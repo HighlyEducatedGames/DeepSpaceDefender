@@ -263,8 +263,9 @@ const laserChargingSound = document.getElementById('laserChargingSound');
 const spiralShotSound = document.getElementById('spiralShotSound');
 const teleportSound = document.getElementById('teleportSound');
 const explosionSound = document.getElementById('explosionSound');
+const hazardSound = document.getElementById('hazardSound');
 
-const soundEffects = [coinSound, fireSound, powerUpSound, collisionSound, chargingSound, accelerationSound, bombSound, boostSound, reverseSound, homingMissileSound, allySound, allyOver, circularOrbitSound, followPlayerSound, lifeLostSound, tractorBeamSound, splatSound, empSound, laserChargingSound, spiralShotSound, teleportSound, explosionSound];
+const soundEffects = [coinSound, fireSound, powerUpSound, collisionSound, chargingSound, accelerationSound, bombSound, boostSound, reverseSound, homingMissileSound, allySound, allyOver, circularOrbitSound, followPlayerSound, lifeLostSound, tractorBeamSound, splatSound, empSound, laserChargingSound, spiralShotSound, teleportSound, explosionSound, hazardSound];
 
 // Set initial volumes
 backgroundMusic.volume = 0.5;
@@ -409,13 +410,17 @@ function handleGamepadInput() {
 // Cheat codes definition
 const cheatCodes = {
     invincibility: ['i', 'd', 'd', 'q', 'd'],
-    bombsAndMissiles: ['i', 'd', 'f', 'a']
+    bombsAndMissiles: ['i', 'd', 'f', 'a'],
+    unlimitedBoost: ['i', 'd', 'b', 'o', 'o', 's', 't']
 };
 let currentCheatIndex = {
     invincibility: 0,
-    bombsAndMissiles: 0
+    bombsAndMissiles: 0,
+    unlimitedBoost: 0
 };
+
 let isCheatCodeActivated = false; // Track if the cheat code is activated
+let isUnlimitedBoostActivated = false;
 
 function addEventListeners() {
     window.addEventListener('keydown', handleKeyDown);
@@ -474,6 +479,17 @@ function handleKeyDown(e) {
         }
     } else {
         currentCheatIndex.bombsAndMissiles = 0;
+    }
+
+    // Check for unlimited boost cheat code sequence
+    if (e.key === cheatCodes.unlimitedBoost[currentCheatIndex.unlimitedBoost]) {
+        currentCheatIndex.unlimitedBoost++;
+        if (currentCheatIndex.unlimitedBoost === cheatCodes.unlimitedBoost.length) {
+            isUnlimitedBoostActivated = !isUnlimitedBoostActivated; // Toggle unlimited boost
+            currentCheatIndex.unlimitedBoost = 0;
+        }
+    } else {
+        currentCheatIndex.unlimitedBoost = 0;
     }
 
     if (e.key === 'm' || e.key === 'M') {
@@ -688,6 +704,129 @@ function handleGameOver() {
     });
 }
 
+function stopGameOverMusic() {
+    const gameOverMusic = document.getElementById('gameOverMusic');
+    gameOverMusic.pause();
+    gameOverMusic.currentTime = 0;
+}
+
+function restartGame() {
+    stopGameOverMusic();
+
+    // Reset player
+    player = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        width: 50,
+        height: 50,
+        speed: 200,
+        rotation: -Math.PI / 2,
+        velocity: { x: 0, y: 0 },
+        thrust: 0,
+        deceleration: 0.98,
+        maxSpeed: 300,
+        lives: 3,
+        health: PLAYER_MAX_HEALTH
+    };
+
+    // Clear coins
+    coins = [];
+    for (let i = 0; i < 5; i++) {
+        coins.push({
+            x: Math.random() * (canvas.width - 20),
+            y: Math.random() * (canvas.height - 20),
+            width: 20,
+            height: 20
+        });
+    }
+
+    // Clear existing timeouts
+    enemyRespawnTimeouts.forEach(timeout => clearTimeout(timeout));
+    enemyRespawnTimeouts = [];
+
+    // Reset powerup timers
+    resetPowerUpTimers();
+
+    // Clear game objects
+    enemies = [];
+    projectiles = [];
+    powerUp = null;
+    bombPowerUp = null;
+    homingMissilePowerUp = null;
+    shieldPowerUp = null;
+    reversePowerUp = null;
+    boostPowerUp = null;
+    homingMissiles = [];
+    asteroids = [];
+    spiralProjectiles = [];
+
+    // Reset powerup states
+    powerUpActive = false;
+    powerUpExpirationTime = 0;
+    powerUpDirection = Math.random() < 0.5 ? 1 : -1;
+    powerUpZigZagSpeed = 100;
+    powerUpSpawned = false;
+    bombSpawned = false;
+    bombActive = false;
+    bombFlashTime = 0;
+    bossHitByBomb = false;
+    homingMissilesInventory = 0;
+    shieldActive = false;
+    shieldPowerUpExpirationTime = 0;
+    reversePowerUpSpawnedThisLevel = false;
+    reversePowerUpActive = false;
+    reversePowerUpExpirationTime = 0;
+    boostPowerUpSpawnedThisLevel = false;
+    boostPowerUpActive = false;
+    boostPowerUpExpirationTime = 0;
+
+    // Reset game state
+    score = 0;
+    level = 1;
+    gameOver = false;
+    spacebarPressedTime = 0;
+    isCharging = false;
+    chargingSoundTimeout = null;
+    levelDuration = 30000;
+    countdown = levelDuration / 1000;
+    levelStartTime = performance.now();
+    nextLifeScore = 1500;
+    bombs = 0;
+
+    // Clear bosses
+    boss = null;
+    cyberDragon = null;
+    biomechLeviathan = null;
+    temporalSerpent = null;
+
+    // Reset ally spawn times
+    allySpawnTime = performance.now();
+    allyInterval = 60000;
+    allyWarningTime = 3000;
+    allyDuration = 15000;
+
+    // Initialize the first level
+    initLevel(level);
+
+    // Manage music
+    stopBackgroundMusic();
+    stopBossMusic();
+    startBackgroundMusic();
+}
+
+document.addEventListener('keydown', function(event) {
+    if (event.code === 'Space' && gameOver) {
+        restartGame();
+    }
+});
+
+window.addEventListener("gamepadconnected", function(event) {
+    requestAnimationFrame(gameLoop); // Ensure the game loop continues to check for input
+});
+
+window.addEventListener("gamepaddisconnected", function(event) {
+    gamepadIndex = null;
+});
 
 document.addEventListener('keydown', function(event) {
     if (event.code === 'Space' && gameOver) {
@@ -1715,8 +1854,134 @@ function spawnTemporalSerpent() {
 }
 
 function attackPhase1() {
-    // Define phase 1 attack logic here
+    if (temporalSerpent.segments.length === 0) return;
+
+    // The Temporal Serpent leaves a hazardous zone at its last segment position
+    const lastSegment = temporalSerpent.segments[temporalSerpent.segments.length - 1];
+    hazardousZones.push({
+        x: lastSegment.x,
+        y: lastSegment.y,
+        radius: HAZARD_RADIUS,
+        spawnTime: performance.now()
+    });
+
+    // Remove old hazardous zones
+    hazardousZones = hazardousZones.filter(zone => performance.now() - zone.spawnTime < HAZARD_DURATION);
 }
+
+
+let hazardousZones = [];
+const HAZARD_DURATION = 1000; // Duration for the hazardous zone to stay active
+const HAZARD_DAMAGE = 1; // Damage to the player if they are in the zone
+const HAZARD_RADIUS = 15; // Radius of the hazardous zone
+const HAZARD_DAMAGE_RATE = 1000; // Time in milliseconds between damage applications
+let hazardCooldownActive = false;
+let hazardCooldownTimer = 0;
+
+const HAZARD_COLORS = [
+    'rgba(255, 0, 0, 0.6)', // Red
+    'rgba(0, 255, 0, 0.6)', // Green
+    'rgba(0, 0, 255, 0.6)', // Blue
+    'rgba(255, 255, 0, 0.6)', // Yellow
+    'rgba(0, 255, 255, 0.6)', // Cyan
+    'rgba(255, 0, 255, 0.6)' // Magenta
+];
+
+
+function drawHazardousZones(ctx, timestamp) {
+    ctx.save();
+
+    hazardousZones.forEach(zone => {
+        // Pick a random color from the array for the gradient
+        const colorIndex = Math.floor(Math.random() * HAZARD_COLORS.length);
+        const baseColor = HAZARD_COLORS[colorIndex];
+        const glowColor = baseColor.replace('0.6', '0.3');
+
+        // Create a radial gradient
+        const gradient = ctx.createRadialGradient(zone.x, zone.y, 0, zone.x, zone.y, zone.radius);
+        gradient.addColorStop(0, baseColor);
+        gradient.addColorStop(1, baseColor.replace('0.6', '0'));
+
+        // Set the fill style to the gradient
+        ctx.fillStyle = gradient;
+
+        // Draw the main circle with the gradient
+        ctx.beginPath();
+        ctx.arc(zone.x, zone.y, zone.radius, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Create a glow effect by drawing a larger, semi-transparent circle around the zone
+        ctx.beginPath();
+        ctx.arc(zone.x, zone.y, zone.radius + 10, 0, 2 * Math.PI);
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 5;
+        ctx.stroke();
+
+        // Animate the zone's opacity for a pulsing effect
+        const pulse = Math.sin(timestamp / 200) * 0.2 + 0.8;
+        ctx.globalAlpha = pulse;
+
+        // Draw the inner circle again with varying opacity for the pulsing effect
+        ctx.beginPath();
+        ctx.arc(zone.x, zone.y, zone.radius - 5, 0, 2 * Math.PI);
+        ctx.fillStyle = baseColor.replace('0.6', '0.8');
+        ctx.fill();
+    });
+
+    ctx.restore();
+}
+
+let isPlayerInHazardZone = false; // Track whether the player is in a hazardous zone
+
+function checkPlayerInHazardousZone(player, timestamp) {
+    if (hazardCooldownActive && timestamp < hazardCooldownTimer) {
+        return; // Skip the check if the cooldown is active
+    }
+
+    let damageApplied = false;
+    let playerIsInHazard = false; // Track if the player is in any hazard zone
+
+    hazardousZones.forEach(zone => {
+        const dx = player.x - zone.x;
+        const dy = player.y - zone.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < zone.radius + player.width / 2) {
+            playerIsInHazard = true;
+            if (!isInvincible && !shieldActive && !damageApplied) {
+                console.log('Applying damage to player.');
+                player.health -= HAZARD_DAMAGE;
+                damageApplied = true; // Ensure damage is only applied once per check
+                if (player.health <= 0) {
+                    player.lives--;
+                    player.health = PLAYER_MAX_HEALTH;
+                    if (player.lives <= 0) {
+                        gameOver = true;
+                        handleGameOver();
+                    }
+                }
+            }
+        }
+    });
+
+    if (damageApplied) {
+        console.log(`Player is in hazardous zone.`); // Log only when damage is applied
+        hazardCooldownActive = true;
+        hazardCooldownTimer = timestamp + HAZARD_DAMAGE_RATE; // Set the cooldown timer
+    } else {
+        hazardCooldownActive = false;
+    }
+
+    // Play the audio only if the player has entered a hazardous zone
+    if (playerIsInHazard && !isPlayerInHazardZone) {
+        hazardSound.play();
+        isPlayerInHazardZone = true;
+    } else if (!playerIsInHazard && isPlayerInHazardZone) {
+        hazardSound.pause();
+        isPlayerInHazardZone = false;
+    }
+}
+
 
 function attackPhase2() {
     // Define phase 2 attack logic here
@@ -1981,6 +2246,20 @@ function updateTemporalSerpent(deltaTime, timestamp) {
             break;
     }
 
+    // Leave a hazardous zone behind the last segment
+    if (temporalSerpent.segments.length > 0) {
+        const lastSegment = temporalSerpent.segments[temporalSerpent.segments.length - 1];
+        hazardousZones.push({
+            x: lastSegment.x,
+            y: lastSegment.y,
+            radius: HAZARD_RADIUS,
+            spawnTime: timestamp
+        });
+
+        // Remove old hazardous zones
+        hazardousZones = hazardousZones.filter(zone => timestamp - zone.spawnTime < HAZARD_DURATION);
+    }
+
     // Add new segment to the tail at the increased interval
     const increasedSegmentInterval = temporalSerpent.segmentAddInterval * 3;
 
@@ -2138,6 +2417,32 @@ function makeTemporalSerpentLeaveScreen(duration) {
         }, duration);
     }
 }
+
+function clearSerpentSegments() {
+    if (temporalSerpent) {
+        // Clear the active segments of the Temporal Serpent
+        temporalSerpent.segments = [];
+
+        // Optionally, reset other properties if needed
+        temporalSerpent.alive = false;
+        temporalSerpent.health = temporalSerpent.maxHealth;
+        temporalSerpent.phase = 1;
+        temporalSerpent.phaseTransitioned = [false, false, false];
+    }
+
+    // Clear the detached segments
+    detachedSegments.length = 0; // This is a more efficient way to clear an array
+
+    // Clear hazardous zones
+    hazardousZones.length = 0;
+}
+
+function handleSerpentDeath() {
+    clearSerpentSegments();
+    // Additional logic for handling serpent death, such as playing an animation, updating score, etc.
+}
+
+
 
 // Call spawnTemporalSerpent() at the appropriate place in your game initialization or level setup
 
@@ -2302,7 +2607,7 @@ function updateProjectiles(deltaTime, timestamp) {
                     const headCircle = { x: temporalSerpent.segments[0].x, y: temporalSerpent.segments[0].y, radius: 30 }; // Updated radius for head
 
                     if (checkCollision(projectileCircle, headCircle)) {
-                        temporalSerpent.health -= projectile.damage + 5;
+                        temporalSerpent.health -= projectile.damage + 25;
                         const collisionSoundClone = collisionSound.cloneNode();
                         collisionSoundClone.volume = collisionSound.volume;
                         collisionSoundClone.play();
@@ -3201,6 +3506,8 @@ function initLevel(level) {
 
     // Clear asteroids
     asteroids = [];
+    // Clear serpent segments
+    clearSerpentSegments();
 
     const isBossLevel = level % 5 === 0;
 
@@ -3521,7 +3828,7 @@ function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
                 reversePowerUpExpirationTime = performance.now() + 10000; // Set the reverse power-up duration to 10 seconds
             } else if (type === 'boostPowerUp') {
                 boostPowerUpActive = true;
-                boostPowerUpExpirationTime = performance.now() + 7500; // Set the boost power-up duration to 7.5 seconds
+                boostPowerUpExpirationTime = performance.now() + 10000; // Set the boost power-up duration to 10 seconds
                 boostCooldownEndTime = performance.now(); // Reset boost cooldown timer
             }
             const powerUpSoundClone = powerUpSound.cloneNode();
@@ -4191,6 +4498,7 @@ function gameLoop(timestamp) {
 
         if (temporalSerpent) {
             updateTemporalSerpent(deltaTime, timestamp);
+            checkPlayerInHazardousZone(player, timestamp);
         }
 
         draw();
@@ -4212,6 +4520,7 @@ function gameLoop(timestamp) {
         }
 
         if (temporalSerpent) {
+            drawHazardousZones(ctx);
             drawTemporalSerpent();
             drawTemporalSerpentHealthBar();
             drawEnergyBarrier(ctx);
@@ -4229,7 +4538,7 @@ function gameLoop(timestamp) {
 }
 
 function useBoost() {
-    if (isBoosting || performance.now() < boostCooldownEndTime) return;
+    if (isBoosting || (!isUnlimitedBoostActivated && performance.now() < boostCooldownEndTime)) return;
 
     isBoosting = true;
     if (!isInvincible) { // Only set isInvincible if it's not already true
@@ -4255,7 +4564,7 @@ function endBoost() {
 }
 
 function isBoostReady() {
-    return !isBoosting && performance.now() >= boostCooldownEndTime;
+    return !isBoosting && (isUnlimitedBoostActivated || performance.now() >= boostCooldownEndTime);
 }
 
 function update(deltaTime, timestamp) {
