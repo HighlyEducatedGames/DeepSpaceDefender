@@ -5397,7 +5397,7 @@ function drawHealthBar(ctx, player, boostBarX, boostBarY, boostBarWidth, boostBa
     ctx.strokeRect(boostBarX, boostBarY + boostBarHeight + 5, boostBarWidth, boostBarHeight);
 }
 
-function drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight, isCharging, spacebarPressedTime) {
+function drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight, isCharging, spacebarPressedTime, flamethrowerActive) {
     ctx.fillStyle = 'gray';
     ctx.fillRect(chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight);
 
@@ -5405,8 +5405,18 @@ function drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHei
         const currentTime = performance.now();
         const chargeDuration = (currentTime - spacebarPressedTime) / 1000;
         const chargeProgress = Math.min(chargeDuration / 2, 1);
-        ctx.fillStyle = 'blue';
+
+        if (flamethrowerActive) {
+            const gradient = ctx.createLinearGradient(chargeBarX, chargeBarY, chargeBarX + chargeBarWidth, chargeBarY);
+            gradient.addColorStop(0, 'orange');
+            gradient.addColorStop(1, 'red');
+            ctx.fillStyle = gradient;
+        } else {
+            ctx.fillStyle = 'blue';
+        }
+
         ctx.fillRect(chargeBarX, chargeBarY, chargeBarWidth * chargeProgress, chargeBarHeight);
+
         const halfwayMarkerX = chargeBarX + chargeBarWidth / 2;
         ctx.strokeStyle = 'yellow';
         ctx.beginPath();
@@ -5570,7 +5580,7 @@ function draw() {
     drawScoreLevelTime(ctx, score, level, countdown, canvas);
     drawBoostBar(ctx, boostBarX, boostBarY, boostBarWidth, boostBarHeight, boostCooldownEndTime, boostPowerUpActive);
     drawHealthBar(ctx, player, boostBarX, boostBarY, boostBarWidth, boostBarHeight);
-    drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight, isCharging, spacebarPressedTime);
+    drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight, isCharging, spacebarPressedTime, flamethrowerActive);
     drawShieldBar(ctx, shieldBarX, shieldBarY, shieldBarWidth, shieldBarHeight, shieldActive, shieldPowerUpExpirationTime);
     drawInventories(ctx, player, bombs, homingMissilesInventory, boostBarX, boostBarY, boostBarWidth, boostBarHeight, chargeBarX, chargeBarWidth, chargeBarY, shieldBarX, shieldBarWidth, shieldBarY);
 
