@@ -1709,68 +1709,6 @@ function drawEMPBlast() {
     }
 }
 
-function updateBiomechLeviathan(deltaTime, timestamp) {
-    if (!biomechLeviathan) return;
-
-    const angleToPlayer = Math.atan2(player.y - biomechLeviathan.y, player.x - biomechLeviathan.x);
-    biomechLeviathan.x += Math.cos(angleToPlayer) * biomechLeviathan.speed * deltaTime / 1000;
-    biomechLeviathan.y += Math.sin(angleToPlayer) * biomechLeviathan.speed * deltaTime / 1000;
-
-    // Use tractor beam attack
-    biomechLeviathanTractorBeam();
-
-    // Check for other attacks
-    const currentTime = performance.now();
-    if (biomechLeviathan.phase === 1 && biomechLeviathan.health <= biomechLeviathan.maxHealth * 0.6 && !biomechLeviathan.phaseTransitioned[0]) {
-        biomechLeviathan.phaseTransitioned[0] = true;
-        biomechLeviathan.phase = 2;
-    } else if (biomechLeviathan.phase === 2 && biomechLeviathan.health <= biomechLeviathan.maxHealth * 0.3 && !biomechLeviathan.phaseTransitioned[1]) {
-        biomechLeviathan.phaseTransitioned[1] = true;
-        biomechLeviathan.phase = 3;
-    }
-
-    switch (biomechLeviathan.phase) {
-        case 1:
-            // Only tractor beam
-            break;
-        case 2:
-            biomechLeviathanInkCloud(); // Use ink cloud attack
-            break;
-        case 3:
-            biomechLeviathanEMPBlast(); // Use EMP blast attack
-            break;
-    }
-
-    if (biomechLeviathan.health <= 0) {
-        biomechLeviathan.alive = false;
-        score += 2000;
-        biomechLeviathan = null;
-        resetTractorBeam(); // Properly reset tractor beam
-        inkClouds = []; // Clear any remaining ink clouds
-        empBlast = null; // Reset EMP blast
-        level++;
-        initLevel(level);
-        lastTime = performance.now();
-    }
-
-    // Check collision with player
-    const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-    const biomechLeviathanCircle = { x: biomechLeviathan.x, y: biomechLeviathan.y, radius: biomechLeviathan.width / 2 };
-
-    if (checkCollision(playerCircle, biomechLeviathanCircle)) {
-        if (!isInvincible) {
-            player.health -= 20; // Adjust damage as needed
-            const collisionSoundClone = collisionSound.cloneNode();
-            collisionSoundClone.volume = collisionSound.volume;
-            collisionSoundClone.play();
-
-            // Play the biomechEat sound
-            biomechEatSound.currentTime = 0; // Reset the sound to the beginning
-            biomechEatSound.play();
-        }
-    }
-}
-
 function drawBiomechLeviathan() {
     if (biomechLeviathan && biomechLeviathan.alive) {
         ctx.save();
@@ -2049,10 +1987,65 @@ function checkPlayerInHazardousZone(player, timestamp) {
     }
 }
 
+function updateDetachedSegments(deltaTime) {
+    detachedSegments.forEach((segment, index) => {
+        if (segment.travelDirection) {
+            const travelDistance = segment.speed * (deltaTime / 1000);
+            segment.x += segment.travelDirection.x * travelDistance;
+            segment.y += segment.travelDirection.y * travelDistance;
+            segment.travelDistance -= travelDistance;
+
+            if (segment.travelDistance <= 0) {
+                segment.explode = true;
+                segment.explosionTime = performance.now();
+                delete segment.travelDirection; // Remove travelDirection to stop further movement
+            }
+        }
+    });
+}
 
 function attackPhase2() {
-    // Define phase 2 attack logic here
+    if (temporalSerpent.segments.length < 10) return; // Ensure there are enough segments for the attack
+
+    const segmentsToFire = [];
+    const numSegments = 1; // Number of segments to detach and fire at the player per attack
+
+    // Select a random segment to detach and fire
+    for (let i = 0; i < numSegments; i++) {
+        const randomIndex = Math.floor(Math.random() * temporalSerpent.segments.length);
+        const segment = temporalSerpent.segments[randomIndex];
+        segmentsToFire.push(segment);
+        // Remove the segment from the serpent
+        temporalSerpent.segments.splice(randomIndex, 1);
+    }
+
+    // Detach selected segments and set them up to travel towards the player and explode
+    segmentsToFire.forEach(segment => {
+        const dx = player.x - segment.x;
+        const dy = player.y - segment.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const travelDuration = 3000; // Time in milliseconds for the segment to travel before exploding
+
+        segment.travelDirection = { x: dx / distance, y: dy / distance };
+        segment.travelDistance = 600; // Distance in pixels to travel towards the player
+        
+        // Increase the segment speed by reducing the travel duration
+        const increasedSpeedFactor = 4; // Increase speed by this factor
+        const newTravelDuration = travelDuration / increasedSpeedFactor; // Reduce travel duration to increase speed
+
+        segment.speed = segment.travelDistance / (newTravelDuration / 1000); // New speed based on increased factor
+
+        segment.startX = segment.x;
+        segment.startY = segment.y;
+        segment.explode = true;
+        segment.explosionTime = performance.now() + newTravelDuration; // Update explosion time based on new travel duration
+
+        // Add the detached segment to a global array for detached segments
+        detachedSegments.push(segment);
+    });
 }
+
+
 
 let energyBarrierActive = false;
 const energyBarrierDuration = 5000; // Duration of the energy barrier in milliseconds
@@ -2375,13 +2368,13 @@ function updateTemporalSerpent(deltaTime, timestamp) {
                 attackPhase1();
                 break;
             case 2:
-                attackPhase2();
+                attackPhase4();
                 break;
             case 3:
                 attackPhase3();
                 break;
             case 4:
-                attackPhase4();
+                attackPhase2();
                 break;
         }
         temporalSerpent.lastAttackTime = timestamp;
@@ -3264,7 +3257,6 @@ function drawHomingMissiles() {
 
 function updateBiomechLeviathan(deltaTime, timestamp) {
     if (!biomechLeviathan) return;
-
     const angleToPlayer = Math.atan2(player.y - biomechLeviathan.y, player.x - biomechLeviathan.x);
     biomechLeviathan.x += Math.cos(angleToPlayer) * biomechLeviathan.speed * deltaTime / 1000;
     biomechLeviathan.y += Math.sin(angleToPlayer) * biomechLeviathan.speed * deltaTime / 1000;
@@ -3549,6 +3541,7 @@ function spawnBoostPowerUp() {
 }
 
 function spawnFlamethrowerPowerUp() {
+if (level <= 5) return;
     const position = getOffScreenSpawnPosition(30, 30);
     flamethrowerPowerUp = {
         x: position.x,
@@ -4533,10 +4526,13 @@ function checkFlameDamage() {
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             if (distance < head.radius) {
-                temporalSerpent.health -= 0.1; // Slow but constant damage to the Temporal Serpent
+                temporalSerpent.health -= 0.2; // Slow but constant damage to the Temporal Serpent
                 if (temporalSerpent.health <= 0) {
                     // Handle Temporal Serpent death
-                    score += 300; // Increase score or any other logic
+                    score += 3000; // Increase score or any other logic
+                    createExplosion(head.x + head.width / 2, head.y + head.height / 2);
+                    explosionSound.play();
+
                     temporalSerpent = null; // Remove the Temporal Serpent
                 }
             }
@@ -4882,6 +4878,7 @@ function gameLoop(timestamp) {
         if (temporalSerpent) {
             updateTemporalSerpent(deltaTime, timestamp);
             checkPlayerInHazardousZone(player, timestamp);
+    	    updateDetachedSegments(deltaTime);
         }
 
         draw();
