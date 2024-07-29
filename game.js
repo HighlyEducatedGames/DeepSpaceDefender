@@ -3001,6 +3001,37 @@ function handleWormholeTeleportation() {
             });
         }
     });
+
+    // Check flamethrower particles entry
+    flameParticles.forEach(particle => {
+        if (!particle.lastTeleportTime) {
+            particle.lastTeleportTime = 0;
+        }
+
+        if (currentTime - particle.lastTeleportTime > PROJECTILE_TELEPORT_COOLDOWN) {
+            wormholes.forEach(wormhole => {
+                const distanceToEntry = Math.sqrt(
+                    (particle.x - wormhole.entry.x) ** 2 +
+                    (particle.y - wormhole.entry.y) ** 2
+                );
+
+                const distanceToExit = Math.sqrt(
+                    (particle.x - wormhole.exit.x) ** 2 +
+                    (particle.y - wormhole.exit.y) ** 2
+                );
+
+                if (distanceToEntry < wormhole.entry.radius) {
+                    particle.x = wormhole.exit.x;
+                    particle.y = wormhole.exit.y;
+                    particle.lastTeleportTime = currentTime; // Update the last teleport time
+                } else if (distanceToExit < wormhole.exit.radius) {
+                    particle.x = wormhole.entry.x;
+                    particle.y = wormhole.entry.y;
+                    particle.lastTeleportTime = currentTime; // Update the last teleport time
+                }
+            });
+        }
+    });
 }
 
 
@@ -4364,7 +4395,10 @@ function checkFlameDamage() {
                 boss.health -= 0.1; // Slow but constant damage to the boss
                 if (boss.health <= 0) {
                     // Handle boss death
-                    score += 100; // Increase score or any other logic
+                    score += 1000; // Increase score or any other logic
+		    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+		    explosionSound.play();
+
                     boss = null; // Remove the boss
                 }
             }
@@ -4380,7 +4414,9 @@ function checkFlameDamage() {
                 cyberDragon.health -= 0.1; // Slow but constant damage to the Cyber Dragon
                 if (cyberDragon.health <= 0) {
                     // Handle Cyber Dragon death
-                    score += 200; // Increase score or any other logic
+		    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+		    explosionSound.play();
+                    score += 3000; // Increase score or any other logic
                     cyberDragon = null; // Remove the Cyber Dragon
                 }
             }
@@ -4396,7 +4432,10 @@ function checkFlameDamage() {
                 biomechLeviathan.health -= 0.1; // Slow but constant damage to the Biomech
                 if (biomechLeviathan.health <= 0) {
                     // Handle Biomech death
-                    score += 150; // Increase score or any other logic
+                    score += 2000; // Increase score or any other logic
+               	    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+	            explosionSound.play();
+
                     biomechLeviathan = null; // Remove the Biomech
                 }
             }
