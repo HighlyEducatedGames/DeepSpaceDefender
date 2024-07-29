@@ -132,7 +132,10 @@ let empBlast = {
 
 let empBlastEndTime = 0;
 let empBlastActive = false;
+let empPulseScale = 1;
+let empPulseTime = 0;
 let isPlayerDisabledByEMP = false;
+let empDisableFire = false;
 let asteroids = [];
 let flamethrowerPowerUp = null;
 let flamethrowerSpawnTime = 0;
@@ -250,9 +253,9 @@ const explosionSound = document.getElementById('explosionSound');
 const hazardSound = document.getElementById('hazardSound');
 const flameSound = document.getElementById('flameSound');
 const torchSound = document.getElementById('torchSound');
+const biomechEatSound = document.getElementById('biomechEatSound');
 
-
-const soundEffects = [coinSound, fireSound, powerUpSound, collisionSound, chargingSound, accelerationSound, bombSound, boostSound, reverseSound, homingMissileSound, allySound, allyOver, circularOrbitSound, followPlayerSound, lifeLostSound, tractorBeamSound, splatSound, empSound, laserChargingSound, spiralShotSound, teleportSound, explosionSound, hazardSound, flameSound, torchSound];
+const soundEffects = [coinSound, fireSound, powerUpSound, collisionSound, chargingSound, accelerationSound, bombSound, boostSound, reverseSound, homingMissileSound, allySound, allyOver, circularOrbitSound, followPlayerSound, lifeLostSound, tractorBeamSound, splatSound, empSound, laserChargingSound, spiralShotSound, teleportSound, explosionSound, hazardSound, flameSound, torchSound, biomechEatSound];
 
 // Set initial volumes
 backgroundMusic.volume = 0.5;
@@ -608,10 +611,11 @@ function initializeGame() {
     };
 
     coins = [];
+    const topMargin = 120; // Adjust this value if needed
     for (let i = 0; i < 5; i++) {
         coins.push({
             x: Math.random() * (canvas.width - 20),
-            y: Math.random() * (canvas.height - 20),
+            y: Math.random() * (canvas.height - 20 - topMargin) + topMargin,
             width: 20,
             height: 20
         });
@@ -727,10 +731,11 @@ function restartGame() {
 
     // Clear coins
     coins = [];
+    const topMargin = 120; // Adjust this value if needed
     for (let i = 0; i < 5; i++) {
         coins.push({
             x: Math.random() * (canvas.width - 20),
-            y: Math.random() * (canvas.height - 20),
+            y: Math.random() * (canvas.height - 20 - topMargin) + topMargin,
             width: 20,
             height: 20
         });
@@ -1594,6 +1599,43 @@ function drawInkClouds() {
 
 let lastEMPTime = 0; // Variable to track the last EMP activation time
 const EMP_COOLDOWN = 5000; // 5 seconds cooldown period
+let empSparkParticles = [];
+let lastBiomechEatSoundTime = 0;
+const BIOMECH_EAT_SOUND_COOLDOWN = 15000; // 15 seconds in milliseconds
+
+
+class EMPSparkParticle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = Math.random() * 5 + 2;
+        this.color = `rgba(0, 255, 255, ${Math.random() * 0.5 + 0.5})`; // Cyan with random transparency
+        this.velocity = {
+            x: (Math.random() - 0.5) * 10,
+            y: (Math.random() - 0.5) * 10,
+        };
+        this.alpha = 1; // transparency
+    }
+
+    update() {
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        this.alpha -= 0.02;
+    }
+
+    draw(ctx) {
+        if (this.alpha > 0) {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+}
+
 
 function biomechLeviathanEMPBlast() {
     const currentTime = performance.now();
@@ -1612,6 +1654,7 @@ function biomechLeviathanEMPBlast() {
     };
     empBlastEndTime = performance.now() + empBlast.duration;
     empBlastActive = true;
+    empDisableFire = true;
 
     // Destroy projectiles within the EMP blast radius
     projectiles = projectiles.filter(projectile => {
@@ -1625,15 +1668,35 @@ function biomechLeviathanEMPBlast() {
     setTimeout(() => {
         empBlast.active = false;
         empBlastActive = false;
+	empDisableFire = false;
     }, empBlast.duration);
 }
 
 function drawEMPBlast() {
     if (empBlast && empBlast.active) {
+        empPulseTime += 0.1; // Adjust the speed of the pulsing
+        empPulseScale = 1 + Math.sin(empPulseTime) * 0.1; // Adjust the range of the pulsing
+
+        ctx.save();
         ctx.fillStyle = 'rgba(0, 0, 255, 0.3)';
         ctx.beginPath();
-        ctx.arc(empBlast.x, empBlast.y, empBlast.radius, 0, 2 * Math.PI);
+        ctx.arc(empBlast.x, empBlast.y, empBlast.radius * empPulseScale, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.restore();
+
+        // Generate spark particles
+        if (Math.random() < 0.5) { // Adjust the frequency of spark generation
+            empSparkParticles.push(new EMPSparkParticle(empBlast.x, empBlast.y));
+        }
+
+        // Update and draw spark particles
+        empSparkParticles.forEach((spark, index) => {
+            spark.update();
+            spark.draw(ctx);
+            if (spark.alpha <= 0) {
+                empSparkParticles.splice(index, 1); // Remove the spark when it fades out
+            }
+        });
 
         if (empSound.paused) {
             empSound.currentTime = 0;
@@ -1642,6 +1705,7 @@ function drawEMPBlast() {
     } else {
         empSound.pause();
         empSound.currentTime = 0; // Reset the sound
+        empSparkParticles = []; // Clear sparks when EMP is not active
     }
 }
 
@@ -1696,6 +1760,13 @@ function updateBiomechLeviathan(deltaTime, timestamp) {
     if (checkCollision(playerCircle, biomechLeviathanCircle)) {
         if (!isInvincible) {
             player.health -= 20; // Adjust damage as needed
+            const collisionSoundClone = collisionSound.cloneNode();
+            collisionSoundClone.volume = collisionSound.volume;
+            collisionSoundClone.play();
+
+            // Play the biomechEat sound
+            biomechEatSound.currentTime = 0; // Reset the sound to the beginning
+            biomechEatSound.play();
         }
     }
 }
@@ -3361,10 +3432,11 @@ function getValidSpawnPosition(width, height) {
     let position;
     let distance;
     let isOverlapping;
+    const topMargin = 120; // Adjust this value if needed
     do {
         position = {
             x: Math.random() * (canvas.width - width),
-            y: Math.random() * (canvas.height - height)
+            y: Math.random() * (canvas.height - height - topMargin) + topMargin
         };
         distance = Math.sqrt(
             (player.x - position.x) ** 2 +
@@ -4187,7 +4259,7 @@ function getOffScreenSpawnPosition(width, height) {
 
 
 function fireProjectile() {
-    if (isMenuOpen || flamethrowerActive) return;
+    if (isMenuOpen || flamethrowerActive || empDisableFire) return; // Prevent firing if EMP effect is active
 
     const chargeDuration = (performance.now() - spacebarPressedTime) / 1000;
     let projectileSize = 5;
@@ -4282,10 +4354,7 @@ class FlameParticle {
         this.x = x;
         this.y = y;
         this.size = Math.random() * 20 + 10;
-        const r = 255;
-        const g = Math.random() * 150 + 50; // Increase the lower limit for green
-        const b = Math.random() * 50; // Add a small amount of blue for more variation
-        this.color = `rgba(${r}, ${g}, ${b}, 1)`;
+        this.color = `rgba(${255}, ${Math.random() * 150}, 0, 1)`;
         this.velocity = {
             x: Math.cos(player.rotation) * 10 + (Math.random() - 0.5) * 2,
             y: Math.sin(player.rotation) * 10 + (Math.random() - 0.5) * 2,
@@ -4298,6 +4367,19 @@ class FlameParticle {
         this.y += this.velocity.y;
         this.size *= 0.96;
         this.alpha -= 0.02;
+
+        // Wrap around the canvas
+        if (this.x < 0) {
+            this.x = canvas.width;
+        } else if (this.x > canvas.width) {
+            this.x = 0;
+        }
+
+        if (this.y < 0) {
+            this.y = canvas.height;
+        } else if (this.y > canvas.height) {
+            this.y = 0;
+        }
     }
 
     draw(ctx) {
@@ -4312,6 +4394,7 @@ class FlameParticle {
         }
     }
 }
+
 
 function createFlameParticle() {
     const flameParticle = new FlameParticle(player.x + Math.cos(player.rotation) * player.width / 2, player.y + Math.sin(player.rotation) * player.height / 2);
@@ -4357,7 +4440,8 @@ function checkFlameDamage() {
                 if (enemy.health <= 0) {
                     // Handle enemy death
                     score += 10; // Increase score or any other logic
-
+                    createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                    
                     // Call the appropriate respawn function based on enemy type
                     if (enemy.type === 'enemyTank') {
                         respawnEnemyTank(5000);
@@ -4396,8 +4480,8 @@ function checkFlameDamage() {
                 if (boss.health <= 0) {
                     // Handle boss death
                     score += 1000; // Increase score or any other logic
-		    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
-		    explosionSound.play();
+                    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+                    explosionSound.play();
 
                     boss = null; // Remove the boss
                 }
@@ -4414,8 +4498,8 @@ function checkFlameDamage() {
                 cyberDragon.health -= 0.1; // Slow but constant damage to the Cyber Dragon
                 if (cyberDragon.health <= 0) {
                     // Handle Cyber Dragon death
-		    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
-		    explosionSound.play();
+                    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                    explosionSound.play();
                     score += 3000; // Increase score or any other logic
                     cyberDragon = null; // Remove the Cyber Dragon
                 }
@@ -4433,21 +4517,22 @@ function checkFlameDamage() {
                 if (biomechLeviathan.health <= 0) {
                     // Handle Biomech death
                     score += 2000; // Increase score or any other logic
-               	    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
-	            explosionSound.play();
+                    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                    explosionSound.play();
 
                     biomechLeviathan = null; // Remove the Biomech
                 }
             }
         }
 
-        // Check damage to Temporal Serpent
+        // Check damage to Temporal Serpent head only
         if (temporalSerpent) {
-            const dx = particle.x - (temporalSerpent.x + temporalSerpent.width / 2);
-            const dy = particle.y - (temporalSerpent.y + temporalSerpent.height / 2);
+            const head = temporalSerpent.segments[0];
+            const dx = particle.x - (head.x + head.radius);
+            const dy = particle.y - (head.y + head.radius);
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < temporalSerpent.width / 2) {
+            if (distance < head.radius) {
                 temporalSerpent.health -= 0.1; // Slow but constant damage to the Temporal Serpent
                 if (temporalSerpent.health <= 0) {
                     // Handle Temporal Serpent death
@@ -4746,6 +4831,8 @@ function gameLoop(timestamp) {
     handleGamepadInput();
 
     if (gameOver) {
+    	player.health = 0.1;
+    	player.lives = 0;
         ctx.fillStyle = 'red';
         ctx.font = '40px Arial';
         ctx.fillText('Game Over', canvas.width / 2 - 100, canvas.height / 2);
@@ -5185,6 +5272,8 @@ if (isBoosting) {
         const collisionSoundClone = collisionSound.cloneNode();
         collisionSoundClone.volume = collisionSound.volume;
         collisionSoundClone.play();
+            biomechEatSound.currentTime = 0; // Reset the sound to the beginning
+            biomechEatSound.play();
     }
 }
 
@@ -5225,8 +5314,10 @@ if (boss && boss.alive) {
         }
 
         // Update the EMP blast's position to follow the biomech Leviathan
-        empBlast.x = biomechLeviathan.x;
-        empBlast.y = biomechLeviathan.y;
+        if (biomechLeviathan) {
+            empBlast.x = biomechLeviathan.x;
+            empBlast.y = biomechLeviathan.y;
+        }
     }
 
     // Destroy projectiles within the EMP blast radius
