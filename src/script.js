@@ -2,13 +2,14 @@ import Player from './assets/scripts/Player.js';
 import GUI from './assets/scripts/GUI.js';
 import Star from './assets/scripts/Star.js';
 import Coin from './assets/scripts/Coin.js';
+import Controls from './assets/scripts/Controls.js';
 
 class Game {
   constructor(canvas) {
     this.canvas = canvas;
     this.width = this.canvas.width;
     this.height = this.canvas.height;
-    this.keys = [];
+    this.keys = new Controls(this);
     this.isMenuOpen = false;
     this.gameOver = false;
     this.score = 0;
@@ -38,21 +39,11 @@ class Game {
 
     this.titleScreenImage = new Image();
     this.titleScreenImage.src = 'assets/images/title_screen.png';
-
-    // Keyboard Listeners
-    window.addEventListener('keydown', (e) => {
-      if (this.keys.indexOf(e.key) === -1) this.keys.push(e.key);
-    });
-
-    window.addEventListener('keyup', (e) => {
-      const index = this.keys.indexOf(e.key);
-      if (index > -1) this.keys.splice(index, 1);
-    });
-
-    // Gamepad listeners
   }
 
   render(ctx, deltaTime) {
+    this.keys.handleGamepadInput();
+
     /* DRAW */
     this.stars.forEach((star) => star.draw(ctx)); // Draw stars before other elements
     this.coins.forEach((coin) => coin.draw(ctx));
@@ -63,6 +54,8 @@ class Game {
     this.stars.forEach((star) => star.update());
     this.player.update(deltaTime);
   }
+
+  restartGame() {} // TODO: implement
 }
 
 let lastTimestamp = 0; // milliseconds

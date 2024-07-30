@@ -44,9 +44,9 @@ class Player {
     ctx.rotate(this.rotation);
 
     let image;
-    if (this.pressed('ArrowUp')) {
+    if (this.game.keys.pressed('ArrowUp')) {
       image = this.images.thrust;
-    } else if (this.pressed('ArrowDown')) {
+    } else if (this.game.keys.pressed('ArrowDown')) {
       image = this.images.reverse;
     } else {
       image = this.images.idle;
@@ -58,18 +58,18 @@ class Player {
 
   update(deltaTime) {
     // Rotate player
-    if (this.pressed('ArrowLeft') && !this.pressed('ArrowRight'))
+    if (this.game.keys.isPressed('ArrowLeft') && !this.game.keys.isPressed('ArrowRight'))
       this.rotation -= (this.rotationSpeed * deltaTime) / 1000;
-    if (this.pressed('ArrowRight') && !this.pressed('ArrowLeft'))
+    if (this.game.keys.isPressed('ArrowRight') && !this.game.keys.isPressed('ArrowLeft'))
       this.rotation += (this.rotationSpeed * deltaTime) / 1000;
 
     // Forward and reverse
-    if (this.pressed('ArrowUp')) {
+    if (this.game.keys.isPressed('ArrowUp')) {
       this.thrust = this.acceleration;
       if (this.sounds.acceleration.paused) {
         this.sounds.acceleration.play();
       }
-    } else if (this.pressed('ArrowDown')) {
+    } else if (this.game.keys.isPressed('ArrowDown')) {
       this.thrust = -this.acceleration;
       if (this.sounds.reverse.paused) {
         this.sounds.reverse.play();
@@ -79,13 +79,16 @@ class Player {
     }
 
     // Stop acceleration sound if no longer pressing ArrowUp
-    if (!this.pressed('ArrowUp') && !this.sounds.acceleration.paused) {
+    if (!this.game.keys.isPressed('ArrowUp') && !this.sounds.acceleration.paused) {
       this.sounds.acceleration.pause();
       this.sounds.acceleration.currentTime = 0;
     }
 
     // Stop reverse sound is no longer pressing ArrowDown or if ArrowUp IS pressed
-    if ((!this.pressed('ArrowDown') || this.pressed('ArrowUp')) && !this.sounds.reverse.paused) {
+    if (
+      (!this.game.keys.isPressed('ArrowDown') || this.game.keys.isPressed('ArrowUp')) &&
+      !this.sounds.reverse.paused
+    ) {
       this.sounds.reverse.pause();
       this.sounds.reverse.currentTime = 0;
     }
@@ -114,10 +117,6 @@ class Player {
                 player.velocity.y *= player.maxSpeed / speed;
             }
         }*/
-  }
-
-  pressed(key) {
-    return this.game.keys.indexOf(key) > -1;
   }
 
   isBoostReady() {
