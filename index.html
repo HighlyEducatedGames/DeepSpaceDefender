@@ -4,13 +4,9 @@
     <meta charset="UTF-8">
     <title>Deep Space Defender</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <style>
-        canvas {
-            background: black;
-        }
-        body, h2, p, label {
-            font-family: 'Press Start 2P', cursive;
-        }
+    <link rel="stylesheet" href="style.css">
+
+    <!--<style>
         #menu, #credits, #howToPlay, #soundOptions, #controls {
             position: absolute;
             top: 50%;
@@ -43,20 +39,17 @@
             border: 1px solid white;
             padding: 5px;
         }
-    </style>
+    </style>-->
 </head>
 <body>
-<canvas id="gameCanvas" width="1200" height="700"></canvas>
-<audio id="backgroundMusic" src="assets/audio/background-music.mp3" loop></audio>
-<audio id="coinSound" src="assets/audio/coin.mp3"></audio>
+<canvas id="gameCanvas"></canvas>
+<!--<audio id="backgroundMusic" src="assets/audio/background-music.mp3" loop></audio>
 <audio id="fireSound" src="assets/audio/fire.mp3"></audio>
 <audio id="powerUpSound" src="assets/audio/powerup.mp3"></audio>
 <audio id="collisionSound" src="assets/audio/collision.mp3"></audio>
 <audio id="chargingSound" src="assets/audio/charging.mp3"></audio>
-<audio id="accelerationSound" src="assets/audio/acceleration.mp3"></audio>
 <audio id="bombSound" src="assets/audio/bombSound.mp3"></audio>
 <audio id="boostSound" src="assets/audio/boost.mp3"></audio>
-<audio id="reverseSound" src="assets/audio/reverse.mp3"></audio>
 <audio id="homingMissileSound" src="assets/audio/homing_missile_sound.mp3"></audio>
 <audio id="allySound" src="assets/audio/allySound.mp3"></audio>
 <audio id="allyOver" src="assets/audio/allyOver.mp3"></audio>
@@ -159,7 +152,7 @@
             <td><img src="assets/images/stealth_enemy.png" alt="Stealth Enemy"></td>
             <td>Stealth enemy. Hard to detect.</td>
         </tr>
-        <!-- Add more rows as needed for other assets -->
+        &lt;!&ndash; Add more rows as needed for other assets &ndash;&gt;
     </table>
     <p class="back-button" onclick="hideHowToPlay()">Back</p>
 </div>
@@ -224,9 +217,9 @@
         </tr>
     </table>
     <p class="back-button" onclick="hideControls()">Back</p>
-</div>
+</div>-->
 
-<script>
+<!--<script>
     let soundEffectTimeout;
 
     function playTestSound() {
@@ -287,8 +280,8 @@
         clearTimeout(soundEffectTimeout);
         soundEffectTimeout = setTimeout(playTestSound, 500); // Play test sound after 500ms
     });
-</script>
+</script>-->
 
-<script src="game.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
