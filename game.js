@@ -1858,78 +1858,98 @@ function spawnTemporalSerpent() {
     lastFollowPlayerTime = performance.now();
 }
 
-function attackPhase1() {
-    if (temporalSerpent.segments.length === 0) return;
-
-    // The Temporal Serpent leaves a hazardous zone at its last segment position
-    const lastSegment = temporalSerpent.segments[temporalSerpent.segments.length - 1];
-    hazardousZones.push({
-        x: lastSegment.x,
-        y: lastSegment.y,
-        radius: HAZARD_RADIUS,
-        spawnTime: performance.now()
-    });
-
-    // Remove old hazardous zones
-    hazardousZones = hazardousZones.filter(zone => performance.now() - zone.spawnTime < HAZARD_DURATION);
-}
-
-
 let hazardousZones = [];
-const HAZARD_DURATION = 1000; // Duration for the hazardous zone to stay active
+const HAZARD_DURATION = 250; // Duration for the hazardous zone to stay active
 const HAZARD_DAMAGE = 1; // Damage to the player if they are in the zone
 const HAZARD_RADIUS = 15; // Radius of the hazardous zone
 const HAZARD_DAMAGE_RATE = 1000; // Time in milliseconds between damage applications
 let hazardCooldownActive = false;
 let hazardCooldownTimer = 0;
 
-const HAZARD_COLORS = [
-    'rgba(255, 0, 0, 0.6)', // Red
-    'rgba(0, 255, 0, 0.6)', // Green
-    'rgba(0, 0, 255, 0.6)', // Blue
-    'rgba(255, 255, 0, 0.6)', // Yellow
-    'rgba(0, 255, 255, 0.6)', // Cyan
-    'rgba(255, 0, 255, 0.6)' // Magenta
-];
 
+function attackPhase1() {
+    if (temporalSerpent.segments.length === 0) return;
+
+    const lastSegment = temporalSerpent.segments[temporalSerpent.segments.length - 1];
+    createHazardParticles(lastSegment.x, lastSegment.y);
+
+    hazardousZones.push({
+        x: lastSegment.x,
+        y: lastSegment.y,
+        radius: HAZARD_RADIUS,
+        spawnTime: performance.now()
+    });
+}
+
+class HazardParticle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.reset();
+    }
+
+    reset() {
+        this.size = Math.random() * 10 + 5; // Random size between 5 and 15
+        this.alpha = 1; // Full opacity
+        this.decay = Math.random() * 0.02 + 0.01; // Increase decay rate for faster fading
+        this.dx = (Math.random() - 0.5) * 1; // Horizontal velocity
+        this.dy = (Math.random() - 0.5) * 1; // Vertical velocity
+    }
+
+    update() {
+        this.x += this.dx;
+        this.y += this.dy;
+        this.alpha -= this.decay;
+        if (this.alpha <= 0) {
+            this.reset();
+        }
+    }
+
+    draw(ctx) {
+        if (this.alpha > 0) {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 255, 0, 1)'; // Green color
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+}
+
+let hazardParticles = [];
+const maxHazardParticles = 1; // Limit the number of particles
+
+function createHazardParticles(x, y) {
+    for (let i = 0; i < maxHazardParticles; i++) {
+        const particle = new HazardParticle(x, y);
+        hazardParticles.push(particle);
+    }
+}
+
+function updateHazardParticles() {
+    hazardParticles.forEach(particle => particle.update());
+}
+
+function drawHazardParticles(ctx) {
+    hazardParticles.forEach(particle => particle.draw(ctx));
+}
+
+function updateHazardousZones(timestamp) {
+    hazardousZones = hazardousZones.filter(zone => timestamp - zone.spawnTime < HAZARD_DURATION);
+}
 
 function drawHazardousZones(ctx, timestamp) {
     ctx.save();
 
     hazardousZones.forEach(zone => {
-        // Pick a random color from the array for the gradient
-        const colorIndex = Math.floor(Math.random() * HAZARD_COLORS.length);
-        const baseColor = HAZARD_COLORS[colorIndex];
-        const glowColor = baseColor.replace('0.6', '0.3');
+        createHazardParticles(zone.x, zone.y); // Create particles for each hazardous zone
 
-        // Create a radial gradient
-        const gradient = ctx.createRadialGradient(zone.x, zone.y, 0, zone.x, zone.y, zone.radius);
-        gradient.addColorStop(0, baseColor);
-        gradient.addColorStop(1, baseColor.replace('0.6', '0'));
-
-        // Set the fill style to the gradient
-        ctx.fillStyle = gradient;
-
-        // Draw the main circle with the gradient
+        // Optionally, draw a faint base circle
+        ctx.fillStyle = 'rgba(255, 69, 0, 0.3)';
         ctx.beginPath();
         ctx.arc(zone.x, zone.y, zone.radius, 0, 2 * Math.PI);
-        ctx.fill();
-
-        // Create a glow effect by drawing a larger, semi-transparent circle around the zone
-        ctx.beginPath();
-        ctx.arc(zone.x, zone.y, zone.radius + 10, 0, 2 * Math.PI);
-        ctx.strokeStyle = glowColor;
-        ctx.lineWidth = 5;
-        ctx.stroke();
-
-        // Animate the zone's opacity for a pulsing effect
-        const pulse = Math.sin(timestamp / 200) * 0.2 + 0.8;
-        ctx.globalAlpha = pulse;
-
-        // Draw the inner circle again with varying opacity for the pulsing effect
-        ctx.beginPath();
-        ctx.arc(zone.x, zone.y, zone.radius - 5, 0, 2 * Math.PI);
-        ctx.fillStyle = baseColor.replace('0.6', '0.8');
         ctx.fill();
     });
 
@@ -1940,23 +1960,22 @@ let isPlayerInHazardZone = false; // Track whether the player is in a hazardous 
 
 function checkPlayerInHazardousZone(player, timestamp) {
     if (hazardCooldownActive && timestamp < hazardCooldownTimer) {
-        return; // Skip the check if the cooldown is active
+        return;
     }
 
     let damageApplied = false;
-    let playerIsInHazard = false; // Track if the player is in any hazard zone
+    let playerIsInHazard = false;
 
-    hazardousZones.forEach(zone => {
-        const dx = player.x - zone.x;
-        const dy = player.y - zone.y;
+    hazardParticles.forEach(particle => {
+        const dx = player.x - particle.x;
+        const dy = player.y - particle.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < zone.radius + player.width / 2) {
+        if (distance < particle.size + player.width / 2) {
             playerIsInHazard = true;
             if (!isInvincible && !shieldActive && !damageApplied) {
-                console.log('Applying damage to player.');
                 player.health -= HAZARD_DAMAGE;
-                damageApplied = true; // Ensure damage is only applied once per check
+                damageApplied = true;
                 if (player.health <= 0) {
                     player.lives--;
                     player.health = PLAYER_MAX_HEALTH;
@@ -1970,14 +1989,12 @@ function checkPlayerInHazardousZone(player, timestamp) {
     });
 
     if (damageApplied) {
-        console.log(`Player is in hazardous zone.`); // Log only when damage is applied
         hazardCooldownActive = true;
-        hazardCooldownTimer = timestamp + HAZARD_DAMAGE_RATE; // Set the cooldown timer
+        hazardCooldownTimer = timestamp + HAZARD_DAMAGE_RATE;
     } else {
         hazardCooldownActive = false;
     }
 
-    // Play the audio only if the player has entered a hazardous zone
     if (playerIsInHazard && !isPlayerInHazardZone) {
         hazardSound.play();
         isPlayerInHazardZone = true;
@@ -2045,8 +2062,6 @@ function attackPhase2() {
     });
 }
 
-
-
 let energyBarrierActive = false;
 const energyBarrierDuration = 5000; // Duration of the energy barrier in milliseconds
 const energyBarrierCooldown = 10000; // Cooldown period in milliseconds
@@ -2083,7 +2098,6 @@ function handleProjectileReflection(projectile) {
 
         // Optionally, you can change the color or other properties of the projectile to indicate it has been reflected
         projectile.color = 'red'; // Example: change color to indicate it's an enemy projectile
-
     }
 }
 
@@ -2112,9 +2126,6 @@ function drawEnergyBarrier(ctx) {
         ctx.restore();
     }
 }
-
-
-
 
 function attackPhase4() {
     // Check if there are enough segments to perform the attack
@@ -2306,8 +2317,9 @@ function updateTemporalSerpent(deltaTime, timestamp) {
             break;
     }
 
-    // Leave a hazardous zone behind the last segment
-    if (temporalSerpent.segments.length > 0) {
+    // Leave a hazardous zone behind the last segment at a specified interval
+    const interval = 500; // Change this value to adjust the interval
+    if (temporalSerpent.segments.length > 0 && temporalSerpent.segments.length % interval === 0) {
         const lastSegment = temporalSerpent.segments[temporalSerpent.segments.length - 1];
         hazardousZones.push({
             x: lastSegment.x,
@@ -2404,7 +2416,6 @@ function handleSerpentBombImpact(enemy, deltaTime, timestamp) {
     }
 }
 
-
 function drawTemporalSerpentHealthBar(ctx, canvas, temporalSerpent) {
     if (!temporalSerpent || !temporalSerpent.alive) return;
 
@@ -2500,9 +2511,8 @@ function handleSerpentDeath() {
     // Additional logic for handling serpent death, such as playing an animation, updating score, etc.
 }
 
-
-
 // Call spawnTemporalSerpent() at the appropriate place in your game initialization or level setup
+
 
 function updateProjectiles(deltaTime, timestamp) {
     let projectilesToRemove = new Set();
@@ -4419,7 +4429,7 @@ function checkFlameDamage() {
 
             if (distance < enemy.width / 2) {
                 enemy.health -= 1; // Adjust the damage value as needed
-                
+
                 // Play torch sound on collision
                 if (torchSound) {
                     if (torchSound.paused) {
@@ -4434,7 +4444,7 @@ function checkFlameDamage() {
                     // Handle enemy death
                     score += 10; // Increase score or any other logic
                     createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
-                    
+
                     // Call the appropriate respawn function based on enemy type
                     if (enemy.type === 'enemyTank') {
                         respawnEnemyTank(5000);
@@ -4537,6 +4547,30 @@ function checkFlameDamage() {
                 }
             }
         }
+
+        // Check damage to hazardous zones
+        hazardousZones.forEach((zone, zoneIndex) => {
+            const dx = particle.x - zone.x;
+            const dy = particle.y - zone.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < zone.radius) {
+                // Remove the hazardous zone
+                hazardousZones.splice(zoneIndex, 1);
+            }
+        });
+
+        // Check damage to hazard particles
+        hazardParticles.forEach((hazardParticle, hazardIndex) => {
+            const dx = particle.x - hazardParticle.x;
+            const dy = particle.y - hazardParticle.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < hazardParticle.size) {
+                // Remove the hazard particle
+                hazardParticles.splice(hazardIndex, 1);
+            }
+        });
     });
 }
 
@@ -4879,6 +4913,8 @@ function gameLoop(timestamp) {
             updateTemporalSerpent(deltaTime, timestamp);
             checkPlayerInHazardousZone(player, timestamp);
     	    updateDetachedSegments(deltaTime);
+    	    updateHazardParticles();
+            updateHazardousZones(timestamp);
         }
 
         draw();
@@ -4899,7 +4935,8 @@ function gameLoop(timestamp) {
         }
 
         if (temporalSerpent) {
-            drawHazardousZones(ctx);
+    	    drawHazardParticles(ctx);
+    	    drawHazardousZones(ctx, performance.now());
             drawTemporalSerpent();
             drawTemporalSerpentHealthBar();
             drawEnergyBarrier(ctx);
