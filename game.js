@@ -760,6 +760,9 @@ function restartGame() {
     homingMissiles = [];
     asteroids = [];
     spiralProjectiles = [];
+    // Clear hazard particles and zones
+    hazardParticles = [];
+    hazardousZones = [];
 
     // Reset powerup states
     powerUpActive = false;
