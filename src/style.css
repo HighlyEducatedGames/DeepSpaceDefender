@@ -1,14 +1,14 @@
 body {
-    margin: 0;
-    padding: 0;
-    background: #323232;
-    font-family: 'Press Start 2P', cursive;
+  margin: 0;
+  padding: 0;
+  background: #323232;
+  font-family: 'Press Start 2P', cursive;
 }
 
 canvas {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: black;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: black;
 }
