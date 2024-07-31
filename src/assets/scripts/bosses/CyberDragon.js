@@ -63,7 +63,7 @@ class CyberDragon {
     ctx.drawImage(this.image, -this.width * 0.5, -this.height * 0.5, this.width, this.height);
     ctx.restore();
 
-    // Boss Bar
+    // Health Bar
     const barWidth = this.width;
     const barHeight = 10;
     const barX = this.x - this.width / 2;

@@ -22,3 +22,8 @@ export function spawnOffScreenRandomSide(object, extraMargin = 0) {
 
   return side;
 }
+
+export function getRandomDirection() {
+  const directions = ['right', 'down', 'left', 'up'];
+  return directions[Math.floor(Math.random() * directions.length)];
+}

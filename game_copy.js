@@ -100,7 +100,6 @@ const collisionSound = document.getElementById('collisionSound');
 const chargingSound = document.getElementById('chargingSound');
 const boostSound = document.getElementById('boostSound');
 const lifeLostSound = document.getElementById('lifeLostSound');
-const tractorBeamSound = document.getElementById('tractorBeamSound');
 const splatSound = document.getElementById('splatSound');
 const empSound = document.getElementById('empSound'); // Add the EMP sound file
 const spiralShotSound = document.getElementById('spiralShotSound');
@@ -117,7 +116,6 @@ const soundEffects = [
   chargingSound,
   boostSound,
   lifeLostSound,
-  tractorBeamSound,
   splatSound,
   empSound,
   spiralShotSound,
@@ -688,47 +686,6 @@ function checkSpiralCollisions() {
 }
 
 function spawnBiomechLeviathan() {
-  const offScreenMargin = 100;
-  const side = Math.floor(Math.random() * 4);
-  let position = { x: 0, y: 0 };
-
-  switch (side) {
-    case 0:
-      position.x = Math.random() * canvas.width;
-      position.y = -offScreenMargin - 100;
-      break;
-    case 1:
-      position.x = Math.random() * canvas.width;
-      position.y = canvas.height + offScreenMargin + 100;
-      break;
-    case 2:
-      position.x = -offScreenMargin - 100;
-      position.y = Math.random() * canvas.height;
-      break;
-    case 3:
-      position.x = canvas.width + offScreenMargin + 100;
-      position.y = Math.random() * canvas.height;
-      break;
-  }
-
-  biomechLeviathan = {
-    x: position.x,
-    y: position.y,
-    width: 200,
-    height: 200,
-    speed: 40,
-    health: 2000,
-    maxHealth: 2000,
-    lastShotTime: 0,
-    shootInterval: 1500,
-    canShoot: false,
-    alive: true,
-    phase: 1,
-    phaseTransitioned: [false, false, false],
-    playerCollisionRadius: 100, // Define the player collision radius
-    projectileCollisionRadius: 120, // Define the projectile collision radius
-  };
-
   tractorBeam = { active: false, startX: 0, startY: 0, endX: 0, endY: 0, strength: 0.2 };
 
   setTimeout(() => {
@@ -1021,35 +978,6 @@ function drawEMPBlast() {
   }
 }
 
-function drawBiomechLeviathan() {
-  if (biomechLeviathan && biomechLeviathan.alive) {
-    ctx.save();
-    ctx.translate(biomechLeviathan.x, biomechLeviathan.y);
-    ctx.drawImage(
-      biomechLeviathanImage,
-      -biomechLeviathan.width / 2,
-      -biomechLeviathan.height / 2,
-      biomechLeviathan.width,
-      biomechLeviathan.height,
-    );
-    ctx.restore();
-  }
-}
-
-function drawBiomechLeviathanHealthBar(boss) {
-  const barWidth = boss.width;
-  const barHeight = 10;
-  const barX = boss.x - boss.width / 2;
-  const barY = boss.y + boss.height / 2 + 10;
-  const healthRatio = boss.health / boss.maxHealth;
-
-  ctx.fillStyle = 'red';
-  ctx.fillRect(barX, barY, barWidth * healthRatio, barHeight);
-
-  ctx.strokeStyle = 'black';
-  ctx.strokeRect(barX, barY, barWidth, barHeight);
-}
-
 function drawTractorBeam() {
   if (tractorBeam && tractorBeam.active && biomechLeviathan && biomechLeviathan.alive) {
     const beamWidth = 20; // Width of the beam at the player end
@@ -1087,80 +1015,6 @@ function drawTractorBeam() {
   }
 }
 // End bio mech leviathan logic
-
-// temporal serpent
-let temporalSerpent = null;
-let lastDirectionChangeTime = 0;
-const DIRECTION_CHANGE_INTERVAL = 1500; // Change direction every 1.5 seconds
-const FOLLOW_PLAYER_INTERVAL = 2500; // Follow the player every 2 seconds
-let lastFollowPlayerTime = 0;
-
-function getRandomDirection() {
-  const directions = ['right', 'down', 'left', 'up'];
-  return directions[Math.floor(Math.random() * directions.length)];
-}
-
-function getDirectionTowardsPlayer(player, serpent) {
-  const dx = player.x - serpent.x;
-  const dy = player.y - serpent.y;
-  if (Math.abs(dx) > Math.abs(dy)) {
-    return dx > 0 ? 'right' : 'left';
-  } else {
-    return dy > 0 ? 'down' : 'up';
-  }
-}
-
-function spawnTemporalSerpent() {
-  const offScreenMargin = 100;
-  const side = Math.floor(Math.random() * 4);
-  let position = { x: 0, y: 0 };
-
-  switch (side) {
-    case 0: // Top
-      position.x = Math.random() * canvas.width;
-      position.y = -offScreenMargin;
-      break;
-    case 1: // Bottom
-      position.x = Math.random() * canvas.width;
-      position.y = canvas.height + offScreenMargin;
-      break;
-    case 2: // Left
-      position.x = -offScreenMargin;
-      position.y = Math.random() * canvas.height;
-      break;
-    case 3: // Right
-      position.x = canvas.width + offScreenMargin;
-      position.y = Math.random() * canvas.height;
-      break;
-  }
-
-  temporalSerpent = {
-    x: position.x,
-    y: position.y,
-    width: 200,
-    height: 200,
-    speed: 400,
-    health: 2000,
-    maxHealth: 2000,
-    lastAttackTime: 0,
-    attackInterval: 3000,
-    canAttack: true,
-    phase: 1,
-    phaseTransitioned: [false, false, false],
-    alive: true,
-    segments: [{ x: position.x, y: position.y, radius: 30 }],
-    segmentAddInterval: 200,
-    lastSegmentAddTime: 0,
-    lastBombDamageTime: 0, // Add this property
-    direction: getRandomDirection(),
-    projectileCollisionRadius: 100,
-    playerCollisionRadius: 120,
-    maxSegments: 3000,
-  };
-
-  lastDirectionChangeTime = performance.now();
-  lastFollowPlayerTime = performance.now();
-}
 
 let hazardousZones = [];
 const HAZARD_DURATION = 250; // Duration for the hazardous zone to stay active
@@ -1720,69 +1574,6 @@ function handleSerpentBombImpact(enemy, deltaTime, timestamp) {
         makeTemporalSerpentLeaveScreen(TEMPORAL_SERPENT_LEAVE_DURATION);
       }
     }
-  }
-}
-
-function drawTemporalSerpentHealthBar(ctx, canvas, temporalSerpent) {
-  if (!temporalSerpent || !temporalSerpent.alive) return;
-
-  const barWidth = 200; // Width of the health bar
-  const barHeight = 20; // Height of the health bar
-  const barX = (canvas.width - barWidth) / 2; // Centered horizontally
-  const barY = canvas.height - barHeight - 30; // Positioned at the bottom of the canvas with some margin
-
-  const healthRatio = temporalSerpent.health / temporalSerpent.maxHealth;
-
-  // Save the current context state
-  ctx.save();
-
-  // Draw the health bar background
-  ctx.fillStyle = 'red';
-  ctx.fillRect(barX, barY, barWidth, barHeight);
-
-  // Draw the current health
-  ctx.fillStyle = 'green';
-  ctx.fillRect(barX, barY, barWidth * healthRatio, barHeight);
-
-  // Draw the border of the health bar
-  ctx.strokeStyle = 'black';
-  ctx.strokeRect(barX, barY, barWidth, barHeight);
-
-  // Set the font for the text
-  ctx.font = '10px "Press Start 2P", cursive'; // Use the correct font and size
-  ctx.fillStyle = 'white';
-  ctx.textAlign = 'center';
-
-  // Draw the "Temporal Serpent" text
-  ctx.fillText('Temporal Serpent', canvas.width / 2, barY + barHeight + 20); // Positioned below the health bar
-
-  // Restore the context to its original state
-  ctx.restore();
-}
-
-function drawTemporalSerpent() {
-  if (!temporalSerpent || !temporalSerpent.alive) return;
-
-  // Draw segments first
-  temporalSerpent.segments.forEach((segment, index) => {
-    if (index !== 0) {
-      // Skip the head segment
-      if (segment.x > 0 && segment.x < canvas.width && segment.y > 0 && segment.y < canvas.height) {
-        ctx.drawImage(
-          serpentSegment,
-          segment.x - segment.radius,
-          segment.y - segment.radius,
-          segment.radius * 2,
-          segment.radius * 2,
-        );
-      }
-    }
-  });
-
-  // Draw the head segment last
-  const head = temporalSerpent.segments[0];
-  if (head.x > 0 && head.x < canvas.width && head.y > 0 && head.y < canvas.height) {
-    ctx.drawImage(serpentHead, head.x - head.radius, head.y - head.radius, head.radius * 2, head.radius * 2);
   }
 }
 
@@ -2896,66 +2687,6 @@ function initLevel(level) {
   initWormholes(level);
 }
 
-function spawnBoss() {
-  const offScreenMargin = 100; // Distance off the screen for spawning
-  const side = Math.floor(Math.random() * 4);
-  let position = { x: 0, y: 0 };
-
-  switch (side) {
-    case 0: // Spawn from the top
-      position.x = Math.random() * canvas.width;
-      position.y = -offScreenMargin - 100;
-      break;
-    case 1: // Spawn from the bottom
-      position.x = Math.random() * canvas.width;
-      position.y = canvas.height + offScreenMargin + 100;
-      break;
-    case 2: // Spawn from the left
-      position.x = -offScreenMargin - 100;
-      position.y = Math.random() * canvas.height;
-      break;
-    case 3: // Spawn from the right
-      position.x = canvas.width + offScreenMargin + 100;
-      position.y = Math.random() * canvas.height;
-      break;
-  }
-
-  boss = {
-    x: position.x,
-    y: position.y,
-    width: 100,
-    height: 100,
-    speed: 50,
-    health: 1000,
-    maxHealth: 1000,
-    lastShotTime: 0,
-    shootInterval: 2000,
-    canShoot: false,
-    alive: true,
-    phase: 1,
-    phaseTransitioned: [false, false, false],
-    collisionRadius: 75,
-  };
-
-  setTimeout(() => {
-    if (boss) boss.canShoot = true;
-  }, 5000);
-}
-
-function drawBossHealthBar(boss) {
-  const barWidth = boss.width;
-  const barHeight = 10;
-  const barX = boss.x;
-  const barY = boss.y + boss.height + 5;
-  const healthRatio = boss.health / 1000; // Assuming boss's maximum health is 1000
-
-  ctx.fillStyle = 'red';
-  ctx.fillRect(barX, barY, barWidth * healthRatio, barHeight);
-
-  ctx.strokeStyle = 'black';
-  ctx.strokeRect(barX, barY, barWidth, barHeight);
-}
-
 function bossAttackPattern1() {
   // Simple projectile attack
   let bossProjectile = {
@@ -3315,26 +3046,8 @@ function respawnEnemyTank(delay) {
       });
     } while (distance < 400 || isOverlapping);
 
-    let enemyTank = {
-      type: 'enemyTank',
-      x: position.x,
-      y: position.y,
-      width: 60,
-      height: 60,
-      speed: 60,
-      directionX: (player.x - position.x) / Math.sqrt((player.x - position.x) ** 2 + (player.y - position.y) ** 2),
-      directionY: (player.y - position.y) / Math.sqrt((player.x - position.x) ** 2 + (player.y - position.y) ** 2),
-      shootInterval: Math.random() * 1000 + 2000,
-      lastShotTime: 0,
-      canShoot: false,
-      alive: true,
-      health: TANK_HEALTH,
-    };
+    let enemyTank = {};
     enemies.push(enemyTank);
-
-    setTimeout(() => {
-      enemyTank.canShoot = true;
-    }, 2000);
   }, delay + 1000);
   enemyRespawnTimeouts.push(timeout);
 }
@@ -3360,32 +3073,9 @@ function respawnStealthEnemy(delay) {
       });
     } while (distance < 400 || isOverlapping);
 
-    let stealthEnemy = {
-      type: 'stealthEnemy',
-      x: position.x,
-      y: position.y,
-      width: 50,
-      height: 50,
-      speed: 150,
-      directionX: (player.x - position.x) / Math.sqrt((player.x - position.x) ** 2 + (player.y - position.y) ** 2),
-      directionY: (player.y - position.y) / Math.sqrt((player.x - position.x) ** 2 + (player.y - position.y) ** 2),
-      visible: false,
-      opacity: 0,
-      visibleStartTime: performance.now(),
-      visibleDuration: 3000, // 3 seconds visible
-      invisibleDuration: 3000, // 3 seconds invisible
-      health: ENEMY_HEALTH,
-      alive: true,
-      canShoot: false,
-      lastShotTime: 0,
-      shootInterval: Math.random() * 1000 + 1000, // Random shooting interval between 2-5 seconds
-    };
+    let stealthEnemy = {};
 
     enemies.push(stealthEnemy);
-
-    setTimeout(() => {
-      stealthEnemy.canShoot = true;
-    }, 2000);
   }, delay);
   enemyRespawnTimeouts.push(timeout);
 }
@@ -4205,32 +3895,6 @@ function update(deltaTime, timestamp) {
     }
   }
 
-  // Player movement logic
-  if (keys['ArrowLeft']) player.rotation -= (rotationSpeed * deltaTime) / 1000;
-  if (keys['ArrowRight']) player.rotation += (rotationSpeed * deltaTime) / 1000;
-
-  if (keys['ArrowUp']) {
-    player.thrust = thrustAcceleration;
-    if (accelerationSound.paused) {
-      accelerationSound.play();
-    }
-  } else if (keys['ArrowDown']) {
-    player.thrust = -thrustAcceleration;
-    if (reverseSound.paused) {
-      reverseSound.play();
-    }
-  } else {
-    player.thrust = 0;
-    if (!keys['ArrowUp']) {
-      accelerationSound.pause();
-      accelerationSound.currentTime = 0;
-    }
-    if (!keys['ArrowDown']) {
-      reverseSound.pause();
-      reverseSound.currentTime = 0;
-    }
-  }
-
   // Reverse Power-up active check
   if (reversePowerUpActive && timestamp >= reversePowerUpExpirationTime) {
     reversePowerUpActive = false;
@@ -4745,16 +4409,6 @@ function draw() {
     ctx.drawImage(homingMissileImage, -missile.width / 2, -missile.height / 2, missile.width, missile.height);
     ctx.restore();
   });
-
-  if (boss) {
-    ctx.drawImage(bossImage, boss.x, boss.y, boss.width, boss.height);
-    drawBossHealthBar(boss);
-  }
-
-  if (biomechLeviathan && biomechLeviathan.alive) {
-    drawBiomechLeviathan();
-    drawBiomechLeviathanHealthBar(biomechLeviathan);
-  }
 
   // Draw the tractor beam
   drawTractorBeam();
