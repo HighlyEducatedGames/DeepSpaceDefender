@@ -124,7 +124,7 @@ class Controls {
 
     // Refresh button (Menu button)
     if (buttons[8] && !this.wasGamepadPressed(8)) {
-      location.reload(); // Refresh the browser
+      this.game.resetGame();
     }
 
     // Pause button (Start button)

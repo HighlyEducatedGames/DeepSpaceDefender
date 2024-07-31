@@ -10,6 +10,16 @@ class Game {
     this.width = this.canvas.width;
     this.height = this.canvas.height;
     this.keys = new Controls(this);
+    this.GUI = new GUI(this);
+    this.titleScreenImage = new Image();
+    this.titleScreenImage.src = 'assets/images/title_screen.png';
+
+    // Instantiate resettable properties
+    this.resetGame();
+  }
+
+  // Put any property instantiation here that needs to be reset on game over or reset
+  resetGame() {
     this.isMenuOpen = false;
     this.gameOver = false;
     this.score = 0;
@@ -23,7 +33,6 @@ class Game {
     this.isUnlimitedBoostActivated = false;
 
     this.player = new Player(this);
-    this.GUI = new GUI(this);
     this.projectiles = [];
 
     this.stars = [];
@@ -36,9 +45,6 @@ class Game {
     for (let i = 0; i < 5; i++) {
       this.coins.push(new Coin(this));
     }
-
-    this.titleScreenImage = new Image();
-    this.titleScreenImage.src = 'assets/images/title_screen.png';
   }
 
   render(ctx, deltaTime) {
@@ -54,8 +60,6 @@ class Game {
     this.stars.forEach((star) => star.update());
     this.player.update(deltaTime);
   }
-
-  restartGame() {} // TODO: implement
 }
 
 let lastTimestamp = 0; // milliseconds
