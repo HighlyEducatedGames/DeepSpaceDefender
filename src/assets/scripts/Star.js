@@ -1,10 +1,11 @@
 class Star {
-  constructor(game) {
+  constructor(game, starLayers) {
     this.game = game;
     this.x = Math.random() * this.game.canvas.width;
     this.y = Math.random() * this.game.canvas.height;
-    this.radius = Math.random() * 2;
-    this.speed = Math.random() * this.radius * 0.25; // Make larger stars move faster
+    this.radius = Math.random() * 0.7 + 0.3;
+    this.layer = Math.floor(Math.random() * starLayers);
+    this.speed = (this.layer + 1) * 0.5;
   }
 
   draw(ctx) {
@@ -16,10 +17,12 @@ class Star {
 
   update() {
     // Parallax
-    this.x -= this.speed;
-    if (this.x + this.radius * 2 < 0) {
-      this.x = this.game.canvas.width + this.radius; // Reset the star once it leaves the canvas
-      this.y = Math.random() * this.game.canvas.height; // Randomize y position on reset
+    this.x -= this.speed; // Move star to the left
+
+    // If star moves off the left edge, reset it to the right edge
+    if (this.x < 0) {
+      this.x = this.game.canvas.width;
+      this.y = Math.random() * this.game.canvas.height;
     }
   }
 }
