@@ -36,10 +36,16 @@ class Controls {
   }
 
   handleGamepadInput() {
-    if (this.gamepadIndex === null) return;
+    if (this.gamepadIndex === null) {
+      this.usingGamepad = false;
+      return;
+    }
 
     const gamepad = navigator.getGamepads()[this.gamepadIndex];
-    if (!gamepad) return;
+    if (!gamepad) {
+      this.usingGamepad = false;
+      return;
+    }
 
     const buttons = gamepad.buttons.map((button) => button.pressed);
     const leftTrigger = gamepad.buttons[6].value > 0.1; // Adjusted to > 0.1 to detect any press
@@ -142,9 +148,11 @@ class Controls {
       this.handleKeyUp({ key: 'ArrowRight' });
     }
 
+    // Determine if the gamepad is being used by comparing
+    // the previous gamepad array state and the current gamepad array state
     if (
-      this.prevGamepadState[this.gamepadIndex].buttons !== buttons ||
-      this.prevGamepadState[this.gamepadIndex].axes !== [leftStickX]
+      !this.arraysEqual(this.prevGamepadState[this.gamepadIndex].buttons, buttons) ||
+      !this.arraysEqual(this.prevGamepadState[this.gamepadIndex].axes, [leftStickX])
     ) {
       this.usingGamepad = true;
     }
@@ -160,13 +168,20 @@ class Controls {
 
   handleKeyDown(e) {
     if (this.keys.indexOf(e.key) === -1) this.keys.push(e.key);
-    console.log(this.keys);
   }
 
   handleKeyUp(e) {
     const index = this.keys.indexOf(e.key);
     if (index > -1) this.keys.splice(index, 1);
-    console.log(this.keys);
+  }
+
+  // Check if 2 arrays contain the same data, not by reference, but by values
+  arraysEqual(arr1, arr2) {
+    if (arr1.length !== arr2.length) return false;
+    for (let i = 0; i < arr1.length; i++) {
+      if (arr1[i] !== arr2[i]) return false;
+    }
+    return true;
   }
 }
 

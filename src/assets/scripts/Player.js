@@ -44,9 +44,9 @@ class Player {
     ctx.rotate(this.rotation);
 
     let image;
-    if (this.game.keys.pressed('ArrowUp')) {
+    if (this.game.keys.isPressed('ArrowUp')) {
       image = this.images.thrust;
-    } else if (this.game.keys.pressed('ArrowDown')) {
+    } else if (this.game.keys.isPressed('ArrowDown')) {
       image = this.images.reverse;
     } else {
       image = this.images.idle;
@@ -66,14 +66,10 @@ class Player {
     // Forward and reverse
     if (this.game.keys.isPressed('ArrowUp')) {
       this.thrust = this.acceleration;
-      if (this.sounds.acceleration.paused) {
-        this.sounds.acceleration.play();
-      }
+      if (this.sounds.acceleration.paused) this.sounds.acceleration.play();
     } else if (this.game.keys.isPressed('ArrowDown')) {
       this.thrust = -this.acceleration;
-      if (this.sounds.reverse.paused) {
-        this.sounds.reverse.play();
-      }
+      if (this.sounds.reverse.paused) this.sounds.reverse.play();
     } else {
       this.thrust = 0;
     }
