@@ -6,7 +6,7 @@ class Coin {
     this.width = 20;
     this.height = 20;
     this.offsetY = 0;
-    this.bobbingSpeed = 1.5; // Adjust the speed of the bobbing
+    this.bobbingSpeed = 6; // Adjust the speed of the bobbing
     this.bobbingAmplitude = 15; // Adjust the amplitude of the bobbing
     this.bobbingAngle = Math.random() * Math.PI * 2; // Random starting angle
 

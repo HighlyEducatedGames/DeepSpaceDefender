@@ -5,7 +5,7 @@ class Star {
     this.y = Math.random() * this.game.canvas.height;
     this.radius = Math.random() * 0.7 + 0.3;
     this.layer = Math.floor(Math.random() * starLayers);
-    this.speed = (this.layer + 1) * 0.5;
+    this.speed = (this.layer + 1) * 2;
   }
 
   draw(ctx) {

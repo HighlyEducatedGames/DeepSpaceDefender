@@ -67,6 +67,8 @@ class Game {
 }
 
 let lastTimestamp = 0; // milliseconds
+const targetFPS = 60;
+const targetFrameDuration = 1000 / targetFPS;
 
 window.addEventListener('load', () => {
   const canvas = document.getElementById('gameCanvas');
@@ -76,7 +78,7 @@ window.addEventListener('load', () => {
 
   const game = new Game(canvas);
 
-  function loop(timestamp) {
+  function loop(timestamp = 0) {
     let deltaTime = timestamp - lastTimestamp;
     lastTimestamp = timestamp;
 
@@ -98,7 +100,11 @@ window.addEventListener('load', () => {
       const y = canvas.height / 3;
       ctx.fillText(text, x, y);
     }
-    requestAnimationFrame(loop);
+
+    const delay = Math.max(0, targetFrameDuration - (performance.now() - timestamp));
+    setTimeout(() => {
+      requestAnimationFrame(loop);
+    }, delay);
   }
 
   loop();
