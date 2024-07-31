@@ -1,30 +1,15 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const menu = document.getElementById('menu');
-const backgroundMusicVolumeSlider = document.getElementById('backgroundMusicVolume');
+
 const soundEffectsVolumeSlider = document.getElementById('soundEffectsVolume');
 const BOMB_RADIUS = 300;
 const BOMB_DAMAGE = 150;
-const boostBarWidth = 200;
-const boostBarHeight = 20;
-const boostBarX = canvas.width / 2 - boostBarWidth / 2 - 250;
-const boostBarY = 20;
-const chargeBarWidth = 200;
-const chargeBarHeight = 20;
-const chargeBarX = canvas.width / 2 - chargeBarWidth / 2 + 350;
-const chargeBarY = 20;
-const shieldBarWidth = 200;
-const shieldBarHeight = 20;
-const shieldBarX = chargeBarX; // Align horizontally with the blaster bar
-const shieldBarY = chargeBarY + chargeBarHeight + 5; // Positioned below the blaster bar
 const TANK_HEALTH = 30;
 const ENEMY_HEALTH = 10;
 const PROJECTILE_DAMAGE = 10;
 const PARTIALLY_CHARGED_PROJECTILE_DAMAGE = 50;
 const FULLY_CHARGED_PROJECTILE_DAMAGE = 150;
 const SPLIT_PROJECTILE_DAMAGE = 25;
-const PLAYER_MAX_HEALTH = 30;
-const MAX_ENEMIES = 20; // Maximum number of enemies allowed
 const MAX_POWER_UPS = 3;
 const VERTICAL_MARGIN = 50;
 const MAX_REGULAR_ENEMIES = 6; // Adjust as needed
@@ -37,9 +22,7 @@ const ASTEROID_SIZES = [
   { width: 50, height: 50 },
   { width: 30, height: 30 },
 ];
-const asteroidSpawnInterval = Math.random() * 1500 + 1000; // Interval between 0.5 and 2 seconds
 
-let lastTime = 0;
 let enemyRespawnTimeouts = [];
 let nextLifeScore = 1500;
 let isBoosting = false;
@@ -50,10 +33,6 @@ let bossHitByBomb = false;
 let biomechHitByBomb = false;
 let cyberDragonHitByBomb = false;
 let temporalSerpentHitByBomb = false;
-let temporalSerpentLastBombDamageTime = 0; // Add this property
-let keys = {};
-let player;
-let coins = [];
 let enemies = [];
 let projectiles = [];
 let powerUp = null;
@@ -63,15 +42,9 @@ let powerUpSpawnTime = 0;
 let powerUpDirection = 1;
 let powerUpZigZagSpeed = 100;
 let powerUpSpawned = false;
-let score = 0;
-let level = 1;
-let gameOver = false;
 let spacebarPressedTime = 0;
 let isCharging = false;
 let chargingSoundTimeout;
-let levelStartTime = 0;
-let levelDuration = 30000; // Example duration, adjust as needed
-let countdown = 0;
 let bombs = 0;
 let bombPowerUp = null;
 let bombSpawnTime = 0;
@@ -84,10 +57,8 @@ let bomb = {
   radius: BOMB_RADIUS,
   active: false,
 };
-let isMenuOpen = true;
 let boss = null;
 let homingMissilePowerUp = null;
-let homingMissileSpawnTime = 0;
 let homingMissileSpawned = false;
 let homingMissiles = [];
 let shieldPowerUp = null;
@@ -95,13 +66,6 @@ let shieldPowerUpSpawnTime = 0;
 let shieldPowerUpSpawned = false;
 let shieldActive = false;
 let shieldPowerUpExpirationTime = 0;
-let ally = null;
-let allySpawnTime = 0;
-let allyDuration = 15000; // 15 seconds
-let allyInterval = 60000; // 60 seconds
-let allyWarningTime = 3000; // 3 seconds before arrival
-let allyRotationAngle = 0; // Initial angle for circular pattern
-let allyOrbitRadius = 100; // Radius of the circular orbit
 let homingMissilesInventory = 0;
 let powerUpSpawnedThisLevel = false;
 let bombPowerUpSpawnedThisLevel = false;
@@ -120,7 +84,6 @@ let boostPowerUpExpirationTime = 0;
 let biomechLeviathan = null;
 let tractorBeam = null;
 let tractorBeamCooldown = false;
-let inkCloud = null;
 let empBlast = {
   active: false,
   x: 0,
@@ -133,7 +96,6 @@ let empBlastEndTime = 0;
 let empBlastActive = false;
 let empPulseScale = 1;
 let empPulseTime = 0;
-let isPlayerDisabledByEMP = false;
 let empDisableFire = false;
 let asteroids = [];
 let flamethrowerPowerUp = null;
@@ -144,15 +106,6 @@ let flameParticles = [];
 let flamethrowerExpirationTime = 0;
 
 // Load images
-const titleScreenImage = new Image();
-titleScreenImage.src = 'assets/images/title_screen.png';
-
-const playerImage = new Image();
-playerImage.src = 'assets/images/player.png';
-
-const playerReverseImage = new Image(); // Added reverse image
-playerReverseImage.src = 'assets/images/player_reverse.png';
-
 const enemyImage = new Image();
 enemyImage.src = 'assets/images/enemy.png';
 
@@ -164,9 +117,6 @@ powerUpImage.src = 'assets/images/powerUp.png';
 
 const bombPowerUpImage = new Image();
 bombPowerUpImage.src = 'assets/images/bombPowerUp.png';
-
-const playerThrustImage = new Image();
-playerThrustImage.src = 'assets/images/player_thrust.png';
 
 const bossImage = new Image();
 bossImage.src = 'assets/images/boss.png';
@@ -182,9 +132,6 @@ homingMissileImage.src = 'assets/images/homing_missile.png';
 
 const shieldPowerUpImage = new Image();
 shieldPowerUpImage.src = 'assets/images/shield_powerUp.png';
-
-const allyImage = new Image();
-allyImage.src = 'assets/images/ally.png';
 
 const enemyTankImage = new Image();
 enemyTankImage.src = 'assets/images/enemy_tank.png';
@@ -220,7 +167,6 @@ const flamethrowerPowerUpImage = new Image();
 flamethrowerPowerUpImage.src = 'assets/images/flamethrowerPowerUp.png';
 
 // Load audio
-const backgroundMusic = document.getElementById('backgroundMusic');
 const bossMusic = document.getElementById('bossMusic');
 
 const coinSound = document.getElementById('coinSound');
@@ -228,15 +174,9 @@ const fireSound = document.getElementById('fireSound');
 const powerUpSound = document.getElementById('powerUpSound');
 const collisionSound = document.getElementById('collisionSound');
 const chargingSound = document.getElementById('chargingSound');
-const accelerationSound = document.getElementById('accelerationSound');
 const bombSound = document.getElementById('bombSound');
 const boostSound = document.getElementById('boostSound');
-const reverseSound = document.getElementById('reverseSound');
 const homingMissileSound = document.getElementById('homingMissileSound');
-const allySound = document.getElementById('allySound');
-const allyOverSound = document.getElementById('allyOver');
-const circularOrbitSound = document.getElementById('circularOrbitSound');
-const followPlayerSound = document.getElementById('followPlayerSound');
 const lifeLostSound = document.getElementById('lifeLostSound');
 const tractorBeamSound = document.getElementById('tractorBeamSound');
 const splatSound = document.getElementById('splatSound');
@@ -256,15 +196,9 @@ const soundEffects = [
   powerUpSound,
   collisionSound,
   chargingSound,
-  accelerationSound,
   bombSound,
   boostSound,
-  reverseSound,
   homingMissileSound,
-  allySound,
-  allyOver,
-  circularOrbitSound,
-  followPlayerSound,
   lifeLostSound,
   tractorBeamSound,
   splatSound,
@@ -280,144 +214,8 @@ const soundEffects = [
 ];
 
 // Set initial volumes
-backgroundMusic.volume = 0.5;
 bossMusic.volume = 0.5;
 soundEffects.forEach((sound) => (sound.volume = 0.5));
-
-// gamepad functionality
-let gamepadIndex = null;
-let prevGamepadState = {};
-
-function connectGamepad(e) {
-  gamepadIndex = e.gamepad.index;
-  prevGamepadState[gamepadIndex] = {
-    buttons: [],
-    axes: [],
-  };
-}
-
-function disconnectGamepad(e) {
-  delete prevGamepadState[gamepadIndex];
-  gamepadIndex = null;
-}
-
-window.addEventListener('gamepadconnected', connectGamepad);
-window.addEventListener('gamepaddisconnected', disconnectGamepad);
-
-function handleGamepadInput() {
-  if (gamepadIndex === null) return;
-
-  const gamepad = navigator.getGamepads()[gamepadIndex];
-  if (!gamepad) return;
-
-  const buttons = gamepad.buttons.map((button) => button.pressed);
-  const leftTrigger = gamepad.buttons[6].value > 0.1; // Adjusted to > 0.1 to detect any press
-  const rightTrigger = gamepad.buttons[7].value > 0.1; // Adjusted to > 0.1 to detect any press
-  const leftStickX = gamepad.axes[0];
-  const dpadLeft = buttons[14];
-  const dpadRight = buttons[15];
-  const leftBumper = buttons[4]; // LB button
-  const rightBumper = buttons[5]; // RB button
-
-  // Fire button (A button)
-  if (buttons[0] && !prevGamepadState[gamepadIndex].buttons[0]) {
-    handleKeyDown({ key: ' ' });
-  } else if (!buttons[0] && prevGamepadState[gamepadIndex].buttons[0]) {
-    handleKeyUp({ key: ' ' });
-  }
-
-  // Bomb button (B button)
-  if (buttons[1] && !prevGamepadState[gamepadIndex].buttons[1]) {
-    handleKeyDown({ key: 'b' });
-  } else if (!buttons[1] && prevGamepadState[gamepadIndex].buttons[1]) {
-    handleKeyUp({ key: 'b' });
-  } else if (buttons[1] && gameOver) {
-    restartGame();
-  }
-
-  // Boost button (X button)
-  if (buttons[2] && !prevGamepadState[gamepadIndex].buttons[2]) {
-    handleKeyDown({ key: 'x' });
-  } else if (!buttons[2] && prevGamepadState[gamepadIndex].buttons[2]) {
-    handleKeyUp({ key: 'x' });
-  }
-
-  // Homing Missile button (Y button)
-  if (buttons[3] && !prevGamepadState[gamepadIndex].buttons[3]) {
-    handleKeyDown({ key: 'h' });
-  } else if (!buttons[3] && prevGamepadState[gamepadIndex].buttons[3]) {
-    handleKeyUp({ key: 'h' });
-  }
-
-  // Bomb button (LB button)
-  if (leftBumper && !prevGamepadState[gamepadIndex].buttons[4]) {
-    handleKeyDown({ key: 'b' });
-  } else if (!leftBumper && prevGamepadState[gamepadIndex].buttons[4]) {
-    handleKeyUp({ key: 'b' });
-  }
-
-  // Homing Missile button (RB button)
-  if (rightBumper && !prevGamepadState[gamepadIndex].buttons[5]) {
-    handleKeyDown({ key: 'h' });
-  } else if (!rightBumper && prevGamepadState[gamepadIndex].buttons[5]) {
-    handleKeyUp({ key: 'h' });
-  }
-
-  // Thrust (Right Trigger)
-  if (rightTrigger) {
-    if (!keys['ArrowUp']) {
-      handleKeyDown({ key: 'ArrowUp' });
-    }
-  } else {
-    if (keys['ArrowUp']) {
-      handleKeyUp({ key: 'ArrowUp' });
-    }
-  }
-
-  // Reverse (Left Trigger)
-  if (leftTrigger) {
-    if (!keys['ArrowDown']) {
-      handleKeyDown({ key: 'ArrowDown' });
-    }
-  } else {
-    if (keys['ArrowDown']) {
-      handleKeyUp({ key: 'ArrowDown' });
-    }
-  }
-
-  // Pause button (Start button)
-  if (buttons[9] && !prevGamepadState[gamepadIndex].buttons[9]) {
-    handleKeyDown({ key: 'm' });
-  } else if (!buttons[9] && prevGamepadState[gamepadIndex].buttons[9]) {
-    handleKeyUp({ key: 'm' });
-  }
-
-  // Refresh button (Menu button)
-  if (buttons[8] && !prevGamepadState[gamepadIndex].buttons[8]) {
-    location.reload(); // Refresh the browser
-  }
-
-  // Rotate left (Left Stick or D-pad left)
-  if (leftStickX < -0.5 || dpadLeft) {
-    handleKeyDown({ key: 'ArrowLeft' });
-  } else {
-    handleKeyUp({ key: 'ArrowLeft' });
-  }
-
-  // Rotate right (Left Stick or D-pad right)
-  if (leftStickX > 0.5 || dpadRight) {
-    handleKeyDown({ key: 'ArrowRight' });
-  } else {
-    handleKeyUp({ key: 'ArrowRight' });
-  }
-
-  // Save the current state for the next frame
-  prevGamepadState[gamepadIndex].buttons = buttons;
-  prevGamepadState[gamepadIndex].axes = [leftStickX];
-}
-
-// end of gamepad functionality
-// Key Board Functionality
 
 // Cheat codes definition
 const cheatCodes = {
@@ -434,16 +232,6 @@ let currentCheatIndex = {
 let isCheatCodeActivated = false; // Track if the cheat code is activated
 let isUnlimitedBoostActivated = false;
 
-function addEventListeners() {
-  window.addEventListener('keydown', handleKeyDown);
-  window.addEventListener('keyup', handleKeyUp);
-}
-
-function removeEventListeners() {
-  window.removeEventListeners('keydown', handleKeyDown);
-  window.removeEventListeners('keyup', handleKeyUp);
-}
-
 function handleKeyUp(e) {
   keys[e.key] = false;
 
@@ -456,21 +244,9 @@ function handleKeyUp(e) {
     flameSound.pause();
     flameSound.currentTime = 0;
   }
-
-  if (e.key === 'ArrowUp') {
-    accelerationSound.pause();
-    accelerationSound.currentTime = 0;
-  }
-
-  if (e.key === 'ArrowDown') {
-    reverseSound.pause();
-    reverseSound.currentTime = 0;
-  }
 }
 
 function handleKeyDown(e) {
-  keys[e.key] = true;
-
   // Check for invincibility cheat code sequence
   if (e.key === cheatCodes.invincibility[currentCheatIndex.invincibility]) {
     currentCheatIndex.invincibility++;
@@ -506,10 +282,6 @@ function handleKeyDown(e) {
     currentCheatIndex.unlimitedBoost = 0;
   }
 
-  if (e.key === 'm' || e.key === 'M') {
-    toggleMenu();
-  }
-
   if (backgroundMusic.paused && !gameOver && !isMenuOpen) {
     startBackgroundMusic();
   }
@@ -528,14 +300,6 @@ function handleKeyDown(e) {
         }
       }, 250);
     }
-  }
-
-  if (e.key === 'ArrowUp') {
-    accelerationSound.play();
-  }
-
-  if (e.key === 'ArrowDown') {
-    reverseSound.play();
   }
 
   if (e.key === 'b' || e.key === 'B') {
@@ -576,20 +340,6 @@ function handleKeyDown(e) {
   }
 }
 
-window.addEventListener('keydown', handleKeyDown);
-window.addEventListener('keyup', handleKeyUp);
-
-// end input
-
-function startBackgroundMusic() {
-  backgroundMusic.play().catch((error) => {});
-}
-
-function stopBackgroundMusic() {
-  backgroundMusic.pause();
-  backgroundMusic.currentTime = 0;
-}
-
 function startBossMusic() {
   if (!bossMusic.playing) {
     stopBackgroundMusic(); // Stop background music if playing
@@ -614,33 +364,6 @@ function manageMusic() {
 }
 
 function initializeGame() {
-  player = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    width: 50,
-    height: 50,
-    speed: 200,
-    rotation: -Math.PI / 2,
-    velocity: { x: 0, y: 0 },
-    thrust: 0,
-    deceleration: 0.98,
-    maxSpeed: 300,
-    lives: 3,
-    lastCollisionTime: 0,
-    health: PLAYER_MAX_HEALTH,
-  };
-
-  coins = [];
-  const topMargin = 120; // Adjust this value if needed
-  for (let i = 0; i < 5; i++) {
-    coins.push({
-      x: Math.random() * (canvas.width - 20),
-      y: Math.random() * (canvas.height - 20 - topMargin) + topMargin,
-      width: 20,
-      height: 20,
-    });
-  }
-
   // Clear existing timeouts
   enemyRespawnTimeouts.forEach((timeout) => clearTimeout(timeout));
   enemyRespawnTimeouts = [];
@@ -655,15 +378,9 @@ function initializeGame() {
   powerUpDirection = Math.random() < 0.5 ? 1 : -1;
   powerUpZigZagSpeed = 100;
   powerUpSpawned = false;
-  score = 0;
-  level = 1;
-  gameOver = false;
   spacebarPressedTime = 0;
   isCharging = false;
   chargingSoundTimeout = null;
-  levelDuration = 30000;
-  countdown = levelDuration / 1000;
-  levelStartTime = performance.now();
   nextLifeScore = 1500;
   bombs = 0;
   bombPowerUp = null;
@@ -680,10 +397,6 @@ function initializeGame() {
   shieldPowerUp = null;
   shieldActive = false;
   shieldPowerUpExpirationTime = 0;
-  allySpawnTime = performance.now();
-  allyInterval = 60000;
-  allyWarningTime = 3000;
-  allyDuration = 15000;
   reversePowerUp = null;
   reversePowerUpSpawnTime = 0;
   reversePowerUpSpawnedThisLevel = false;
@@ -698,9 +411,7 @@ function initializeGame() {
   flamethrowerSpawnedThisLevel = false;
   flamethrowerActive = false;
   initLevel(level);
-  stopBackgroundMusic();
   stopBossMusic();
-  startBackgroundMusic();
 }
 
 function checkCollision(circle1, circle2) {
@@ -728,127 +439,10 @@ function stopGameOverMusic() {
   gameOverMusic.currentTime = 0;
 }
 
-function restartGame() {
-  stopGameOverMusic();
-
-  // Reset player
-  player = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    width: 50,
-    height: 50,
-    speed: 200,
-    rotation: -Math.PI / 2,
-    velocity: { x: 0, y: 0 },
-    thrust: 0,
-    deceleration: 0.98,
-    maxSpeed: 300,
-    lives: 3,
-    lastCollisionTime: 0,
-    health: PLAYER_MAX_HEALTH,
-  };
-
-  // Clear coins
-  coins = [];
-  const topMargin = 120; // Adjust this value if needed
-  for (let i = 0; i < 5; i++) {
-    coins.push({
-      x: Math.random() * (canvas.width - 20),
-      y: Math.random() * (canvas.height - 20 - topMargin) + topMargin,
-      width: 20,
-      height: 20,
-    });
-  }
-
-  // Clear existing timeouts
-  enemyRespawnTimeouts.forEach((timeout) => clearTimeout(timeout));
-  enemyRespawnTimeouts = [];
-
-  // Reset powerup timers
-  resetPowerUpTimers();
-
-  // Clear game objects
-  enemies = [];
-  projectiles = [];
-  powerUp = null;
-  bombPowerUp = null;
-  homingMissilePowerUp = null;
-  shieldPowerUp = null;
-  reversePowerUp = null;
-  boostPowerUp = null;
-  homingMissiles = [];
-  asteroids = [];
-  spiralProjectiles = [];
-  // Clear hazard particles and zones
-  hazardParticles = [];
-  hazardousZones = [];
-
-  // Reset powerup states
-  powerUpActive = false;
-  powerUpExpirationTime = 0;
-  powerUpDirection = Math.random() < 0.5 ? 1 : -1;
-  powerUpZigZagSpeed = 100;
-  powerUpSpawned = false;
-  bombSpawned = false;
-  bombActive = false;
-  bombFlashTime = 0;
-  bossHitByBomb = false;
-  homingMissilesInventory = 0;
-  shieldActive = false;
-  shieldPowerUpExpirationTime = 0;
-  reversePowerUpSpawnedThisLevel = false;
-  reversePowerUpActive = false;
-  reversePowerUpExpirationTime = 0;
-  boostPowerUpSpawnedThisLevel = false;
-  boostPowerUpActive = false;
-  boostPowerUpExpirationTime = 0;
-
-  // Reset game state
-  score = 0;
-  level = 1;
-  gameOver = false;
-  spacebarPressedTime = 0;
-  isCharging = false;
-  chargingSoundTimeout = null;
-  levelDuration = 30000;
-  countdown = levelDuration / 1000;
-  levelStartTime = performance.now();
-  nextLifeScore = 1500;
-  bombs = 0;
-
-  // Clear bosses
-  boss = null;
-  cyberDragon = null;
-  biomechLeviathan = null;
-  temporalSerpent = null;
-
-  // Reset ally spawn times
-  allySpawnTime = performance.now();
-  allyInterval = 60000;
-  allyWarningTime = 3000;
-  allyDuration = 15000;
-
-  // Initialize the first level
-  initLevel(level);
-
-  // Manage music
-  stopBackgroundMusic();
-  stopBossMusic();
-  startBackgroundMusic();
-}
-
 document.addEventListener('keydown', function (event) {
   if (event.code === 'KeyB' && gameOver) {
     restartGame();
   }
-});
-
-window.addEventListener('gamepadconnected', function (event) {
-  requestAnimationFrame(gameLoop); // Ensure the game loop continues to check for input
-});
-
-window.addEventListener('gamepaddisconnected', function (event) {
-  gamepadIndex = null;
 });
 
 document.addEventListener('keydown', function (event) {
@@ -856,84 +450,6 @@ document.addEventListener('keydown', function (event) {
     restartGame();
   }
 });
-
-window.addEventListener('gamepadconnected', function (event) {
-  requestAnimationFrame(gameLoop); // Ensure the game loop continues to check for input
-});
-
-window.addEventListener('gamepaddisconnected', function (event) {
-  gamepadIndex = null;
-});
-
-let stars = [];
-for (let i = 0; i < 200; i++) {
-  stars.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    radius: Math.random() * 2,
-  });
-}
-
-function getRandomPosition(width, height) {
-  return {
-    x: Math.random() * (canvas.width - width),
-    y: Math.random() * (canvas.height - height),
-  };
-}
-
-function spawnAlly() {
-  let side = Math.floor(Math.random() * 4);
-  let position = { x: 0, y: 0 };
-  let enteringSide = '';
-
-  switch (side) {
-    case 0: // Enter from the left
-      position.x = -100;
-      position.y = Math.random() * canvas.height;
-      enteringSide = 'left';
-      break;
-    case 1: // Enter from the right
-      position.x = canvas.width + 100;
-      position.y = Math.random() * canvas.height;
-      enteringSide = 'right';
-      break;
-    case 2: // Enter from the top
-      position.x = Math.random() * canvas.width;
-      position.y = -100;
-      enteringSide = 'top';
-      break;
-    case 3: // Enter from the bottom
-      position.x = Math.random() * canvas.width;
-      position.y = canvas.height + 100;
-      enteringSide = 'bottom';
-      break;
-  }
-
-  const patterns = ['circularOrbit', 'followPlayer']; // List of possible patterns
-  const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)]; // Randomly select a pattern
-
-  ally = {
-    x: position.x,
-    y: position.y,
-    width: 50,
-    height: 50,
-    speed: 300, // Ally's speed
-    active: true,
-    rotation: 0, // Initial rotation
-    enteringSide: enteringSide, // Track the side from which the ally enters
-    exiting: false, // Add exiting state
-    pattern: selectedPattern, // Set the selected pattern
-    entering: true, // Add entering state
-  };
-
-  if (selectedPattern === 'circularOrbit') {
-    circularOrbitSound.currentTime = 0;
-    circularOrbitSound.play();
-  } else if (selectedPattern === 'followPlayer') {
-    followPlayerSound.currentTime = 0;
-    followPlayerSound.play();
-  }
-}
 
 function spawnCyberDragon() {
   const offScreenMargin = 100;
@@ -1465,11 +981,8 @@ function biomechLeviathanTractorBeam() {
 }
 
 let inkClouds = [];
-let lastInkCloudSpawnTime = 0;
-const INK_CLOUD_COOLDOWN = 5000; // 5 seconds cooldown between ink cloud spawns
 
 function biomechLeviathanInkCloud() {
-  const currentTime = performance.now();
   if (inkClouds.length >= 3) {
     // If there are already 3 ink clouds, do not spawn a new one
     return;
@@ -1610,8 +1123,6 @@ function drawInkClouds() {
 let lastEMPTime = 0; // Variable to track the last EMP activation time
 const EMP_COOLDOWN = 5000; // 5 seconds cooldown period
 let empSparkParticles = [];
-let lastBiomechEatSoundTime = 0;
-const BIOMECH_EAT_SOUND_COOLDOWN = 15000; // 15 seconds in milliseconds
 
 class EMPSparkParticle {
   constructor(x, y) {
@@ -1745,19 +1256,6 @@ function drawBiomechLeviathanHealthBar(boss) {
 
   ctx.strokeStyle = 'black';
   ctx.strokeRect(barX, barY, barWidth, barHeight);
-}
-
-function resetTractorBeam() {
-  if (tractorBeam) {
-    tractorBeam.active = false;
-    tractorBeam.startX = 0;
-    tractorBeam.startY = 0;
-    tractorBeam.endX = 0;
-    tractorBeam.endY = 0;
-    tractorBeam.strength = 0;
-    tractorBeam = null;
-  }
-  tractorBeamCooldown = false;
 }
 
 function drawTractorBeam() {
@@ -2530,13 +2028,6 @@ function clearSerpentSegments() {
   hazardousZones.length = 0;
 }
 
-function handleSerpentDeath() {
-  clearSerpentSegments();
-  // Additional logic for handling serpent death, such as playing an animation, updating score, etc.
-}
-
-// Call spawnTemporalSerpent() at the appropriate place in your game initialization or level setup
-
 function updateProjectiles(deltaTime, timestamp) {
   let projectilesToRemove = new Set();
   handleWormholeTeleportation();
@@ -2857,21 +2348,6 @@ function updateProjectiles(deltaTime, timestamp) {
       }
     });
   }
-}
-
-function checkCollisionWithLaser(laser, player) {
-  // Calculate the laser's end position
-  const laserEndX = laser.x + laser.directionX * laser.height;
-  const laserEndY = laser.y + laser.directionY * laser.height;
-
-  // Calculate the distance from the player to the laser line
-  const dist =
-    Math.abs(
-      (laserEndY - laser.y) * player.x - (laserEndX - laser.x) * player.y + laserEndX * laser.y - laserEndY * laser.x,
-    ) / Math.sqrt((laserEndY - laser.y) ** 2 + (laserEndX - laser.x) ** 2);
-
-  // Check if the player is within the laser width
-  return dist <= laser.width / 2;
 }
 
 // wormhole logic
@@ -3296,25 +2772,6 @@ function updateHomingMissiles(deltaTime) {
   });
 }
 
-function drawHomingMissiles() {
-  homingMissiles.forEach((missile, index) => {
-    if (missile.alive) {
-      // Check if the missile is within the canvas bounds
-      if (missile.x >= 0 && missile.x <= canvas.width && missile.y >= 0 && missile.y <= canvas.height) {
-        ctx.drawImage(
-          homingMissileImage,
-          missile.x - missile.width / 2,
-          missile.y - missile.height / 2,
-          missile.width,
-          missile.height,
-        );
-      } else {
-      }
-    } else {
-    }
-  });
-}
-
 function updateBiomechLeviathan(deltaTime, timestamp) {
   if (!biomechLeviathan) return;
   const angleToPlayer = Math.atan2(player.y - biomechLeviathan.y, player.x - biomechLeviathan.x);
@@ -3325,7 +2782,6 @@ function updateBiomechLeviathan(deltaTime, timestamp) {
   biomechLeviathanTractorBeam();
 
   // Check for other attacks
-  const currentTime = performance.now();
   if (
     biomechLeviathan.phase === 1 &&
     biomechLeviathan.health <= biomechLeviathan.maxHealth * 0.6 &&
@@ -3367,155 +2823,28 @@ function updateBiomechLeviathan(deltaTime, timestamp) {
 }
 
 function updateAlly(deltaTime, timestamp) {
-  if (!ally) return;
+  // Fire projectiles in the opposite direction of the player
+  if (timestamp % 200 < deltaTime) {
+    // Rapid fire every 200ms
+    const angleToPlayer = Math.atan2(player.y - ally.y, player.x - ally.x);
+    const fireDirection = angleToPlayer + Math.PI; // Opposite direction
+    ally.rotation = fireDirection; // Rotate ally to face the direction it is shooting
 
-  if (ally.entering) {
-    // Move the ally onto the screen
-    const entrySpeed = (ally.speed * deltaTime) / 1000;
-    switch (ally.enteringSide) {
-      case 'left':
-        ally.x += entrySpeed;
-        if (ally.x >= 50) ally.entering = false;
-        break;
-      case 'right':
-        ally.x -= entrySpeed;
-        if (ally.x <= canvas.width - 50) ally.entering = false;
-        break;
-      case 'top':
-        ally.y += entrySpeed;
-        if (ally.y >= 50) ally.entering = false;
-        break;
-      case 'bottom':
-        ally.y -= entrySpeed;
-        if (ally.y <= canvas.height - 50) ally.entering = false;
-        break;
-    }
-  } else if (!ally.exiting) {
-    const distanceToPlayer = Math.sqrt((player.x - ally.x) ** 2 + (player.y - ally.y) ** 2);
-
-    if (distanceToPlayer > allyOrbitRadius + 10) {
-      // Move ally towards the player before starting the circular orbit
-      const angleToPlayer = Math.atan2(player.y - ally.y, player.x - ally.x);
-      ally.x += (Math.cos(angleToPlayer) * ally.speed * deltaTime) / 1000;
-      ally.y += (Math.sin(angleToPlayer) * ally.speed * deltaTime) / 1000;
-    } else {
-      switch (ally.pattern) {
-        case 'circularOrbit':
-          // New circular orbit pattern
-          allyRotationAngle += (2 * Math.PI * deltaTime) / 5000; // Full rotation every 5 seconds
-          ally.x = player.x + Math.cos(allyRotationAngle) * allyOrbitRadius;
-          ally.y = player.y + Math.sin(allyRotationAngle) * allyOrbitRadius;
-          break;
-        case 'followPlayer':
-          // Existing follow player pattern
-          if (distanceToPlayer > 75) {
-            const angleToPlayer = Math.atan2(player.y - ally.y, player.x - ally.x);
-            ally.x += (Math.cos(angleToPlayer) * ally.speed * deltaTime) / 1000;
-            ally.y += (Math.sin(angleToPlayer) * ally.speed * deltaTime) / 1000;
-          }
-          break;
-      }
-    }
-
-    // Fire projectiles in the opposite direction of the player
-    if (timestamp % 200 < deltaTime) {
-      // Rapid fire every 200ms
-      const angleToPlayer = Math.atan2(player.y - ally.y, player.x - ally.x);
-      const fireDirection = angleToPlayer + Math.PI; // Opposite direction
-      ally.rotation = fireDirection; // Rotate ally to face the direction it is shooting
-
-      let projectile = {
-        x: ally.x,
-        y: ally.y,
-        width: 5,
-        height: 5,
-        speed: 500,
-        directionX: -Math.cos(angleToPlayer),
-        directionY: -Math.sin(angleToPlayer),
-        fromPlayer: true,
-        traveledDistance: 0, // Add this property
-        maxDistance: 1000, // Set a max travel distance
-        damage: 25, // Set damage for ally projectiles
-      };
-      projectiles.push(projectile);
-    }
-
-    // Check if the ally's duration has ended
-    if (timestamp > allySpawnTime + allyDuration) {
-      ally.exiting = true;
-      allyOverSound.play(); // Play the ally over sound
-    }
-  } else {
-    // Move the ally off the screen
-    let exitSpeed = (ally.speed * deltaTime) / 1000;
-    switch (ally.enteringSide) {
-      case 'left':
-        ally.x += exitSpeed;
-        if (ally.x > canvas.width + ally.width) {
-          ally = null;
-        }
-        break;
-      case 'right':
-        ally.x -= exitSpeed;
-        if (ally.x < -ally.width) {
-          ally = null;
-        }
-        break;
-      case 'top':
-        ally.y += exitSpeed;
-        if (ally.y > canvas.height + ally.height) {
-          ally = null;
-        }
-        break;
-      case 'bottom':
-        ally.y -= exitSpeed;
-        if (ally.y < -ally.height) {
-          ally = null;
-        }
-        break;
-    }
-  }
-}
-
-function drawAlly() {
-  if (ally && ally.active) {
-    ctx.save();
-    ctx.translate(ally.x, ally.y);
-    ctx.rotate(ally.rotation); // Rotate the ally
-    ctx.drawImage(allyImage, -ally.width / 2, -ally.height / 2, ally.width, ally.height);
-    ctx.restore();
-  }
-}
-
-function getValidSpawnPosition(width, height) {
-  let position;
-  let distance;
-  let isOverlapping;
-  const topMargin = 120; // Adjust this value if needed
-  do {
-    position = {
-      x: Math.random() * (canvas.width - width),
-      y: Math.random() * (canvas.height - height - topMargin) + topMargin,
+    let projectile = {
+      x: ally.x,
+      y: ally.y,
+      width: 5,
+      height: 5,
+      speed: 500,
+      directionX: -Math.cos(angleToPlayer),
+      directionY: -Math.sin(angleToPlayer),
+      fromPlayer: true,
+      traveledDistance: 0, // Add this property
+      maxDistance: 1000, // Set a max travel distance
+      damage: 25, // Set damage for ally projectiles
     };
-    distance = Math.sqrt((player.x - position.x) ** 2 + (player.y - position.y) ** 2);
-
-    // Check if the new entity overlaps with existing entities
-    isOverlapping =
-      enemies.some((enemy) => {
-        const enemyDistance = Math.sqrt((enemy.x - position.x) ** 2 + (enemy.y - position.y) ** 2);
-        return enemyDistance < width + 50; // Add a buffer to prevent overlapping
-      }) ||
-      coins.some((coin) => {
-        const coinDistance = Math.sqrt((coin.x - position.x) ** 2 + (coin.y - position.y) ** 2);
-        return coinDistance < width + 50; // Add a buffer to prevent overlapping
-      }) ||
-      (powerUp && distance < width + 50) ||
-      (bombPowerUp && distance < width + 50) ||
-      (homingMissilePowerUp && distance < width + 50) ||
-      (shieldPowerUp && distance < width + 50);
-  } while (distance < 400 || isOverlapping);
-
-  return position;
+    projectiles.push(projectile);
+  }
 }
 
 function spawnPowerUp() {
@@ -3615,22 +2944,6 @@ function spawnFlamethrowerPowerUp() {
     directionY: position.directionY,
   };
   flamethrowerSpawnedThisLevel = true;
-}
-
-function updateFlamethrowerPosition(deltaTime) {
-  if (flamethrowerPowerUp) {
-    flamethrowerPowerUp.x += (flamethrowerPowerUp.speed * flamethrowerPowerUp.directionX * deltaTime) / 1000;
-    flamethrowerPowerUp.y += (flamethrowerPowerUp.speed * flamethrowerPowerUp.directionY * deltaTime) / 1000;
-
-    if (
-      flamethrowerPowerUp.x < -flamethrowerPowerUp.width ||
-      flamethrowerPowerUp.x > canvas.width ||
-      flamethrowerPowerUp.y < -flamethrowerPowerUp.height ||
-      flamethrowerPowerUp.y > canvas.height
-    ) {
-      flamethrowerPowerUp = null;
-    }
-  }
 }
 
 function getRandomBorderPosition() {
@@ -3835,43 +3148,6 @@ function spawnBoss() {
   setTimeout(() => {
     if (boss) boss.canShoot = true;
   }, 5000);
-}
-
-function drawBoss() {
-  if (boss && boss.alive) {
-    ctx.save();
-
-    // Translate to the center of the boss's collision circle
-    ctx.translate(boss.x, boss.y);
-
-    // Draw the boss image, offsetting by half its width and height
-    ctx.drawImage(
-      bossImage,
-      -boss.width / 2 + 100, // Offset by half the width for centering
-      -boss.height / 2 + 100, // Offset by half the height for centering
-      boss.width,
-      boss.height,
-    );
-
-    ctx.restore();
-  }
-}
-
-function createHeatSeekingProjectile(boss) {
-  return {
-    x: boss.x,
-    y: boss.y,
-    width: 40,
-    height: 40,
-    speed: 300,
-    directionX: 0,
-    directionY: 0,
-    heatSeeking: true,
-    target: player, // Ensure it targets the player
-    maxDistance: 800,
-    traveledDistance: 0,
-    damage: 10,
-  };
 }
 
 function drawBossHealthBar(boss) {
@@ -4930,19 +4206,6 @@ function useHomingMissile() {
   }
 }
 
-function checkGamepadMenuButton() {
-  const gamepads = navigator.getGamepads();
-  for (let i = 0; i < gamepads.length; i++) {
-    const gamepad = gamepads[i];
-    if (gamepad) {
-      // The Menu button on an Xbox controller typically has an index of 9
-      if (gamepad.buttons[9].pressed) {
-        location.reload(); // Refresh the page
-      }
-    }
-  }
-}
-
 // Reduce the volume of the flame sound by 50%
 flameSound.volume = 0.5;
 
@@ -4950,11 +4213,6 @@ flameSound.volume = 0.5;
 flameSound.volume = 0.5;
 
 function gameLoop(timestamp) {
-  checkGamepadMenuButton();
-
-  // Handle gamepad input in any state
-  handleGamepadInput();
-
   if (gameOver) {
     player.health = 0.1;
     player.lives = 0;
@@ -4967,9 +4225,6 @@ function gameLoop(timestamp) {
     ctx.fillText('Press B to Restart', canvas.width / 2 - 30, canvas.height / 2 + 100);
     stopBackgroundMusic();
     stopBossMusic();
-
-    // Continue the game loop to ensure inputs are processed
-    requestAnimationFrame(gameLoop);
     return;
   }
 
@@ -5610,152 +4865,6 @@ function drawProjectile() {
   });
 }
 
-function drawScoreLevelTime(ctx, score, level, countdown, canvas) {
-  ctx.font = '15px "Press Start 2P", cursive';
-  ctx.fillStyle = 'white';
-  ctx.fillText('Score: ' + score, 10, 20);
-  ctx.fillText('Level: ' + level, 10, 50);
-  ctx.fillText('Time: ' + Math.floor(countdown), canvas.width / 2 - 30, 20);
-}
-
-function drawBoostBar(
-  ctx,
-  boostBarX,
-  boostBarY,
-  boostBarWidth,
-  boostBarHeight,
-  boostCooldownEndTime,
-  boostPowerUpActive,
-) {
-  ctx.fillStyle = 'gray';
-  ctx.fillRect(boostBarX, boostBarY, boostBarWidth, boostBarHeight);
-
-  const currentTime = performance.now();
-  let boostProgress;
-  if (isBoostReady()) {
-    boostProgress = 1;
-  } else {
-    boostProgress = Math.max(
-      0,
-      (currentTime - boostCooldownEndTime + (boostPowerUpActive ? 500 : 7000)) / (boostPowerUpActive ? 500 : 7000),
-    );
-  }
-
-  ctx.fillStyle = 'green';
-  ctx.fillRect(boostBarX, boostBarY, boostBarWidth * boostProgress, boostBarHeight);
-  ctx.strokeStyle = 'gray';
-
-  if (boostPowerUpActive) {
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(boostBarX - 3, boostBarY - 3, boostBarWidth + 6, boostBarHeight + 6);
-  }
-}
-
-function drawHealthBar(ctx, player, boostBarX, boostBarY, boostBarWidth, boostBarHeight) {
-  ctx.fillStyle = 'gray';
-  ctx.fillRect(boostBarX, boostBarY + boostBarHeight + 5, boostBarWidth, boostBarHeight);
-
-  const healthRatio = player.health / PLAYER_MAX_HEALTH;
-  ctx.fillStyle = 'red';
-  ctx.fillRect(boostBarX, boostBarY + boostBarHeight + 5, boostBarWidth * healthRatio, boostBarHeight);
-
-  ctx.strokeStyle = 'gray';
-  ctx.strokeRect(boostBarX, boostBarY + boostBarHeight + 5, boostBarWidth, boostBarHeight);
-}
-
-function drawChargeBar(
-  ctx,
-  chargeBarX,
-  chargeBarY,
-  chargeBarWidth,
-  chargeBarHeight,
-  isCharging,
-  spacebarPressedTime,
-  flamethrowerActive,
-) {
-  ctx.fillStyle = 'gray';
-  ctx.fillRect(chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight);
-
-  if (isCharging) {
-    const currentTime = performance.now();
-    const chargeDuration = (currentTime - spacebarPressedTime) / 1000;
-    const chargeProgress = Math.min(chargeDuration / 2, 1);
-
-    if (flamethrowerActive) {
-      const gradient = ctx.createLinearGradient(chargeBarX, chargeBarY, chargeBarX + chargeBarWidth, chargeBarY);
-      gradient.addColorStop(0, 'orange');
-      gradient.addColorStop(1, 'red');
-      ctx.fillStyle = gradient;
-    } else {
-      ctx.fillStyle = 'blue';
-    }
-
-    ctx.fillRect(chargeBarX, chargeBarY, chargeBarWidth * chargeProgress, chargeBarHeight);
-
-    const halfwayMarkerX = chargeBarX + chargeBarWidth / 2;
-    ctx.strokeStyle = 'yellow';
-    ctx.beginPath();
-    ctx.moveTo(halfwayMarkerX, chargeBarY);
-    ctx.lineTo(halfwayMarkerX, chargeBarY + chargeBarHeight);
-    ctx.stroke();
-  }
-}
-
-function drawShieldBar(
-  ctx,
-  shieldBarX,
-  shieldBarY,
-  shieldBarWidth,
-  shieldBarHeight,
-  shieldActive,
-  shieldPowerUpExpirationTime,
-) {
-  ctx.fillStyle = 'gray';
-  ctx.fillRect(shieldBarX, shieldBarY, shieldBarWidth, shieldBarHeight);
-
-  if (shieldActive) {
-    const currentTime = performance.now();
-    const shieldProgress = Math.max(0, (shieldPowerUpExpirationTime - currentTime) / 15000);
-    ctx.fillStyle = 'cyan';
-    ctx.fillRect(shieldBarX, shieldBarY, shieldBarWidth * shieldProgress, shieldBarHeight);
-  }
-
-  ctx.strokeStyle = 'black';
-  ctx.strokeRect(shieldBarX, shieldBarY, shieldBarWidth, shieldBarHeight);
-}
-
-function drawInventories(
-  ctx,
-  player,
-  bombs,
-  homingMissilesInventory,
-  boostBarX,
-  boostBarY,
-  boostBarWidth,
-  boostBarHeight,
-  chargeBarX,
-  chargeBarWidth,
-  chargeBarY,
-  shieldBarX,
-  shieldBarWidth,
-  shieldBarY,
-) {
-  const livesIconX = boostBarX + boostBarWidth + 10;
-  ctx.drawImage(playerImage, livesIconX, boostBarY + boostBarHeight + 5, 20, 20);
-  ctx.fillStyle = 'white';
-  ctx.font = '15px "Press Start 2P", cursive';
-  ctx.fillText(': ' + player.lives, livesIconX + 25, boostBarY + boostBarHeight + 20);
-
-  const bombIconX = chargeBarX + chargeBarWidth + 10;
-  ctx.drawImage(bombPowerUpImage, bombIconX, chargeBarY, 20, 20);
-  ctx.fillText(': ' + bombs, bombIconX + 25, chargeBarY + 15);
-
-  const missileIconX = shieldBarX + shieldBarWidth + 10;
-  ctx.drawImage(homingMissilePowerUpImage, missileIconX, shieldBarY, 20, 20);
-  ctx.fillText(': ' + homingMissilesInventory, missileIconX + 25, shieldBarY + 15);
-}
-
 function draw() {
   ctx.fillStyle = 'black';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -5773,31 +4882,6 @@ function draw() {
     ctx.fillText(text, x, y);
     return;
   }
-
-  ctx.fillStyle = 'white';
-  stars.forEach((star) => {
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
-    ctx.fill();
-  });
-
-  ctx.save();
-  ctx.translate(player.x, player.y);
-  ctx.rotate(player.rotation);
-
-  if (keys['ArrowUp']) {
-    ctx.drawImage(playerThrustImage, -player.width / 2, -player.height / 2, player.width, player.height);
-  } else if (keys['ArrowDown']) {
-    ctx.drawImage(playerReverseImage, -player.width / 2, -player.height / 2, player.width, player.height);
-  } else {
-    ctx.drawImage(playerImage, -player.width / 2, -player.height / 2, player.width, player.height);
-  }
-
-  ctx.restore();
-
-  coins.forEach((coin) => {
-    ctx.drawImage(coinImage, coin.x, coin.y, coin.width, coin.height);
-  });
 
   enemies.forEach((enemy) => {
     if (enemy.type === 'stealthEnemy') {
@@ -5886,45 +4970,6 @@ function draw() {
 
   // Draw the ally
   drawAlly();
-
-  drawScoreLevelTime(ctx, score, level, countdown, canvas);
-  drawBoostBar(ctx, boostBarX, boostBarY, boostBarWidth, boostBarHeight, boostCooldownEndTime, boostPowerUpActive);
-  drawHealthBar(ctx, player, boostBarX, boostBarY, boostBarWidth, boostBarHeight);
-  drawChargeBar(
-    ctx,
-    chargeBarX,
-    chargeBarY,
-    chargeBarWidth,
-    chargeBarHeight,
-    isCharging,
-    spacebarPressedTime,
-    flamethrowerActive,
-  );
-  drawShieldBar(
-    ctx,
-    shieldBarX,
-    shieldBarY,
-    shieldBarWidth,
-    shieldBarHeight,
-    shieldActive,
-    shieldPowerUpExpirationTime,
-  );
-  drawInventories(
-    ctx,
-    player,
-    bombs,
-    homingMissilesInventory,
-    boostBarX,
-    boostBarY,
-    boostBarWidth,
-    boostBarHeight,
-    chargeBarX,
-    chargeBarWidth,
-    chargeBarY,
-    shieldBarX,
-    shieldBarWidth,
-    shieldBarY,
-  );
 
   // Draw detached segments
   drawDetachedSegments(ctx);
@@ -6021,41 +5066,3 @@ function draw() {
 
   drawFlameParticles(ctx);
 }
-
-function advanceToLevel(newLevel) {
-  level = newLevel;
-  countdown = 30;
-  initLevel(level);
-  startCountdown();
-}
-
-function toggleMenu() {
-  isMenuOpen = !isMenuOpen;
-  if (isMenuOpen) {
-    menu.style.display = 'block';
-    stopBackgroundMusic();
-  } else {
-    menu.style.display = 'none';
-    if (!gameOver) {
-      startBackgroundMusic();
-    }
-  }
-}
-
-backgroundMusicVolumeSlider.addEventListener('input', () => {
-  backgroundMusic.volume = backgroundMusicVolumeSlider.value;
-  bossMusic.volume = backgroundMusicVolumeSlider.value;
-});
-
-soundEffectsVolumeSlider.addEventListener('input', () => {
-  const volume = soundEffectsVolumeSlider.value;
-  soundEffects.forEach((sound) => (sound.volume = volume));
-});
-
-menu.style.display = 'block';
-initializeGame();
-requestAnimationFrame(gameLoop);
-
-titleScreenImage.onload = () => {
-  draw();
-};
