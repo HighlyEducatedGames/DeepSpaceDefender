@@ -1,3 +1,5 @@
+import { spawnOffScreenRandomSide } from './utilities.js';
+
 class Ally {
   constructor(game) {
     this.game = game;
@@ -24,7 +26,7 @@ class Ally {
       followPlayer: new Audio('assets/audio/followPlayerSound.mp3'),
     };
 
-    this.enteringSide = this.chooseSideToEnterFrom();
+    this.enteringSide = spawnOffScreenRandomSide(this);
     this.pattern = this.selectedPattern();
     this.active = true;
     this.entering = true;
@@ -38,31 +40,6 @@ class Ally {
       this.sounds.followPlayer.currentTime = 0;
       this.sounds.followPlayer.play();
     }
-  }
-
-  chooseSideToEnterFrom() {
-    const side = Math.floor(Math.random() * 4);
-
-    switch (side) {
-      case 0: // Enter from the left
-        this.x = -100;
-        this.y = Math.random() * this.game.canvas.height;
-        break;
-      case 1: // Enter from the right
-        this.x = this.game.canvas.width + 100;
-        this.y = Math.random() * this.game.canvas.height;
-        break;
-      case 2: // Enter from the top
-        this.x = Math.random() * this.game.canvas.width;
-        this.y = -100;
-        break;
-      case 3: // Enter from the bottom
-        this.x = Math.random() * this.game.canvas.width;
-        this.y = this.game.canvas.height + 100;
-        break;
-    }
-
-    return side;
   }
 
   selectedPattern() {
