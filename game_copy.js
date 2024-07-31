@@ -3936,24 +3936,6 @@ function update(deltaTime, timestamp) {
     powerUpActive = false;
   }
 
-  // Collision detection and handling for coins
-  coins.forEach((coin, coinIndex) => {
-    const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-    const coinCircle = { x: coin.x + coin.width / 2, y: coin.y + coin.height / 2, radius: coin.width / 2 };
-
-    if (checkCollision(playerCircle, coinCircle)) {
-      score += 20;
-      coins.splice(coinIndex, 1);
-
-      // Increase player's health by 2, but do not exceed the maximum health
-      player.health = Math.min(player.health + 2, PLAYER_MAX_HEALTH);
-
-      const coinSoundClone = coinSound.cloneNode();
-      coinSoundClone.volume = coinSound.volume;
-      coinSoundClone.play();
-    }
-  });
-
   // Update the biomechLeviathan if it exists
   if (biomechLeviathan) {
     updateBiomechLeviathan(deltaTime, timestamp); // Ensure this calls inkCloud initialization
