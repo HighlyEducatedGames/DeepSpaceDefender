@@ -28,7 +28,10 @@ canvas {
   border-radius: 15px;
 }
 
-#credits, #howToPlay, #soundOptions, #controls {
+#credits,
+#howToPlay,
+#soundOptions,
+#controls {
   display: none;
 }
 
@@ -38,17 +41,24 @@ canvas {
   display: inline-block;
 }
 
-#howToPlayTable img, #controlsTable img {
+#howToPlayTable img,
+#controlsTable img {
   width: 25px;
   height: 25px;
 }
 
-#howToPlayTable, #controlsTable {
+#howToPlayTable,
+#controlsTable {
   width: 100%;
   border-collapse: collapse;
 }
 
-#howToPlayTable, #howToPlayTable th, #howToPlayTable td, #controlsTable, #controlsTable th, #controlsTable td {
+#howToPlayTable,
+#howToPlayTable th,
+#howToPlayTable td,
+#controlsTable,
+#controlsTable th,
+#controlsTable td {
   border: 1px solid white;
   padding: 5px;
 }

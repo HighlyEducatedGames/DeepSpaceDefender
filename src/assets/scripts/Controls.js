@@ -181,7 +181,6 @@ class Controls {
   }
 
   handleKeyDown(e) {
-    console.log(e.key);
     if (this.keys.indexOf(e.key) === -1) this.keys.push(e.key);
 
     if (this.isPressed('m')) {
