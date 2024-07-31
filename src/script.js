@@ -16,6 +16,7 @@ class Game {
 
     // Instantiate resettable properties
     this.resetGame();
+    console.log(this);
   }
 
   // Put any property instantiation here that needs to be reset on game over or reset
@@ -35,9 +36,11 @@ class Game {
     this.player = new Player(this);
     this.projectiles = [];
 
+    const numStars = 50;
+    const starLayers = 3;
     this.stars = [];
-    for (let i = 0; i < 150; i++) {
-      this.stars.push(new Star(this));
+    for (let i = 0; i < numStars; i++) {
+      this.stars.push(new Star(this, starLayers));
     }
 
     this.coins = [];
@@ -59,6 +62,7 @@ class Game {
     /* UPDATE */
     this.stars.forEach((star) => star.update());
     this.player.update(deltaTime);
+    this.coins.forEach((coin) => coin.update());
   }
 }
 
