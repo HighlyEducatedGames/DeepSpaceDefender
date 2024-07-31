@@ -113,6 +113,31 @@ class Player {
                 player.velocity.y *= player.maxSpeed / speed;
             }
         }*/
+
+    // Basic movement
+    this.velocity.x += (Math.cos(this.rotation) * this.thrust * deltaTime) / 1000;
+    this.velocity.y += (Math.sin(this.rotation) * this.thrust * deltaTime) / 1000;
+
+    if (!this.game.keys.isPressed('ArrowUp') && !!this.game.keys.isPressed('ArrowDown')) {
+      this.velocity.x *= this.deceleration;
+      this.velocity.y *= this.deceleration;
+    }
+
+    const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    if (speed > this.maxSpeed) {
+      this.velocity.x *= this.maxSpeed / speed;
+      this.velocity.y *= this.maxSpeed / speed;
+    }
+
+    // Move player
+    this.x += (this.velocity.x * deltaTime) / 1000;
+    this.y += (this.velocity.y * deltaTime) / 1000;
+
+    // Screen wrap
+    if (this.x < 0) this.x = this.game.canvas.width;
+    if (this.x > this.game.canvas.width) this.x = 0;
+    if (this.y < 0) this.y = this.game.canvas.height;
+    if (this.y > this.game.canvas.height) this.y = 0;
   }
 
   isBoostReady() {

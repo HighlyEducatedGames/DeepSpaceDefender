@@ -3910,28 +3910,8 @@ function update(deltaTime, timestamp) {
       endBoost();
     }
   } else {
-    player.velocity.x += (Math.cos(player.rotation) * player.thrust * deltaTime) / 1000;
-    player.velocity.y += (Math.sin(player.rotation) * player.thrust * deltaTime) / 1000;
-
-    if (!keys['ArrowUp'] && !keys['ArrowDown']) {
-      player.velocity.x *= player.deceleration;
-      player.velocity.y *= player.deceleration;
-    }
-
-    const speed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.y * player.velocity.y);
-    if (speed > player.maxSpeed) {
-      player.velocity.x *= player.maxSpeed / speed;
-      player.velocity.y *= player.maxSpeed / speed;
-    }
+    // Basic movement
   }
-
-  player.x += (player.velocity.x * deltaTime) / 1000;
-  player.y += (player.velocity.y * deltaTime) / 1000;
-
-  if (player.x < 0) player.x = canvas.width;
-  if (player.x > canvas.width) player.x = 0;
-  if (player.y < 0) player.y = canvas.height;
-  if (player.y > canvas.height) player.y = 0;
 
   if (isBoosting && performance.now() > boostEndTime) {
     isBoosting = false;
@@ -4322,22 +4302,7 @@ function drawProjectile() {
 }
 
 function draw() {
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
   drawWormholes();
-
-  if (isMenuOpen) {
-    ctx.drawImage(titleScreenImage, 0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'white';
-    ctx.font = '40px "Press Start 2P", cursive';
-    const text = 'PAUSED';
-    const textWidth = ctx.measureText(text).width;
-    const x = (canvas.width - textWidth) / 2;
-    const y = canvas.height / 3;
-    ctx.fillText(text, x, y);
-    return;
-  }
 
   enemies.forEach((enemy) => {
     if (enemy.type === 'stealthEnemy') {
