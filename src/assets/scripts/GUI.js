@@ -24,7 +24,7 @@ class GUI {
   }
 
   draw(ctx) {
-    this.drawScoreLevelTime(ctx);
+    this.drawText(ctx);
     this.drawBoostBar(ctx);
     this.drawHealthBar(ctx);
     this.drawChargeBar(ctx);
@@ -32,12 +32,18 @@ class GUI {
     this.drawInventories(ctx);
   }
 
-  drawScoreLevelTime(ctx) {
-    ctx.font = '15px "Press Start 2P", cursive';
+  drawText(ctx) {
     ctx.fillStyle = 'white';
+    ctx.font = '15px "Press Start 2P", cursive';
     ctx.fillText('Score: ' + this.game.score, 10, 20);
     ctx.fillText('Level: ' + this.game.level, 10, 50);
     ctx.fillText('Time: ' + Math.floor(this.game.countdown), this.game.canvas.width * 0.5 - 30, 20);
+
+    ctx.font = '10px "Press Start 2P", cursive';
+    ctx.fillText('Booster', this.boostBarX - ctx.measureText('Booster').width - 10, this.boostBarY + 15);
+    ctx.fillText('Health', this.healthBarX - ctx.measureText('Health').width - 10, this.healthBarY + 15);
+    ctx.fillText('Blaster', this.chargeBarX - ctx.measureText('Blaster').width - 10, this.chargeBarY + 15);
+    ctx.fillText('Shield', this.shieldBarX - ctx.measureText('Shield').width - 10, this.shieldBarY + 15);
   }
 
   drawBoostBar(ctx) {
