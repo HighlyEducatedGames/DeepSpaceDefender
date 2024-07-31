@@ -2,10 +2,6 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 const soundEffectsVolumeSlider = document.getElementById('soundEffectsVolume');
-const BOMB_RADIUS = 300;
-const BOMB_DAMAGE = 150;
-const TANK_HEALTH = 30;
-const ENEMY_HEALTH = 10;
 const PROJECTILE_DAMAGE = 10;
 const PARTIALLY_CHARGED_PROJECTILE_DAMAGE = 50;
 const FULLY_CHARGED_PROJECTILE_DAMAGE = 150;
@@ -15,13 +11,6 @@ const VERTICAL_MARGIN = 50;
 const MAX_REGULAR_ENEMIES = 6; // Adjust as needed
 const MAX_ENEMY_TANKS = 3; // Adjust as needed
 const MAX_STEALTH_ENEMIES = 4; // Adjust as needed
-const ASTEROID_DAMAGE = 10;
-const ASTEROID_SPEED = 200;
-const ASTEROID_SIZES = [
-  { width: 75, height: 75 },
-  { width: 50, height: 50 },
-  { width: 30, height: 30 },
-];
 
 let enemyRespawnTimeouts = [];
 let nextLifeScore = 1500;
@@ -105,83 +94,15 @@ let flamethrowerActive = false;
 let flameParticles = [];
 let flamethrowerExpirationTime = 0;
 
-// Load images
-const enemyImage = new Image();
-enemyImage.src = 'assets/images/enemy.png';
-
-const coinImage = new Image();
-coinImage.src = 'assets/images/coin.png';
-
-const powerUpImage = new Image();
-powerUpImage.src = 'assets/images/powerUp.png';
-
-const bombPowerUpImage = new Image();
-bombPowerUpImage.src = 'assets/images/bombPowerUp.png';
-
-const bossImage = new Image();
-bossImage.src = 'assets/images/boss.png';
-
-const bossProjectileImage = new Image();
-bossProjectileImage.src = 'assets/images/boss_projectile.png';
-
-const homingMissilePowerUpImage = new Image();
-homingMissilePowerUpImage.src = 'assets/images/homingMissilePowerUp.png';
-
-const homingMissileImage = new Image();
-homingMissileImage.src = 'assets/images/homing_missile.png';
-
-const shieldPowerUpImage = new Image();
-shieldPowerUpImage.src = 'assets/images/shield_powerUp.png';
-
-const enemyTankImage = new Image();
-enemyTankImage.src = 'assets/images/enemy_tank.png';
-
-const stealthEnemyImage = new Image();
-stealthEnemyImage.src = 'assets/images/stealth_enemy.png';
-
-const reversePowerUpImage = new Image();
-reversePowerUpImage.src = 'assets/images/reversePowerUp.png';
-
-const boostPowerUpImage = new Image();
-boostPowerUpImage.src = 'assets/images/boostPowerUp.png';
-
-const biomechLeviathanImage = new Image();
-biomechLeviathanImage.src = 'assets/images/biomech_leviathan2.png';
-
-const cyberDragonImage = new Image();
-cyberDragonImage.src = 'assets/images/cyber_dragon.png';
-
-const asteroidImage = new Image();
-asteroidImage.src = 'assets/images/asteroid.png';
-
-const temporalSerpentImage = new Image();
-temporalSerpentImage.src = 'assets/images/temporal_serpent.png'; // Replace with the actual path to your image
-
-const serpentHead = new Image();
-serpentHead.src = 'assets/images/serpentHead.png'; // Update with the correct path to your image
-
-const serpentSegment = new Image();
-serpentSegment.src = 'assets/images/serpentSegment.png'; // Update with the correct path to your image
-
-const flamethrowerPowerUpImage = new Image();
-flamethrowerPowerUpImage.src = 'assets/images/flamethrowerPowerUp.png';
-
 // Load audio
-const bossMusic = document.getElementById('bossMusic');
-
-const coinSound = document.getElementById('coinSound');
 const fireSound = document.getElementById('fireSound');
-const powerUpSound = document.getElementById('powerUpSound');
 const collisionSound = document.getElementById('collisionSound');
 const chargingSound = document.getElementById('chargingSound');
-const bombSound = document.getElementById('bombSound');
 const boostSound = document.getElementById('boostSound');
-const homingMissileSound = document.getElementById('homingMissileSound');
 const lifeLostSound = document.getElementById('lifeLostSound');
 const tractorBeamSound = document.getElementById('tractorBeamSound');
 const splatSound = document.getElementById('splatSound');
 const empSound = document.getElementById('empSound'); // Add the EMP sound file
-const laserChargingSound = document.getElementById('laserChargingSound');
 const spiralShotSound = document.getElementById('spiralShotSound');
 const teleportSound = document.getElementById('teleportSound');
 const explosionSound = document.getElementById('explosionSound');
@@ -191,19 +112,14 @@ const torchSound = document.getElementById('torchSound');
 const biomechEatSound = document.getElementById('biomechEatSound');
 
 const soundEffects = [
-  coinSound,
   fireSound,
-  powerUpSound,
   collisionSound,
   chargingSound,
-  bombSound,
   boostSound,
-  homingMissileSound,
   lifeLostSound,
   tractorBeamSound,
   splatSound,
   empSound,
-  laserChargingSound,
   spiralShotSound,
   teleportSound,
   explosionSound,
@@ -340,18 +256,6 @@ function handleKeyDown(e) {
   }
 }
 
-function startBossMusic() {
-  if (!bossMusic.playing) {
-    stopBackgroundMusic(); // Stop background music if playing
-    bossMusic.play().catch((error) => {});
-  }
-}
-
-function stopBossMusic() {
-  bossMusic.pause();
-  bossMusic.currentTime = 0;
-}
-
 function manageMusic() {
   const isBossLevel = level % 5 === 0;
   if (isBossLevel && !bossMusic.playing) {
@@ -414,13 +318,6 @@ function initializeGame() {
   stopBossMusic();
 }
 
-function checkCollision(circle1, circle2) {
-  const dx = circle1.x - circle2.x;
-  const dy = circle1.y - circle2.y;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  return distance < circle1.radius + circle2.radius;
-}
-
 function handleGameOver() {
   // Stop background and boss music
   stopBackgroundMusic();
@@ -444,84 +341,6 @@ document.addEventListener('keydown', function (event) {
     restartGame();
   }
 });
-
-document.addEventListener('keydown', function (event) {
-  if (event.code === 'KeyB' && gameOver) {
-    restartGame();
-  }
-});
-
-function spawnCyberDragon() {
-  const offScreenMargin = 100;
-  const side = Math.floor(Math.random() * 4);
-  let position = { x: 0, y: 0 };
-
-  switch (side) {
-    case 0:
-      position.x = Math.random() * canvas.width;
-      position.y = -offScreenMargin - 100;
-      break;
-    case 1:
-      position.x = Math.random() * canvas.width;
-      position.y = canvas.height + offScreenMargin + 100;
-      break;
-    case 2:
-      position.x = -offScreenMargin - 100;
-      position.y = Math.random() * canvas.height;
-      break;
-    case 3:
-      position.x = canvas.width + offScreenMargin + 100;
-      position.y = Math.random() * canvas.height;
-      break;
-  }
-
-  cyberDragon = {
-    x: position.x,
-    y: position.y,
-    width: 250,
-    height: 250,
-    speed: 50,
-    health: 3000,
-    maxHealth: 3000,
-    lastAttackTime: 0,
-    attackInterval: 2000,
-    canAttack: true,
-    phase: 1,
-    phaseTransitioned: [false, false, false],
-    laserCharging: false,
-    laserChargeTime: 0,
-    laserChargeDuration: 3500,
-    laserReady: false,
-    alive: true,
-    projectileCollisionRadius: 125, // 250 diameter / 2
-    playerCollisionRadius: 47.5, // 95 diameter / 2
-    lastBombDamageTime: 0, // Add this property
-    spiralProjectiles: [],
-    spiralAngle: 0,
-    spiralSpeed: 0.1, // Adjust for desired speed of the spiral
-    spiralRadius: 100, // Adjust for the size of the spiral
-    spiralActive: false,
-    spiralStartTime: 0,
-    spiralDuration: 5000, // 5 seconds
-    spiralCooldown: 4000, // 4 seconds
-  };
-}
-
-function drawCyberDragonHealthBar(cyberDragon) {
-  if (!cyberDragon.alive) return; // Only draw the health bar if the Cyber Dragon is alive
-
-  const barWidth = cyberDragon.width;
-  const barHeight = 10;
-  const barX = cyberDragon.x - cyberDragon.width / 2;
-  const barY = cyberDragon.y + cyberDragon.height / 2 + 10;
-  const healthRatio = cyberDragon.health / cyberDragon.maxHealth;
-
-  ctx.fillStyle = 'red';
-  ctx.fillRect(barX, barY, barWidth * healthRatio, barHeight);
-
-  ctx.strokeStyle = 'black';
-  ctx.strokeRect(barX, barY, barWidth, barHeight);
-}
 
 function updateCyberDragon(deltaTime, timestamp) {
   if (!cyberDragon || !cyberDragon.alive) return;
@@ -574,33 +393,6 @@ function updateCyberDragon(deltaTime, timestamp) {
   updateSpiralProjectiles(deltaTime);
   checkSpiralCollisions();
   drawSpiralProjectiles();
-}
-
-function drawCyberDragon() {
-  if (cyberDragon && cyberDragon.alive) {
-    ctx.save();
-    ctx.translate(cyberDragon.x, cyberDragon.y);
-    ctx.drawImage(
-      cyberDragonImage,
-      -cyberDragon.width / 2,
-      -cyberDragon.height / 2,
-      cyberDragon.width,
-      cyberDragon.height,
-    );
-    ctx.restore();
-  }
-}
-
-function chargeLaser() {
-  if (!cyberDragon || !cyberDragon.alive) return;
-
-  if (!cyberDragon.laserCharging) {
-    cyberDragon.laserCharging = true;
-    cyberDragon.laserChargeTime = 0;
-    cyberDragon.laserChargeRadius = 5; // Reset the charge radius
-    laserChargingSound.currentTime = 0; // Reset sound to start
-    laserChargingSound.play(); // Play the charging sound
-  }
 }
 
 function fireLaser() {
@@ -5056,13 +4848,6 @@ function draw() {
     ctx.arc(player.x, player.y, player.width, 0, 2 * Math.PI);
     ctx.fill();
   }
-
-  ctx.font = '10px "Press Start 2P", cursive';
-  ctx.fillStyle = 'white';
-  ctx.fillText('Booster', boostBarX - ctx.measureText('Booster').width - 10, boostBarY + 15);
-  ctx.fillText('Health', boostBarX - ctx.measureText('Health').width - 10, boostBarY + boostBarHeight + 20);
-  ctx.fillText('Blaster', chargeBarX - ctx.measureText('Blaster').width - 10, chargeBarY + 15);
-  ctx.fillText('Shield', shieldBarX - ctx.measureText('Shield').width - 10, shieldBarY + 15);
 
   drawFlameParticles(ctx);
 }
