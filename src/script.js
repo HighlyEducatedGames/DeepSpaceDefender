@@ -3,6 +3,7 @@ import GUI from './assets/scripts/GUI.js';
 import Star from './assets/scripts/Star.js';
 import Coin from './assets/scripts/Coin.js';
 import Controls from './assets/scripts/Controls.js';
+import Menu from './assets/scripts/Menu.js';
 
 class Game {
   constructor(canvas) {
@@ -11,8 +12,10 @@ class Game {
     this.height = this.canvas.height;
     this.keys = new Controls(this);
     this.GUI = new GUI(this);
+    this.menu = new Menu(this);
     this.titleScreenImage = new Image();
     this.titleScreenImage.src = 'assets/images/title_screen.png';
+    this.backgroundMusic = new Audio('assets/audio/background-music.mp3');
 
     // Instantiate resettable properties
     this.resetGame();
@@ -21,7 +24,7 @@ class Game {
 
   // Put any property instantiation here that needs to be reset on game over or reset
   resetGame() {
-    this.isMenuOpen = false;
+    this.menu.showMenu();
     this.gameOver = false;
     this.score = 0;
     this.level = 1;
@@ -51,8 +54,6 @@ class Game {
   }
 
   render(ctx, deltaTime) {
-    this.keys.handleGamepadInput();
-
     /* DRAW */
     this.stars.forEach((star) => star.draw(ctx)); // Draw stars before other elements
     this.coins.forEach((coin) => coin.draw(ctx));
@@ -63,6 +64,15 @@ class Game {
     this.stars.forEach((star) => star.update());
     this.player.update(deltaTime);
     this.coins.forEach((coin) => coin.update());
+  }
+
+  startBackgroundMusic() {
+    this.backgroundMusic.play();
+  }
+
+  stopBackgroundMusic() {
+    this.backgroundMusic.pause();
+    this.backgroundMusic.currentTime = 0;
   }
 }
 
@@ -83,10 +93,13 @@ window.addEventListener('load', () => {
     lastTimestamp = timestamp;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!game.isMenuOpen) {
+
+    game.keys.handleGamepadInput();
+
+    if (!game.menu.isOpen) {
       game.render(ctx, deltaTime);
     } else {
-      // TODO: Loop through all sounds and pause
+      // TODO: Loop through all sounds and pause, but background is already getting paused in the menu class
 
       // Draw title screen
       ctx.drawImage(game.titleScreenImage, 0, 0, canvas.width, canvas.height);

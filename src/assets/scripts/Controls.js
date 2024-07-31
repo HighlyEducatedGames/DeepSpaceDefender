@@ -1,18 +1,32 @@
+/* global menuBack, updateMenuText */
+
 class Controls {
   constructor(game) {
     this.game = game;
     this.keys = [];
     this.gamepadIndex = null;
     this.prevGamepadState = {};
-    this.usingGamepad = false;
+    this.usingGamepad = {
+      _value: true,
+      get value() {
+        return this._value;
+      },
+      set value(newValue) {
+        if (this._value !== newValue) {
+          this._value = newValue;
+          updateMenuText(newValue);
+        }
+      },
+    };
+    updateMenuText(this.usingGamepad.value);
 
     // Keyboard Listeners
     window.addEventListener('keydown', (e) => {
-      this.usingGamepad = false;
+      this.usingGamepad.value = false;
       this.handleKeyDown(e);
     });
     window.addEventListener('keyup', (e) => {
-      this.usingGamepad = false;
+      this.usingGamepad.value = false;
       this.handleKeyUp(e);
     });
 
@@ -37,13 +51,13 @@ class Controls {
 
   handleGamepadInput() {
     if (this.gamepadIndex === null) {
-      this.usingGamepad = false;
+      this.usingGamepad.value = false;
       return;
     }
 
     const gamepad = navigator.getGamepads()[this.gamepadIndex];
     if (!gamepad) {
-      this.usingGamepad = false;
+      this.usingGamepad.value = false;
       return;
     }
 
@@ -69,7 +83,7 @@ class Controls {
     } else if (!buttons[1] && this.wasGamepadPressed(1)) {
       this.handleKeyUp({ key: 'b' });
     } else if (buttons[1] && this.game.gameOver) {
-      this.game.restartGame();
+      this.game.resetGame();
     }
 
     // Boost button (X button)
@@ -154,7 +168,7 @@ class Controls {
       !this.arraysEqual(this.prevGamepadState[this.gamepadIndex].buttons, buttons) ||
       !this.arraysEqual(this.prevGamepadState[this.gamepadIndex].axes, [leftStickX])
     ) {
-      this.usingGamepad = true;
+      this.usingGamepad.value = true;
     }
 
     // Save the current state for the next frame
@@ -167,7 +181,16 @@ class Controls {
   }
 
   handleKeyDown(e) {
+    console.log(e.key);
     if (this.keys.indexOf(e.key) === -1) this.keys.push(e.key);
+
+    if (this.isPressed('m')) {
+      this.game.menu.toggleMenu();
+    }
+
+    if (this.isPressed('Escape') && this.game.menu.isOpen) {
+      menuBack();
+    }
   }
 
   handleKeyUp(e) {
