@@ -18,8 +18,8 @@ class Star {
     // Parallax
     this.x -= this.speed;
     if (this.x + this.radius * 2 < 0) {
-      this.x = this.game.canvas.width + this.radius;
-      this.y = Math.random() * this.game.canvas.height;
+      this.x = this.game.canvas.width + this.radius; // Reset the star once it leaves the canvas
+      this.y = Math.random() * this.game.canvas.height; // Randomize y position on reset
     }
   }
 }
