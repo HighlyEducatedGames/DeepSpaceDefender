@@ -1,17 +1,30 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-
 const menu = document.getElementById('menu');
 const backgroundMusicVolumeSlider = document.getElementById('backgroundMusicVolume');
 const soundEffectsVolumeSlider = document.getElementById('soundEffectsVolume');
 const BOMB_RADIUS = 300;
 const BOMB_DAMAGE = 150;
+const boostBarWidth = 200;
+const boostBarHeight = 20;
+const boostBarX = canvas.width / 2 - boostBarWidth / 2 - 250;
+const boostBarY = 20;
+const chargeBarWidth = 200;
+const chargeBarHeight = 20;
+const chargeBarX = canvas.width / 2 - chargeBarWidth / 2 + 350;
+const chargeBarY = 20;
+const shieldBarWidth = 200;
+const shieldBarHeight = 20;
+const shieldBarX = chargeBarX; // Align horizontally with the blaster bar
+const shieldBarY = chargeBarY + chargeBarHeight + 5; // Positioned below the blaster bar
 const TANK_HEALTH = 30;
 const ENEMY_HEALTH = 10;
 const PROJECTILE_DAMAGE = 10;
 const PARTIALLY_CHARGED_PROJECTILE_DAMAGE = 50;
 const FULLY_CHARGED_PROJECTILE_DAMAGE = 150;
 const SPLIT_PROJECTILE_DAMAGE = 25;
+const PLAYER_MAX_HEALTH = 30;
+const MAX_ENEMIES = 20; // Maximum number of enemies allowed
 const MAX_POWER_UPS = 3;
 const VERTICAL_MARGIN = 50;
 const MAX_REGULAR_ENEMIES = 6; // Adjust as needed
@@ -27,8 +40,12 @@ const ASTEROID_SIZES = [
 const asteroidSpawnInterval = Math.random() * 1500 + 1000; // Interval between 0.5 and 2 seconds
 
 
+let lastTime = 0;
 let enemyRespawnTimeouts = [];
 let nextLifeScore = 1500;
+let isBoosting = false;
+let boostEndTime = 0;
+let boostCooldownEndTime = 0;
 let isInvincible = false;
 let bossHitByBomb = false;
 let biomechHitByBomb = false;
@@ -36,6 +53,8 @@ let cyberDragonHitByBomb = false;
 let temporalSerpentHitByBomb = false;
 let temporalSerpentLastBombDamageTime = 0; // Add this property
 let keys = {};
+let player;
+let coins = [];
 let enemies = [];
 let projectiles = [];
 let powerUp = null;
@@ -45,9 +64,15 @@ let powerUpSpawnTime = 0;
 let powerUpDirection = 1;
 let powerUpZigZagSpeed = 100;
 let powerUpSpawned = false;
+let score = 0;
+let level = 1;
+let gameOver = false;
 let spacebarPressedTime = 0;
 let isCharging = false;
 let chargingSoundTimeout;
+let levelStartTime = 0;
+let levelDuration = 30000; // Example duration, adjust as needed
+let countdown = 0;
 let bombs = 0;
 let bombPowerUp = null;
 let bombSpawnTime = 0;
@@ -60,6 +85,7 @@ let bomb = {
     radius: BOMB_RADIUS,
     active: false
 };
+let isMenuOpen = true;
 let boss = null;
 let homingMissilePowerUp = null;
 let homingMissileSpawnTime = 0;
@@ -68,6 +94,8 @@ let homingMissiles = [];
 let shieldPowerUp = null;
 let shieldPowerUpSpawnTime = 0;
 let shieldPowerUpSpawned = false;
+let shieldActive = false;
+let shieldPowerUpExpirationTime = 0;
 let ally = null;
 let allySpawnTime = 0;
 let allyDuration = 15000; // 15 seconds
@@ -116,16 +144,34 @@ let flamethrowerActive = false;
 let flameParticles = [];
 let flamethrowerExpirationTime = 0;
 
+
+
+
+
 // Load images
+const titleScreenImage = new Image();
+titleScreenImage.src = 'assets/images/title_screen.png';
+
+const playerImage = new Image();
+playerImage.src = 'assets/images/player.png';
+
+const playerReverseImage = new Image(); // Added reverse image
+playerReverseImage.src = 'assets/images/player_reverse.png';
 
 const enemyImage = new Image();
 enemyImage.src = 'assets/images/enemy.png';
+
+const coinImage = new Image();
+coinImage.src = 'assets/images/coin.png';
 
 const powerUpImage = new Image();
 powerUpImage.src = 'assets/images/powerUp.png';
 
 const bombPowerUpImage = new Image();
 bombPowerUpImage.src = 'assets/images/bombPowerUp.png';
+
+const playerThrustImage = new Image();
+playerThrustImage.src = 'assets/images/player_thrust.png';
 
 const bossImage = new Image();
 bossImage.src = 'assets/images/boss.png';
@@ -161,7 +207,7 @@ const biomechLeviathanImage = new Image();
 biomechLeviathanImage.src = 'assets/images/biomech_leviathan2.png';
 
 const cyberDragonImage = new Image();
-cyberDragonImage.src = 'assets/images/cyber_dragon.png'; 
+cyberDragonImage.src = 'assets/images/cyber_dragon.png';
 
 const asteroidImage = new Image();
 asteroidImage.src = 'assets/images/asteroid.png';
@@ -181,6 +227,8 @@ flamethrowerPowerUpImage.src = 'assets/images/flamethrowerPowerUp.png';
 // Load audio
 const backgroundMusic = document.getElementById('backgroundMusic');
 const bossMusic = document.getElementById('bossMusic');
+
+const coinSound = document.getElementById('coinSound');
 const fireSound = document.getElementById('fireSound');
 const powerUpSound = document.getElementById('powerUpSound');
 const collisionSound = document.getElementById('collisionSound');
@@ -358,11 +406,21 @@ const cheatCodes = {
 let currentCheatIndex = {
     invincibility: 0,
     bombsAndMissiles: 0,
-    unlimitedBoost: 0 
+    unlimitedBoost: 0
 };
 
 let isCheatCodeActivated = false; // Track if the cheat code is activated
 let isUnlimitedBoostActivated = false;
+
+function addEventListeners() {
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+}
+
+function removeEventListeners() {
+    window.removeEventListeners('keydown', handleKeyDown);
+    window.removeEventListeners('keyup', handleKeyUp);
+}
 
 function handleKeyUp(e) {
     keys[e.key] = false;
@@ -552,6 +610,17 @@ function initializeGame() {
         health: PLAYER_MAX_HEALTH
     };
 
+    coins = [];
+    const topMargin = 120; // Adjust this value if needed
+    for (let i = 0; i < 5; i++) {
+        coins.push({
+            x: Math.random() * (canvas.width - 20),
+            y: Math.random() * (canvas.height - 20 - topMargin) + topMargin,
+            width: 20,
+            height: 20
+        });
+    }
+
     // Clear existing timeouts
     enemyRespawnTimeouts.forEach(timeout => clearTimeout(timeout));
     enemyRespawnTimeouts = [];
@@ -566,9 +635,15 @@ function initializeGame() {
     powerUpDirection = Math.random() < 0.5 ? 1 : -1;
     powerUpZigZagSpeed = 100;
     powerUpSpawned = false;
+    score = 0;
+    level = 1;
+    gameOver = false;
     spacebarPressedTime = 0;
     isCharging = false;
     chargingSoundTimeout = null;
+    levelDuration = 30000;
+    countdown = levelDuration / 1000;
+    levelStartTime = performance.now();
     nextLifeScore = 1500;
     bombs = 0;
     bombPowerUp = null;
@@ -583,6 +658,8 @@ function initializeGame() {
     homingMissilePowerUp = null;
     homingMissilesInventory = 0;
     shieldPowerUp = null;
+    shieldActive = false;
+    shieldPowerUpExpirationTime = 0;
     allySpawnTime = performance.now();
     allyInterval = 60000;
     allyWarningTime = 3000;
@@ -600,17 +677,6 @@ function initializeGame() {
     flamethrowerPowerUp = null;
     flamethrowerSpawnedThisLevel = false;
     flamethrowerActive = false;
-
-
-    const bgVol = localStorage.getItem('background_volume') || "0.5";
-    backgroundMusicVolumeSlider.value = bgVol;
-    bossMusic.volume = parseFloat(bgVol);
-    backgroundMusic.volume = parseFloat(bgVol);
-
-    const sfxVol = localStorage.getItem('sfx_volume') || "0.5";
-    soundEffects.forEach(sound => sound.volume = parseFloat(sfxVol));
-    soundEffectsVolumeSlider.value = parseFloat(sfxVol);
-
     initLevel(level);
     stopBackgroundMusic();
     stopBossMusic();
@@ -629,7 +695,7 @@ function handleGameOver() {
     // Stop background and boss music
     stopBackgroundMusic();
     stopBossMusic();
-    
+
     // Play game over music
     gameOverMusic.currentTime = 0; // Reset the music to start
     gameOverMusic.play().catch(error => {
@@ -645,7 +711,7 @@ function stopGameOverMusic() {
 
 function restartGame() {
     stopGameOverMusic();
-    
+
     // Reset player
     player = {
         x: canvas.width / 2,
@@ -662,6 +728,18 @@ function restartGame() {
         lastCollisionTime: 0,
         health: PLAYER_MAX_HEALTH
     };
+
+    // Clear coins
+    coins = [];
+    const topMargin = 120; // Adjust this value if needed
+    for (let i = 0; i < 5; i++) {
+        coins.push({
+            x: Math.random() * (canvas.width - 20),
+            y: Math.random() * (canvas.height - 20 - topMargin) + topMargin,
+            width: 20,
+            height: 20
+        });
+    }
 
     // Clear existing timeouts
     enemyRespawnTimeouts.forEach(timeout => clearTimeout(timeout));
@@ -697,6 +775,8 @@ function restartGame() {
     bombFlashTime = 0;
     bossHitByBomb = false;
     homingMissilesInventory = 0;
+    shieldActive = false;
+    shieldPowerUpExpirationTime = 0;
     reversePowerUpSpawnedThisLevel = false;
     reversePowerUpActive = false;
     reversePowerUpExpirationTime = 0;
@@ -765,6 +845,15 @@ window.addEventListener("gamepadconnected", function(event) {
 window.addEventListener("gamepaddisconnected", function(event) {
     gamepadIndex = null;
 });
+
+let stars = [];
+for (let i = 0; i < 200; i++) {
+    stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 2
+    });
+}
 
 function getRandomPosition(width, height) {
     return {
@@ -1582,7 +1671,7 @@ function biomechLeviathanEMPBlast() {
     setTimeout(() => {
         empBlast.active = false;
         empBlastActive = false;
-	empDisableFire = false;
+        empDisableFire = false;
     }, empBlast.duration);
 }
 
@@ -1959,7 +2048,7 @@ function attackPhase2() {
 
         segment.travelDirection = { x: dx / distance, y: dy / distance };
         segment.travelDistance = 600; // Distance in pixels to travel towards the player
-        
+
         // Increase the segment speed by reducing the travel duration
         const increasedSpeedFactor = 4; // Increase speed by this factor
         const newTravelDuration = travelDuration / increasedSpeedFactor; // Reduce travel duration to increase speed
@@ -2536,8 +2625,8 @@ function updateProjectiles(deltaTime, timestamp) {
 
                         if (cyberDragon && cyberDragon.health <= 0) {
                             cyberDragon.alive = false;
-			    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
-			    explosionSound.play();
+                            createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                            explosionSound.play();
                             score += 3000;
                             cyberDragon = null;
                             clearAsteroids();
@@ -2561,8 +2650,8 @@ function updateProjectiles(deltaTime, timestamp) {
 
                         if (boss.health <= 0) {
                             boss.alive = false;
-			    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
-			    explosionSound.play();
+                            createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+                            explosionSound.play();
                             score += 1000;
                             initLevel(level + 1);
                         }
@@ -2584,8 +2673,8 @@ function updateProjectiles(deltaTime, timestamp) {
 
                         if (biomechLeviathan && biomechLeviathan.health <= 0) {
                             biomechLeviathan.alive = false;
-			    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
-			    explosionSound.play();
+                            createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                            explosionSound.play();
                             score += 2000;
                             biomechLeviathan = null;
                             level++;
@@ -2745,8 +2834,8 @@ function checkCollisionWithLaser(laser, player) {
 
 // wormhole logic
 const WORMHOLE_PAIRS = [
-    { entry: { x: 100, y: 100, radius: 37.5 }, exit: { x: 700, y: 500, radius: 37.5 } }, 
-    { entry: { x: 400, y: 300, radius: 37.5 }, exit: { x: 200, y: 700, radius: 37.5 } }  
+    { entry: { x: 100, y: 100, radius: 37.5 }, exit: { x: 700, y: 500, radius: 37.5 } },
+    { entry: { x: 400, y: 300, radius: 37.5 }, exit: { x: 200, y: 700, radius: 37.5 } }
 ];
 
 const WORMHOLE_LIFETIME = 10000; // 10 seconds
@@ -2763,7 +2852,7 @@ let wormholeSpawnTime = 0;
 function isValidSpawnPosition(x, y, radius, canvasWidth, canvasHeight) {
     const margin = 150;
     return (x > margin + radius && x < canvasWidth - margin - radius &&
-            y > margin + radius && y < canvasHeight - margin - radius);
+        y > margin + radius && y < canvasHeight - margin - radius);
 }
 
 
@@ -3047,10 +3136,10 @@ function updateHomingMissiles(deltaTime) {
         // Acquire target if missile has none or if the target is dead
         if (!missile.target || !missile.target.alive) {
             missile.target = enemies.find(enemy => enemy.alive) ||
-                             (boss && boss.alive ? boss : null) ||
-                             (biomechLeviathan && biomechLeviathan.alive ? biomechLeviathan : null) ||
-                             (cyberDragon && cyberDragon.alive ? cyberDragon : null) ||
-                             (temporalSerpent && temporalSerpent.alive ? temporalSerpent : null);
+                (boss && boss.alive ? boss : null) ||
+                (biomechLeviathan && biomechLeviathan.alive ? biomechLeviathan : null) ||
+                (cyberDragon && cyberDragon.alive ? cyberDragon : null) ||
+                (temporalSerpent && temporalSerpent.alive ? temporalSerpent : null);
         }
 
         if (missile.target) {
@@ -3103,16 +3192,16 @@ function updateHomingMissiles(deltaTime) {
                     boss.health -= missile.damage;
                     if (boss.health <= 0) {
                         boss.alive = false;
-			createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
-			explosionSound.play();
+                        createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+                        explosionSound.play();
                         score += 1000;
                     }
                 } else if (missile.target === biomechLeviathan) {
                     biomechLeviathan.health -= missile.damage;
                     if (biomechLeviathan.health <= 0) {
                         biomechLeviathan.alive = false;
-			createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
-			explosionSound.play();
+                        createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                        explosionSound.play();
                         score += 2000;
                     }
                     tractorBeam.active = false;
@@ -3124,8 +3213,8 @@ function updateHomingMissiles(deltaTime) {
                     cyberDragon.health -= missile.damage;
                     if (cyberDragon.health <= 0) {
                         cyberDragon.alive = false;
-			createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
-			explosionSound.play();
+                        createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                        explosionSound.play();
                         score += 3000;
                     }
                 } else if (missile.target === temporalSerpent) {
@@ -3171,10 +3260,10 @@ function drawHomingMissiles() {
             if (missile.x >= 0 && missile.x <= canvas.width && missile.y >= 0 && missile.y <= canvas.height) {
                 ctx.drawImage(homingMissileImage, missile.x - missile.width / 2, missile.y - missile.height / 2, missile.width, missile.height);
             } else {
-                
+
             }
         } else {
-            
+
         }
     });
 }
@@ -3212,8 +3301,8 @@ function updateBiomechLeviathan(deltaTime, timestamp) {
 
     if (biomechLeviathan.health <= 0) {
         biomechLeviathan.alive = false;
-	createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
-	explosionSound.play();
+        createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+        explosionSound.play();
         score += 2000;
         biomechLeviathan = null;
         level++;
@@ -3465,7 +3554,7 @@ function spawnBoostPowerUp() {
 }
 
 function spawnFlamethrowerPowerUp() {
-if (level <= 5) return;
+    if (level <= 5) return;
     const position = getOffScreenSpawnPosition(30, 30);
     flamethrowerPowerUp = {
         x: position.x,
@@ -3629,6 +3718,16 @@ function initLevel(level) {
         countdown = levelDuration / 1000; // Set countdown for non-boss levels
     }
 
+    coins = [];
+    for (let i = 0; i < 5; i++) {
+        coins.push({
+            x: Math.random() * (canvas.width - 20),
+            y: Math.random() * (canvas.height - 20),
+            width: 20,
+            height: 20
+        });
+    }
+
     resetPowerUpTimers();
 
     levelStartTime = performance.now();
@@ -3676,7 +3775,7 @@ function spawnBoss() {
         alive: true,
         phase: 1,
         phaseTransitioned: [false, false, false],
-     	collisionRadius: 75
+        collisionRadius: 75
     };
 
     setTimeout(() => {
@@ -3793,7 +3892,7 @@ function bossAttackPattern3() {
         };
         projectiles.push(bossProjectile);
     }
-} 
+}
 
 function updateBoss(deltaTime, timestamp) {
     if (!boss) return;
@@ -3827,15 +3926,15 @@ function updateBoss(deltaTime, timestamp) {
         boss.lastShotTime = timestamp;
     }
 
-if (boss && boss.health <= 0) {
-    boss.alive = false;
-    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
-    score += 1000;
-    boss = null;
-    level++;
-    initLevel(level);
-    lastTime = performance.now();
-}
+    if (boss && boss.health <= 0) {
+        boss.alive = false;
+        createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+        score += 1000;
+        boss = null;
+        level++;
+        initLevel(level);
+        lastTime = performance.now();
+    }
 }
 
 
@@ -4247,7 +4346,7 @@ function splitChargedProjectile(projectile) {
             directionY: Math.sin(angle),
             fromPlayer: true,
             isCharged: false,
-	    maxDistance: 800,
+            maxDistance: 800,
             traveledDistance: 0,
             damage: SPLIT_PROJECTILE_DAMAGE,
             split: true
@@ -4536,8 +4635,8 @@ function useBomb() {
                 bossHitByBomb = true;
                 if (boss.health <= 0) {
                     boss.alive = false;
-		    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
-		    explosionSound.play();
+                    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+                    explosionSound.play();
                     score += 1000;
                 }
             }
@@ -4551,8 +4650,8 @@ function useBomb() {
                 biomechHitByBomb = true;
                 if (biomechLeviathan.health <= 0) {
                     biomechLeviathan.alive = false;
-		    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
-		    explosionSound.play();
+                    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                    explosionSound.play();
                     score += 2000;
                 } else {
                     // Stop the tractor beam and start the cooldown
@@ -4573,8 +4672,8 @@ function useBomb() {
                 cyberDragonHitByBomb = true;
                 if (cyberDragon.health <= 0) {
                     cyberDragon.alive = false;
-		    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
-		    explosionSound.play();
+                    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                    explosionSound.play();
                     score += 3000;
                     cyberDragon = null;
                     level++;
@@ -4705,10 +4804,10 @@ function updateBombs(deltaTime) {
 function useHomingMissile() {
     if (homingMissilesInventory > 0) {
         let target = enemies.find(enemy => enemy.alive) ||
-                     (boss && boss.alive ? boss : null) ||
-                     (biomechLeviathan && biomechLeviathan.alive ? biomechLeviathan : null) ||
-                     (cyberDragon && cyberDragon.alive ? cyberDragon : null) ||
-                     (temporalSerpent && temporalSerpent.alive ? temporalSerpent.segments[0] : null); // Target the head of the temporalSerpent
+            (boss && boss.alive ? boss : null) ||
+            (biomechLeviathan && biomechLeviathan.alive ? biomechLeviathan : null) ||
+            (cyberDragon && cyberDragon.alive ? cyberDragon : null) ||
+            (temporalSerpent && temporalSerpent.alive ? temporalSerpent.segments[0] : null); // Target the head of the temporalSerpent
 
         if (target) {
             homingMissilesInventory--;
@@ -4765,8 +4864,8 @@ function gameLoop(timestamp) {
     handleGamepadInput();
 
     if (gameOver) {
-    	player.health = 0.1;
-    	player.lives = 0;
+        player.health = 0.1;
+        player.lives = 0;
         ctx.fillStyle = 'red';
         ctx.font = '40px Arial';
         ctx.fillText('Game Over', canvas.width / 2 - 100, canvas.height / 2);
@@ -4816,8 +4915,8 @@ function gameLoop(timestamp) {
         if (temporalSerpent) {
             updateTemporalSerpent(deltaTime, timestamp);
             checkPlayerInHazardousZone(player, timestamp);
-    	    updateDetachedSegments(deltaTime);
-    	    updateHazardParticles();
+            updateDetachedSegments(deltaTime);
+            updateHazardParticles();
             updateHazardousZones(timestamp);
         }
 
@@ -4839,8 +4938,8 @@ function gameLoop(timestamp) {
         }
 
         if (temporalSerpent) {
-    	    drawHazardParticles(ctx);
-    	    drawHazardousZones(ctx, performance.now());
+            drawHazardParticles(ctx);
+            drawHazardousZones(ctx, performance.now());
             drawTemporalSerpent();
             drawTemporalSerpentHealthBar();
             drawEnergyBarrier(ctx);
@@ -4935,6 +5034,9 @@ function isBoostReady() {
 }
 
 function update(deltaTime, timestamp) {
+    const rotationSpeed = 4;
+    const thrustAcceleration = 300;
+
     // Update power-up positions
     updatePowerUpPosition(powerUp, deltaTime);
     updatePowerUpPosition(bombPowerUp, deltaTime);
@@ -4964,13 +5066,60 @@ function update(deltaTime, timestamp) {
     }
 
     // Player movement logic
+    if (keys['ArrowLeft']) player.rotation -= rotationSpeed * deltaTime / 1000;
+    if (keys['ArrowRight']) player.rotation += rotationSpeed * deltaTime / 1000;
+
+    if (keys['ArrowUp']) {
+        player.thrust = thrustAcceleration;
+        if (accelerationSound.paused) {
+            accelerationSound.play();
+        }
+    } else if (keys['ArrowDown']) {
+        player.thrust = -thrustAcceleration;
+        if (reverseSound.paused) {
+            reverseSound.play();
+        }
+    } else {
+        player.thrust = 0;
+        if (!keys['ArrowUp']) {
+            accelerationSound.pause();
+            accelerationSound.currentTime = 0;
+        }
+        if (!keys['ArrowDown']) {
+            reverseSound.pause();
+            reverseSound.currentTime = 0;
+        }
+    }
 
     // Reverse Power-up active check
     if (reversePowerUpActive && timestamp >= reversePowerUpExpirationTime) {
         reversePowerUpActive = false;
     }
 
+// Boost handling
+    if (isBoosting) {
+        player.velocity.x = Math.cos(player.rotation) * player.maxSpeed * 2;
+        player.velocity.y = Math.sin(player.rotation) * player.maxSpeed * 2;
 
+        // Check if the boost duration has ended
+        if (performance.now() >= boostEndTime) {
+            endBoost();
+        }
+    } else {
+        player.velocity.x += Math.cos(player.rotation) * player.thrust * deltaTime / 1000;
+        player.velocity.y += Math.sin(player.rotation) * player.thrust * deltaTime / 1000;
+
+        if (!keys['ArrowUp'] && !keys['ArrowDown']) {
+            player.velocity.x *= player.deceleration;
+            player.velocity.y *= player.deceleration;
+        }
+
+        const speed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.y * player.velocity.y);
+        if (speed > player.maxSpeed) {
+            player.velocity.x *= player.maxSpeed / speed;
+            player.velocity.y *= player.maxSpeed / speed;
+        }
+    }
 
     player.x += player.velocity.x * deltaTime / 1000;
     player.y += player.velocity.y * deltaTime / 1000;
@@ -5144,50 +5293,50 @@ function update(deltaTime, timestamp) {
         const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
         const biomechCircle = { x: biomechLeviathan.x, y: biomechLeviathan.y, radius: biomechLeviathan.width / 2 };
 
-    if (checkCollision(playerCircle, biomechCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
-        player.health -= 10;
-        player.lastCollisionTime = timestamp;
+        if (checkCollision(playerCircle, biomechCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
+            player.health -= 10;
+            player.lastCollisionTime = timestamp;
 
-        if (player.health <= 0) {
-            player.lives--;
-            player.health = PLAYER_MAX_HEALTH;
-            lifeLostSound.play();
-            if (player.lives <= 0) {
-                gameOver = true;
-                handleGameOver();
+            if (player.health <= 0) {
+                player.lives--;
+                player.health = PLAYER_MAX_HEALTH;
+                lifeLostSound.play();
+                if (player.lives <= 0) {
+                    gameOver = true;
+                    handleGameOver();
+                }
             }
-        }
-        const collisionSoundClone = collisionSound.cloneNode();
-        collisionSoundClone.volume = collisionSound.volume;
-        collisionSoundClone.play();
+            const collisionSoundClone = collisionSound.cloneNode();
+            collisionSoundClone.volume = collisionSound.volume;
+            collisionSoundClone.play();
             biomechEatSound.currentTime = 0; // Reset the sound to the beginning
             biomechEatSound.play();
+        }
     }
-}
 
     // Collision detection between player and boss
-if (boss && boss.alive) {
-    const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-    const bossCircle = { x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, radius: Math.max(boss.width, boss.height) / 2 };
+    if (boss && boss.alive) {
+        const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
+        const bossCircle = { x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, radius: Math.max(boss.width, boss.height) / 2 };
 
-    if (checkCollision(playerCircle, bossCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
-        player.health -= 10;
-        player.lastCollisionTime = timestamp;
+        if (checkCollision(playerCircle, bossCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
+            player.health -= 10;
+            player.lastCollisionTime = timestamp;
 
-        if (player.health <= 0) {
-            player.lives--;
-            player.health = PLAYER_MAX_HEALTH;
-            lifeLostSound.play();
-            if (player.lives <= 0) {
-                gameOver = true;
-                handleGameOver();
+            if (player.health <= 0) {
+                player.lives--;
+                player.health = PLAYER_MAX_HEALTH;
+                lifeLostSound.play();
+                if (player.lives <= 0) {
+                    gameOver = true;
+                    handleGameOver();
+                }
             }
+            const collisionSoundClone = collisionSound.cloneNode();
+            collisionSoundClone.volume = collisionSound.volume;
+            collisionSoundClone.play();
         }
-        const collisionSoundClone = collisionSound.cloneNode();
-        collisionSoundClone.volume = collisionSound.volume;
-        collisionSoundClone.play();
     }
-}
 
     // EMP blast effect on player
     if (empBlast && empBlast.active) {
@@ -5225,7 +5374,7 @@ if (boss && boss.alive) {
 
             if (checkCollision(playerCircle, segmentCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
                 player.health -= 10;
-		player.lastCollisionTime = timestamp;
+                player.lastCollisionTime = timestamp;
 
                 if (player.health <= 0) {
                     player.lives--;
@@ -5248,19 +5397,19 @@ if (boss && boss.alive) {
         const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
         const dragonCircle = { x: cyberDragon.x, y: cyberDragon.y, radius: cyberDragon.playerCollisionRadius }; // Use playerCollisionRadius
 
-            if (checkCollision(playerCircle, dragonCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
-                player.health -= 10;
-		player.lastCollisionTime = timestamp;
+        if (checkCollision(playerCircle, dragonCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
+            player.health -= 10;
+            player.lastCollisionTime = timestamp;
 
-                if (player.health <= 0) {
-                    player.lives--;
-                    player.health = PLAYER_MAX_HEALTH;
-                    lifeLostSound.play();
-                    if (player.lives <= 0) {
-                        gameOver = true;
-                        handleGameOver();
-                    }
+            if (player.health <= 0) {
+                player.lives--;
+                player.health = PLAYER_MAX_HEALTH;
+                lifeLostSound.play();
+                if (player.lives <= 0) {
+                    gameOver = true;
+                    handleGameOver();
                 }
+            }
 
             const collisionSoundClone = collisionSound.cloneNode();
             collisionSoundClone.volume = collisionSound.volume;
@@ -5270,7 +5419,7 @@ if (boss && boss.alive) {
 
     if (cyberDragon) {
         updateCyberDragon(deltaTime, timestamp);
-        drawCyberDragon(); 
+        drawCyberDragon();
         drawLaserCharge();
         drawAsteroids();
     }
@@ -5300,10 +5449,10 @@ if (boss && boss.alive) {
 
 function checkAndAdvanceLevel() {
     const isBossLevel = level % 5 === 0;
-    if (isBossLevel && enemies.length === 0 && 
-        boss === null && 
-        biomechLeviathan === null && 
-        (cyberDragon === null || cyberDragon.health <= 0) && 
+    if (isBossLevel && enemies.length === 0 &&
+        boss === null &&
+        biomechLeviathan === null &&
+        (cyberDragon === null || cyberDragon.health <= 0) &&
         (temporalSerpent === null || temporalSerpent.health <= 0)) {
         level++;
         initLevel(level);
@@ -5332,8 +5481,153 @@ function drawProjectile() {
     });
 }
 
+function drawScoreLevelTime(ctx, score, level, countdown, canvas) {
+    ctx.font = '15px "Press Start 2P", cursive';
+    ctx.fillStyle = 'white';
+    ctx.fillText('Score: ' + score, 10, 20);
+    ctx.fillText('Level: ' + level, 10, 50);
+    ctx.fillText('Time: ' + Math.floor(countdown), canvas.width / 2 - 30, 20);
+}
+
+
+function drawBoostBar(ctx, boostBarX, boostBarY, boostBarWidth, boostBarHeight, boostCooldownEndTime, boostPowerUpActive) {
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(boostBarX, boostBarY, boostBarWidth, boostBarHeight);
+
+    const currentTime = performance.now();
+    let boostProgress;
+    if (isBoostReady()) {
+        boostProgress = 1;
+    } else {
+        boostProgress = Math.max(0, (currentTime - boostCooldownEndTime + (boostPowerUpActive ? 500 : 7000)) / (boostPowerUpActive ? 500 : 7000));
+    }
+
+    ctx.fillStyle = 'green';
+    ctx.fillRect(boostBarX, boostBarY, boostBarWidth * boostProgress, boostBarHeight);
+    ctx.strokeStyle = 'gray';
+
+    if (boostPowerUpActive) {
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(boostBarX - 3, boostBarY - 3, boostBarWidth + 6, boostBarHeight + 6);
+    }
+}
+
+function drawHealthBar(ctx, player, boostBarX, boostBarY, boostBarWidth, boostBarHeight) {
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(boostBarX, boostBarY + boostBarHeight + 5, boostBarWidth, boostBarHeight);
+
+    const healthRatio = player.health / PLAYER_MAX_HEALTH;
+    ctx.fillStyle = 'red';
+    ctx.fillRect(boostBarX, boostBarY + boostBarHeight + 5, boostBarWidth * healthRatio, boostBarHeight);
+
+    ctx.strokeStyle = 'gray';
+    ctx.strokeRect(boostBarX, boostBarY + boostBarHeight + 5, boostBarWidth, boostBarHeight);
+}
+
+function drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight, isCharging, spacebarPressedTime, flamethrowerActive) {
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight);
+
+    if (isCharging) {
+        const currentTime = performance.now();
+        const chargeDuration = (currentTime - spacebarPressedTime) / 1000;
+        const chargeProgress = Math.min(chargeDuration / 2, 1);
+
+        if (flamethrowerActive) {
+            const gradient = ctx.createLinearGradient(chargeBarX, chargeBarY, chargeBarX + chargeBarWidth, chargeBarY);
+            gradient.addColorStop(0, 'orange');
+            gradient.addColorStop(1, 'red');
+            ctx.fillStyle = gradient;
+        } else {
+            ctx.fillStyle = 'blue';
+        }
+
+        ctx.fillRect(chargeBarX, chargeBarY, chargeBarWidth * chargeProgress, chargeBarHeight);
+
+        const halfwayMarkerX = chargeBarX + chargeBarWidth / 2;
+        ctx.strokeStyle = 'yellow';
+        ctx.beginPath();
+        ctx.moveTo(halfwayMarkerX, chargeBarY);
+        ctx.lineTo(halfwayMarkerX, chargeBarY + chargeBarHeight);
+        ctx.stroke();
+    }
+}
+
+function drawShieldBar(ctx, shieldBarX, shieldBarY, shieldBarWidth, shieldBarHeight, shieldActive, shieldPowerUpExpirationTime) {
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(shieldBarX, shieldBarY, shieldBarWidth, shieldBarHeight);
+
+    if (shieldActive) {
+        const currentTime = performance.now();
+        const shieldProgress = Math.max(0, (shieldPowerUpExpirationTime - currentTime) / 15000);
+        ctx.fillStyle = 'cyan';
+        ctx.fillRect(shieldBarX, shieldBarY, shieldBarWidth * shieldProgress, shieldBarHeight);
+    }
+
+    ctx.strokeStyle = 'black';
+    ctx.strokeRect(shieldBarX, shieldBarY, shieldBarWidth, shieldBarHeight);
+}
+
+function drawInventories(ctx, player, bombs, homingMissilesInventory, boostBarX, boostBarY, boostBarWidth, boostBarHeight, chargeBarX, chargeBarWidth, chargeBarY, shieldBarX, shieldBarWidth, shieldBarY) {
+    const livesIconX = boostBarX + boostBarWidth + 10;
+    ctx.drawImage(playerImage, livesIconX, boostBarY + boostBarHeight + 5, 20, 20);
+    ctx.fillStyle = 'white';
+    ctx.font = '15px "Press Start 2P", cursive';
+    ctx.fillText(': ' + player.lives, livesIconX + 25, boostBarY + boostBarHeight + 20);
+
+    const bombIconX = chargeBarX + chargeBarWidth + 10;
+    ctx.drawImage(bombPowerUpImage, bombIconX, chargeBarY, 20, 20);
+    ctx.fillText(': ' + bombs, bombIconX + 25, chargeBarY + 15);
+
+    const missileIconX = shieldBarX + shieldBarWidth + 10;
+    ctx.drawImage(homingMissilePowerUpImage, missileIconX, shieldBarY, 20, 20);
+    ctx.fillText(': ' + homingMissilesInventory, missileIconX + 25, shieldBarY + 15);
+}
+
+
 function draw() {
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     drawWormholes();
+
+    if (isMenuOpen) {
+        ctx.drawImage(titleScreenImage, 0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '40px "Press Start 2P", cursive';
+        const text = 'PAUSED';
+        const textWidth = ctx.measureText(text).width;
+        const x = (canvas.width - textWidth) / 2;
+        const y = canvas.height / 3;
+        ctx.fillText(text, x, y);
+        return;
+    }
+
+    ctx.fillStyle = 'white';
+    stars.forEach(star => {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
+        ctx.fill();
+    });
+
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.rotation);
+
+    if (keys['ArrowUp']) {
+        ctx.drawImage(playerThrustImage, -player.width / 2, -player.height / 2, player.width, player.height);
+    } else if (keys['ArrowDown']) {
+        ctx.drawImage(playerReverseImage, -player.width / 2, -player.height / 2, player.width, player.height);
+    } else {
+        ctx.drawImage(playerImage, -player.width / 2, -player.height / 2, player.width, player.height);
+    }
+
+    ctx.restore();
+
+    coins.forEach(coin => {
+        ctx.drawImage(coinImage, coin.x, coin.y, coin.width, coin.height);
+    });
 
     enemies.forEach(enemy => {
         if (enemy.type === 'stealthEnemy') {
@@ -5411,6 +5705,12 @@ function draw() {
     // Draw the ally
     drawAlly();
 
+    drawScoreLevelTime(ctx, score, level, countdown, canvas);
+    drawBoostBar(ctx, boostBarX, boostBarY, boostBarWidth, boostBarHeight, boostCooldownEndTime, boostPowerUpActive);
+    drawHealthBar(ctx, player, boostBarX, boostBarY, boostBarWidth, boostBarHeight);
+    drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight, isCharging, spacebarPressedTime, flamethrowerActive);
+    drawShieldBar(ctx, shieldBarX, shieldBarY, shieldBarWidth, shieldBarHeight, shieldActive, shieldPowerUpExpirationTime);
+    drawInventories(ctx, player, bombs, homingMissilesInventory, boostBarX, boostBarY, boostBarWidth, boostBarHeight, chargeBarX, chargeBarWidth, chargeBarY, shieldBarX, shieldBarWidth, shieldBarY);
 
     // Draw detached segments
     drawDetachedSegments(ctx);
@@ -5461,18 +5761,18 @@ function draw() {
 
     if (temporalSerpent) {
         drawTemporalSerpentHealthBar(ctx, canvas, temporalSerpent);
-	drawEnergyBarrier(ctx);
+        drawEnergyBarrier(ctx);
     }
 
     if (isInvincible) {
-	const gradient = ctx.createRadialGradient(player.x, player.y, player.width / 2, player.x, player.y, player.width);
-	gradient.addColorStop(0, 'rgba(255, 69, 0, 0.5)'); // Red/orange color with 50% opacity
-	gradient.addColorStop(0.7, 'rgba(255, 140, 0, 0.2)'); // Lighter orange color with 20% opacity
-	gradient.addColorStop(1, 'rgba(255, 165, 0, 0)'); // Even lighter orange color with 0% opacity
-	ctx.fillStyle = gradient;
-	ctx.beginPath();
-	ctx.arc(player.x, player.y, player.width, 0, 2 * Math.PI);
-	ctx.fill();
+        const gradient = ctx.createRadialGradient(player.x, player.y, player.width / 2, player.x, player.y, player.width);
+        gradient.addColorStop(0, 'rgba(255, 69, 0, 0.5)'); // Red/orange color with 50% opacity
+        gradient.addColorStop(0.7, 'rgba(255, 140, 0, 0.2)'); // Lighter orange color with 20% opacity
+        gradient.addColorStop(1, 'rgba(255, 165, 0, 0)'); // Even lighter orange color with 0% opacity
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.width, 0, 2 * Math.PI);
+        ctx.fill();
     }
 
     if (isBoosting) {
@@ -5533,15 +5833,17 @@ function toggleMenu() {
 backgroundMusicVolumeSlider.addEventListener('input', () => {
     backgroundMusic.volume = backgroundMusicVolumeSlider.value;
     bossMusic.volume = backgroundMusicVolumeSlider.value;
-    localStorage.setItem('background_volume', backgroundMusicVolumeSlider.value)
 });
 
 soundEffectsVolumeSlider.addEventListener('input', () => {
     const volume = soundEffectsVolumeSlider.value;
     soundEffects.forEach(sound => sound.volume = volume);
-    localStorage.setItem('sfx_volume', soundEffectsVolumeSlider.value)
 });
 
 menu.style .display = 'block';
 initializeGame();
 requestAnimationFrame(gameLoop);
+
+titleScreenImage.onload = () => {
+    draw();
+};
