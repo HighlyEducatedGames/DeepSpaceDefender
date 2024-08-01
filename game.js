@@ -144,9 +144,8 @@ let flamethrowerActive = false;
 let flameParticles = [];
 let flamethrowerExpirationTime = 0;
 
-
+const PLAYER_LASER_DURATION = 5000
 const PLAYER_LASER_DAMAGE = 0.1; // Adjust as needed
-const PLAYER_LASER_DURATION = 7000; // 7 seconds
 let playerLaserPowerUpActive = false;
 let playerLaserPowerUpExpirationTime = 0;
 let playerLasersArray = [];
@@ -265,8 +264,10 @@ const torchSound = document.getElementById('torchSound');
 const biomechEatSound = document.getElementById('biomechEatSound');
 const nofireSound = document.getElementById('nofireSound');
 const empSound = document.getElementById('empSound');
+const laserHitSound = document.getElementById('laserHitSound');
+const laserFireSound = document.getElementById('laserFireSound');
 
-const soundEffects = [coinSound, fireSound, powerUpSound, collisionSound, chargingSound, accelerationSound, bombSound, boostSound, reverseSound, homingMissileSound, allySound, allyOver, circularOrbitSound, followPlayerSound, lifeLostSound, tractorBeamSound, splatSound, empSound, laserChargingSound, spiralShotSound, teleportSound, explosionSound, hazardSound, flameSound, torchSound, biomechEatSound, nofireSound, empSound];
+const soundEffects = [coinSound, fireSound, powerUpSound, collisionSound, chargingSound, accelerationSound, bombSound, boostSound, reverseSound, homingMissileSound, allySound, allyOver, circularOrbitSound, followPlayerSound, lifeLostSound, tractorBeamSound, splatSound, empSound, laserChargingSound, spiralShotSound, teleportSound, explosionSound, hazardSound, flameSound, torchSound, biomechEatSound, nofireSound, empSound, laserHitSound, laserFireSound];
 
 // Set initial volumes
 backgroundMusic.volume = 0.5;
@@ -3751,7 +3752,7 @@ function resetPowerUpTimers() {
 
     playerLaserPowerUp = null;
     playerLaserSpawned = false;
-    playerLaserPowerUpSpawnTime = performance.now() + Math.random() * 5000 + 12000;
+    playerLaserPowerUpSpawnTime = performance.now();
     playerLaserPowerUpSpawnedThisLevel = false;
 }
 
@@ -4134,7 +4135,8 @@ function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
                 flamethrowerActive = true;
                 flamethrowerExpirationTime = performance.now() + 10000; // Set the flamethrower duration to 10 seconds
             } else if (type === 'playerLaserPowerUp') { // Activate the player laser power-up
-                activatePlayerLaserPowerUp();
+                playerLaserPowerUpActive = true;
+    		playerLaserPowerUpExpirationTime = performance.now() + 5000;
             }
             const powerUpSoundClone = powerUpSound.cloneNode();
             powerUpSoundClone.volume = soundEffectsVolumeSlider.value;
@@ -4724,42 +4726,47 @@ function checkFlameDamage() {
     });
 }
 
+const particleSpeed = 10;
+const particleLife = 30; // Brief lifespan for particles
+const maxParticles = 20; // Assuming maxParticles is defined globally
+
 class PlayerLaserParticle {
-    constructor(x, y, directionX, directionY, speed, size, color) {
+    constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.directionX = directionX;
-        this.directionY = directionY;
-        this.speed = speed;
-        this.size = size;
-        this.color = color;
-        this.alpha = 1;
-        this.fadeRate = 0.03;
-        this.createdAt = performance.now();
-        this.LIFETIME = 500; // Lifetime in milliseconds
+        this.vx = (Math.random() - 0.5) * particleSpeed;
+        this.vy = (Math.random() - 0.5) * particleSpeed;
+        this.life = particleLife;
     }
 
     update() {
-        this.x += this.directionX * this.speed;
-        this.y += this.directionY * this.speed;
-        this.alpha -= this.fadeRate;
-        if (this.alpha <= 0) {
-            this.alpha = 0;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life--;
+
+        // Wrap around the canvas
+        if (this.x < 0) {
+            this.x = canvas.width;
+        } else if (this.x > canvas.width) {
+            this.x = 0;
+        }
+
+        if (this.y < 0) {
+            this.y = canvas.height;
+        } else if (this.y > canvas.height) {
+            this.y = 0;
         }
     }
 
-    isExpired() {
-        return performance.now() - this.createdAt > this.LIFETIME;
+    draw(ctx) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.life / particleLife})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+        ctx.fill();
     }
 
-    draw(ctx) {
-        ctx.save();
-        ctx.globalAlpha = this.alpha;
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-        ctx.fill();
-        ctx.restore();
+    isDead() {
+        return this.life <= 0;
     }
 }
 
@@ -4782,6 +4789,7 @@ class PlayerLaser {
         if (this.alpha <= 0) {
             this.alpha = 0;
         }
+
         // Update pulsing effect
         this.pulse += this.pulseDirection * 0.1;
         if (this.pulse > 2 || this.pulse < -2) {
@@ -4789,21 +4797,29 @@ class PlayerLaser {
         }
 
         // Generate particles at the end of the laser
-        const particleCount = 1;
-        for (let i = 0; i < particleCount; i++) {
-            const directionX = (Math.random() - 0.5) * 2;
-            const directionY = (Math.random() - 0.5) * 2;
-            const speed = Math.random() * 2 + 1;
-            const size = Math.random() * 2 + 1;
-            const color = 'rgba(255, 255, 255, 1)';
-            this.particles.push(new PlayerLaserParticle(this.endX, this.endY, directionX, directionY, speed, size, color));
+        this.addParticle(this.endX, this.endY);
+
+        // Update particles and remove dead ones
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const particle = this.particles[i];
+            particle.update();
+            if (particle.isDead()) {
+                this.particles.splice(i, 1);
+            }
         }
 
-        // Update particles and remove expired ones
-        this.particles = this.particles.filter(particle => {
-            particle.update();
-            return !particle.isExpired();
-        });
+        // Wrap around the canvas
+        if (this.endX < 0) {
+            this.endX = canvas.width;
+        } else if (this.endX > canvas.width) {
+            this.endX = 0;
+        }
+
+        if (this.endY < 0) {
+            this.endY = canvas.height;
+        } else if (this.endY > canvas.height) {
+            this.endY = 0;
+        }
     }
 
     draw(ctx) {
@@ -4833,28 +4849,52 @@ class PlayerLaser {
             particle.draw(ctx);
         });
     }
+
+    addParticle(x, y) {
+        if (this.particles.length < maxParticles) {
+            this.particles.push(new PlayerLaserParticle(x, y));
+        } else {
+            this.particles.shift();
+            this.particles.push(new PlayerLaserParticle(x, y));
+        }
+    }
+
+    // Update the end coordinates of the laser
+    setEndCoordinates(newEndX, newEndY) {
+        this.endX = newEndX;
+        this.endY = newEndY;
+    }
+
+    // Clear particles when the laser is deactivated
+    clearParticles() {
+        this.particles = [];
+    }
 }
 
-
 function createPlayerLaserBeam(x, y, directionX, directionY, color) {
-    const offsetX = Math.cos(player.rotation) * player.width / 2 - 5;
-    const offsetY = Math.sin(player.rotation) * player.width / 2 - 5;
-    const startX = x + offsetX;
-    const startY = y + offsetY;
-
-    const length = 500; // Length of the laser beam
-    const endX = startX + directionX * length;
-    const endY = startY + directionY * length;
-    playerLasersArray.push(new PlayerLaser(startX, startY, endX, endY, color));
+    const length = 20; // Length of the laser beam
+    const endX = x + directionX * length;
+    const endY = y + directionY * length;
+    playerLasersArray.push(new PlayerLaser(x, y, endX, endY, color));
 }
 
 
 function updatePlayerLasers(deltaTime) {
-    playerLasersArray.forEach(laser => {
+    for (let i = playerLasersArray.length - 1; i >= 0; i--) {
+        const laser = playerLasersArray[i];
         laser.update();
-    });
+
+        if (laser.alpha <= 0 && laser.particles.length === 0) {
+            playerLasersArray.splice(i, 1);
+        }
+    }
 }
 
+function drawPlayerLasers(ctx) {
+    playerLasersArray.forEach(laser => {
+        laser.draw(ctx);
+    });
+}
 
 
 
@@ -4867,9 +4907,36 @@ function checkPlayerLaserDamage() {
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             if (distance < enemy.width / 2) {
-                // Remove enemy
-                enemies.splice(index, 1);
-                score += 10; // Adjust score as needed
+                enemy.health -= PLAYER_LASER_DAMAGE;
+
+                // Play laser hit sound on collision
+                if (laserHitSound) {
+                    if (laserHitSound.paused) {
+                        laserHitSound.play();
+                    } else {
+                        laserHitSound.currentTime = 0; // Reset sound if it's already playing
+                        laserHitSound.play();
+                    }
+                }
+
+                if (enemy.health <= 0) {
+                    // Handle enemy death
+                    score += 10; // Increase score or any other logic
+                    createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                    explosionSound.play();
+
+                    // Call the appropriate respawn function based on enemy type
+                    if (enemy.type === 'enemyTank') {
+                        respawnEnemyTank(5000);
+                    } else if (enemy.type === 'stealthEnemy') {
+                        respawnStealthEnemy(7000);
+                    } else {
+                        const enemySpeed = 50 + level * 10;
+                        respawnEnemyAfterDelay(enemySpeed, 7000);
+                    }
+
+                    enemies.splice(index, 1);
+                }
             }
         });
 
@@ -4882,12 +4949,16 @@ function checkPlayerLaserDamage() {
             if (distance < boss.width / 2) {
                 boss.health -= PLAYER_LASER_DAMAGE; // Slow, constant damage
                 if (boss.health <= 0) {
-                    boss = null;
-                    score += 100; // Adjust score as needed
+                    score += 100; // Increase score or any other logic
+                    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2);
+                    explosionSound.play();
+
+                    boss = null; // Remove the boss
                 }
             }
         }
 
+        // Check laser beam collision with Cyber Dragon
         if (cyberDragon) {
             const dx = laser.endX - (cyberDragon.x + cyberDragon.width / 2);
             const dy = laser.endY - (cyberDragon.y + cyberDragon.height / 2);
@@ -4896,12 +4967,16 @@ function checkPlayerLaserDamage() {
             if (distance < cyberDragon.width / 2) {
                 cyberDragon.health -= PLAYER_LASER_DAMAGE;
                 if (cyberDragon.health <= 0) {
-                    cyberDragon = null;
-                    score += 200;
+                    score += 200; // Increase score or any other logic
+                    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                    explosionSound.play();
+
+                    cyberDragon = null; // Remove the Cyber Dragon
                 }
             }
         }
 
+        // Check laser beam collision with Biomech Leviathan
         if (biomechLeviathan) {
             const dx = laser.endX - (biomechLeviathan.x + biomechLeviathan.width / 2);
             const dy = laser.endY - (biomechLeviathan.y + biomechLeviathan.height / 2);
@@ -4910,12 +4985,16 @@ function checkPlayerLaserDamage() {
             if (distance < biomechLeviathan.width / 2) {
                 biomechLeviathan.health -= PLAYER_LASER_DAMAGE;
                 if (biomechLeviathan.health <= 0) {
-                    biomechLeviathan = null;
-                    score += 150;
+                    score += 150; // Increase score or any other logic
+                    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                    explosionSound.play();
+
+                    biomechLeviathan = null; // Remove the Biomech Leviathan
                 }
             }
         }
 
+        // Check laser beam collision with Temporal Serpent
         if (temporalSerpent) {
             const dx = laser.endX - (temporalSerpent.x + temporalSerpent.width / 2);
             const dy = laser.endY - (temporalSerpent.y + temporalSerpent.height / 2);
@@ -4924,8 +5003,11 @@ function checkPlayerLaserDamage() {
             if (distance < temporalSerpent.width / 2) {
                 temporalSerpent.health -= PLAYER_LASER_DAMAGE;
                 if (temporalSerpent.health <= 0) {
-                    temporalSerpent = null;
-                    score += 300;
+                    score += 300; // Increase score or any other logic
+                    createExplosion(temporalSerpent.x + temporalSerpent.width / 2, temporalSerpent.y + temporalSerpent.height / 2);
+                    explosionSound.play();
+
+                    temporalSerpent = null; // Remove the Temporal Serpent
                 }
             }
         }
@@ -4938,9 +5020,36 @@ function checkPlayerLaserDamage() {
                 const distance = Math.sqrt(dx * dx + dy * dy);
 
                 if (distance < enemy.width / 2) {
-                    // Remove enemy
-                    enemies.splice(index, 1);
-                    score += 10; // Adjust score as needed
+                    enemy.health -= PLAYER_LASER_DAMAGE;
+
+                    // Play laser hit sound on collision
+                    if (laserHitSound) {
+                        if (laserHitSound.paused) {
+                            laserHitSound.play();
+                        } else {
+                            laserHitSound.currentTime = 0; // Reset sound if it's already playing
+                            laserHitSound.play();
+                        }
+                    }
+
+                    if (enemy.health <= 0) {
+                        // Handle enemy death
+                        score += 10; // Increase score or any other logic
+                        createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                        explosionSound.play();
+
+                        // Call the appropriate respawn function based on enemy type
+                        if (enemy.type === 'enemyTank') {
+                            respawnEnemyTank(5000);
+                        } else if (enemy.type === 'stealthEnemy') {
+                            respawnStealthEnemy(7000);
+                        } else {
+                            const enemySpeed = 50 + level * 10;
+                            respawnEnemyAfterDelay(enemySpeed, 7000);
+                        }
+
+                        enemies.splice(index, 1);
+                    }
                 }
             });
 
@@ -4953,12 +5062,16 @@ function checkPlayerLaserDamage() {
                 if (distance < boss.width / 2) {
                     boss.health -= PLAYER_LASER_DAMAGE; // Slow, constant damage
                     if (boss.health <= 0) {
-                        boss = null;
-                        score += 100; // Adjust score as needed
+                        score += 100; // Increase score or any other logic
+                        createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2);
+                        explosionSound.play();
+
+                        boss = null; // Remove the boss
                     }
                 }
             }
 
+            // Check laser particles collision with Cyber Dragon
             if (cyberDragon) {
                 const dx = particle.x - (cyberDragon.x + cyberDragon.width / 2);
                 const dy = particle.y - (cyberDragon.y + cyberDragon.height / 2);
@@ -4967,12 +5080,16 @@ function checkPlayerLaserDamage() {
                 if (distance < cyberDragon.width / 2) {
                     cyberDragon.health -= PLAYER_LASER_DAMAGE;
                     if (cyberDragon.health <= 0) {
-                        cyberDragon = null;
-                        score += 200;
+                        score += 200; // Increase score or any other logic
+                        createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                        explosionSound.play();
+
+                        cyberDragon = null; // Remove the Cyber Dragon
                     }
                 }
             }
 
+            // Check laser particles collision with Biomech Leviathan
             if (biomechLeviathan) {
                 const dx = particle.x - (biomechLeviathan.x + biomechLeviathan.width / 2);
                 const dy = particle.y - (biomechLeviathan.y + biomechLeviathan.height / 2);
@@ -4981,12 +5098,16 @@ function checkPlayerLaserDamage() {
                 if (distance < biomechLeviathan.width / 2) {
                     biomechLeviathan.health -= PLAYER_LASER_DAMAGE;
                     if (biomechLeviathan.health <= 0) {
-                        biomechLeviathan = null;
-                        score += 150;
+                        score += 150; // Increase score or any other logic
+                        createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                        explosionSound.play();
+
+                        biomechLeviathan = null; // Remove the Biomech Leviathan
                     }
                 }
             }
 
+            // Check laser particles collision with Temporal Serpent
             if (temporalSerpent) {
                 const dx = particle.x - (temporalSerpent.x + temporalSerpent.width / 2);
                 const dy = particle.y - (temporalSerpent.y + temporalSerpent.height / 2);
@@ -4995,19 +5116,16 @@ function checkPlayerLaserDamage() {
                 if (distance < temporalSerpent.width / 2) {
                     temporalSerpent.health -= PLAYER_LASER_DAMAGE;
                     if (temporalSerpent.health <= 0) {
-                        temporalSerpent = null;
-                        score += 300;
+                        score += 300; // Increase score or any other logic
+                        createExplosion(temporalSerpent.x + temporalSerpent.width / 2, temporalSerpent.y + temporalSerpent.height / 2);
+                        explosionSound.play();
+
+                        temporalSerpent = null; // Remove the Temporal Serpent
                     }
                 }
             }
         });
     });
-}
-
-function activatePlayerLaserPowerUp() {
-    playerLaserPowerUpActive = true;
-    playerLaserPowerUpExpirationTime = performance.now() + PLAYER_LASER_DURATION; // Lasts for 7 seconds
-    playerLaserPowerUp = null;
 }
 
 function spawnPlayerLaserPowerUp() {
@@ -5037,15 +5155,20 @@ function updateLaserPowerUp(deltaTime) {
     }
 }
 
-function drawPlayerLasers(ctx) {
-    console.log("Drawing player lasers");
+function updateLaserPosition() {
+    const offsetX = Math.cos(player.rotation) * player.width / 2 - 5;
+    const offsetY = Math.sin(player.rotation) * player.width / 2 - 5;
+    const startX = player.x + offsetX;
+    const startY = player.y + offsetY;
+
+    const length = 500; // Length of the laser beam
+    const endX = startX + Math.cos(player.rotation) * length;
+    const endY = startY + Math.sin(player.rotation) * length;
+
     playerLasersArray.forEach(laser => {
-        laser.draw(ctx);
-        console.log("Drawing laser:", laser);
+        laser.setEndCoordinates(endX, endY);
     });
 }
-
-
 
 function useBomb() {
     if (bombs > 0 && !bombActive) {
@@ -5330,11 +5453,9 @@ function checkGamepadMenuButton() {
 // Reduce the volume of the flame sound by 50%
 flameSound.volume = 0.5;
 
-// Reduce the volume of the flame sound by 50%
-flameSound.volume = 0.5;
-
 function gameLoop(timestamp) {
     checkGamepadMenuButton();
+    console.log(projectiles.length);
 
     // Handle gamepad input in any state
     handleGamepadInput();
@@ -5471,28 +5592,67 @@ function gameLoop(timestamp) {
         }
     }
 
-   // Laser management
+    // Laser management
     if (playerLaserActive && playerLaserPowerUpActive) {
         createPlayerLaserBeam(player.x, player.y, Math.cos(player.rotation), Math.sin(player.rotation), 'rgba(0, 255, 255, 1)');
+
         // Deactivate the laser if the duration has passed
         if (performance.now() - playerLaserPowerUpExpirationTime > PLAYER_LASER_DURATION) {
             playerLaserActive = false;
-            playerLasersArray = []; // Clear the laser beam and particles
             playerLaserPowerUpActive = false; // Laser power-up is consumed
+            playerLasersArray.forEach(laser => laser.clearParticles()); // Clear the laser beam and particles
+            playerLasersArray = [];
+            laserFireSound.pause();
+            laserFireSound.currentTime = 0;
+        } else {
+            // Ensure charging sound is stopped when laser is active
+            if (!laserFireSound.playing) {
+                laserFireSound.loop = true;
+                laserFireSound.play();
+            }
+            if (!laserFireSound.paused) {
+                chargingSound.pause();
+                chargingSound.currentTime = 0;
+            }
+        }
+    } else {
+        playerLasersArray.forEach(laser => laser.clearParticles()); // Clear particles when the laser is not active
+        playerLasersArray = [];
+        laserFireSound.pause();
+        laserFireSound.currentTime = 0;
+
+        if (isCharging && !chargingSound.playing) {
+            chargingSound.play();
         }
     }
 
     if (playerLaserActive) {
+        updateLaserPosition(); // Ensure laser position is updated
         updatePlayerLasers(deltaTime);
         checkPlayerLaserDamage();
     } else {
+        playerLasersArray.forEach(laser => laser.clearParticles()); // Clear particles when the laser is not active
         playerLasersArray = [];
     }
 
+    // Update laser position with player
+    const offsetX = Math.cos(player.rotation) * player.width / 2 - 5;
+    const offsetY = Math.sin(player.rotation) * player.width / 2 - 5;
+    const startX = player.x + offsetX;
+    const startY = player.y + offsetY;
+    const length = 500; // Length of the laser beam
+    const endX = startX + Math.cos(player.rotation) * length;
+    const endY = startY + Math.sin(player.rotation) * length;
+
+    playerLasersArray.forEach(laser => {
+        laser.setEndCoordinates(endX, endY);
+        laser.startX = startX;
+        laser.startY = startY;
+    });
+
     updateFlameParticles();
-    updatePlayerLasers(deltaTime);
-    checkFlameDamage(); // Add this line to check for flame damage to enemies, projectiles, and bosses
-    checkPlayerLaserDamage(); // Add this line to check for laser damage to enemies, projectiles, and bosses
+    checkFlameDamage(); // Check for flame damage to enemies, projectiles, and bosses
+
     requestAnimationFrame(gameLoop);
 }
 
