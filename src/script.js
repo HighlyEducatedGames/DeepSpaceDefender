@@ -54,16 +54,35 @@ class Game {
   }
 
   render(ctx, deltaTime) {
+    const projectiles = [this.player.projectiles];
+    console.log('projectiles: ', projectiles.flat().length);
+
     /* DRAW */
     this.stars.forEach((star) => star.draw(ctx)); // Draw stars before other elements
     this.coins.forEach((coin) => coin.draw(ctx));
+    projectiles.forEach((projectileArray) => {
+      projectileArray.forEach((projectile) => projectile.draw(ctx));
+    });
     this.player.draw(ctx);
     this.GUI.draw(ctx); // Draw the GUI last so it is always on top
 
     /* UPDATE */
     this.stars.forEach((star) => star.update());
+    projectiles.forEach((projectileArray) => {
+      projectileArray.forEach((projectile) => projectile.update(deltaTime));
+    });
     this.player.update(deltaTime);
     this.coins.forEach((coin) => coin.update());
+
+    /* DELETION */
+    this.coins.forEach((coin, index) => {
+      if (coin.markedForDeletion) this.coins.splice(index, 1);
+    });
+    for (let i = 0; i < projectiles.length; i++) {
+      for (let j = 0; j < projectiles[i].length; j++) {
+        if (projectiles[i][j].markedForDeletion) projectiles[i].splice(j, 1);
+      }
+    }
   }
 
   checkCollision(circle1, circle2) {

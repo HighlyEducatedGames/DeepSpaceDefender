@@ -18,6 +18,24 @@ class Controls {
         }
       },
     };
+    this.codes = {
+      invincibility: {
+        code: ['i', 'd', 'd', 'q', 'd'],
+        index: 0,
+        enabled: false,
+      },
+      unlimitedAmmunition: {
+        code: ['i', 'd', 'f', 'a'],
+        index: 0,
+        enabled: false,
+      },
+      unlimitedBoost: {
+        code: ['i', 'd', 'b', 'o', 'o', 's', 't'],
+        index: 0,
+        enabled: false,
+      },
+    };
+
     updateMenuText(this.usingGamepad.value);
 
     // Keyboard Listeners
@@ -181,18 +199,41 @@ class Controls {
   }
 
   handleKeyDown(e) {
+    // Track keys
     if (this.keys.indexOf(e.key) === -1) this.keys.push(e.key);
 
-    if (this.isPressed('m')) {
+    // Menu
+    if (this.isPressed('m') || this.isPressed('M')) {
       this.game.menu.toggleMenu();
     }
 
+    // Back out of menu option to main menu with Escape
     if (this.isPressed('Escape') && this.game.menu.isOpen) {
       menuBack();
+    }
+
+    // Restart game if game over
+    if (this.game.gameOver && (this.isPressed('b') || this.isPressed('B'))) {
+      this.game.resetGame();
+    }
+
+    // Check for codes
+    for (const key in this.codes) {
+      const code = this.codes[key];
+      if (e.key === code[code.index]) {
+        code.index++;
+        if (code.index === code.length) {
+          code.enabled = !code.enabled;
+          code.index = 0;
+        }
+      } else {
+        code.index = 0;
+      }
     }
   }
 
   handleKeyUp(e) {
+    // Track keys
     const index = this.keys.indexOf(e.key);
     if (index > -1) this.keys.splice(index, 1);
   }

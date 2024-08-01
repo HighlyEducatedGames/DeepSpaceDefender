@@ -1,3 +1,5 @@
+import RegularProjectile from './projectiles/RegularProjectile.js';
+
 class Player {
   constructor(game) {
     this.game = game;
@@ -20,6 +22,10 @@ class Player {
     this.isBoosting = false;
     this.boostEndTime = 0;
     this.boostCooldownEndTime = 0;
+    this.isCharging = false;
+    this.chargingSoundTimeout = null;
+    this.spacebarHeldTime = 0;
+    this.projectiles = [];
 
     this.images = {
       idle: new Image(),
@@ -33,6 +39,9 @@ class Player {
     this.sounds = {
       acceleration: new Audio('assets/audio/acceleration.mp3'),
       reverse: new Audio('assets/audio/reverse.mp3'),
+      fire: new Audio('assets/audio/fire.mp3'),
+      charging: new Audio('assets/audio/charging.mp3'),
+      flame: new Audio('assets/audio/flame.mp3'),
     };
     this.setVolumes(0.5); // Initialize volume at 0.5 // TODO: load from localstorage, maybe in window load event
   }
@@ -57,17 +66,19 @@ class Player {
   }
 
   update(deltaTime) {
+    const keys = this.game.keys; // Current keys state of controls
+
     // Rotate player
-    if (this.game.keys.isPressed('ArrowLeft') && !this.game.keys.isPressed('ArrowRight'))
+    if (keys.isPressed('ArrowLeft') && !keys.isPressed('ArrowRight'))
       this.rotation -= (this.rotationSpeed * deltaTime) / 1000;
-    if (this.game.keys.isPressed('ArrowRight') && !this.game.keys.isPressed('ArrowLeft'))
+    if (keys.isPressed('ArrowRight') && !keys.isPressed('ArrowLeft'))
       this.rotation += (this.rotationSpeed * deltaTime) / 1000;
 
     // Forward and reverse
-    if (this.game.keys.isPressed('ArrowUp')) {
+    if (keys.isPressed('ArrowUp')) {
       this.thrust = this.acceleration;
       if (this.sounds.acceleration.paused) this.sounds.acceleration.play();
-    } else if (this.game.keys.isPressed('ArrowDown')) {
+    } else if (keys.isPressed('ArrowDown')) {
       this.thrust = -this.acceleration;
       if (this.sounds.reverse.paused) this.sounds.reverse.play();
     } else {
@@ -75,44 +86,50 @@ class Player {
     }
 
     // Stop acceleration sound if no longer pressing ArrowUp
-    if (!this.game.keys.isPressed('ArrowUp') && !this.sounds.acceleration.paused) {
+    if (!keys.isPressed('ArrowUp') && !this.sounds.acceleration.paused) {
       this.sounds.acceleration.pause();
       this.sounds.acceleration.currentTime = 0;
     }
 
     // Stop reverse sound is no longer pressing ArrowDown or if ArrowUp IS pressed
-    if (
-      (!this.game.keys.isPressed('ArrowDown') || this.game.keys.isPressed('ArrowUp')) &&
-      !this.sounds.reverse.paused
-    ) {
+    if ((!keys.isPressed('ArrowDown') || keys.isPressed('ArrowUp')) && !this.sounds.reverse.paused) {
       this.sounds.reverse.pause();
       this.sounds.reverse.currentTime = 0;
     }
 
-    /*// Boost handling
-        if (this.isBoosting) {
-            this.velocity.x = Math.cos(this.rotation) * this.maxSpeed * 2;
-            this.velocity.y = Math.sin(this.rotation) * this.maxSpeed * 2;
-
-            // Check if the boost duration has ended
-            if (performance.now() >= boostEndTime) {
-                endBoost();
+    if (!this.game.menu.isOpen && !this.game.gameOver) {
+      // Space
+      if (keys.isPressed(' ')) {
+        if (!this.isCharging) {
+          this.isCharging = true;
+          this.spacebarHeldTime = performance.now();
+          this.chargingSoundTimeout = setTimeout(() => {
+            if (/*!flamethrowerActive &&*/ this.sounds.charging.paused) {
+              // TODO: flamethrower conditional
+              this.sounds.charging.play();
             }
-        } else {
-            this.velocity.x += Math.cos(this.rotation) * this.thrust * deltaTime / 1000;
-            this.velocity.y += Math.sin(this.rotation) * this.thrust * deltaTime / 1000;
+          }, 250);
+        }
+        this.fireProjectile();
+      } else {
+        this.isCharging = false;
+        clearTimeout(this.chargingSoundTimeout);
+        this.sounds.charging.pause();
+        this.sounds.charging.currentTime = 0;
+        this.sounds.flame.pause();
+        this.sounds.flame.currentTime = 0;
+      }
 
-            if (!keys['ArrowUp'] && !keys['ArrowDown']) {
-                player.velocity.x *= player.deceleration;
-                player.velocity.y *= player.deceleration;
-            }
-
-            const speed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.y * player.velocity.y);
-            if (speed > player.maxSpeed) {
-                player.velocity.x *= player.maxSpeed / speed;
-                player.velocity.y *= player.maxSpeed / speed;
-            }
-        }*/
+      if (keys.isPressed('b') || keys.isPressed('B')) {
+        // this.useBomb(); // TODO
+      }
+      if (keys.isPressed('x') || keys.isPressed('X')) {
+        // this.useBoost(); // TODO
+      }
+      if (keys.isPressed('h') || keys.isPressed('H')) {
+        // useHomingMissile(); // TODO
+      }
+    }
 
     // Basic movement
     this.velocity.x += (Math.cos(this.rotation) * this.thrust * deltaTime) / 1000;
@@ -148,6 +165,18 @@ class Player {
     for (const sound in this.sounds) {
       this.sounds[sound].volume = value;
     }
+  }
+
+  fireProjectile() {
+    if (this.game.menu.isOpen /*|| flamethrowerActive || empDisableFire*/) return; // TODO
+    const chargeDuration = (performance.now() - this.spacebarHeldTime) / 1000;
+    const projectilesToFire = /*powerUpActive ? 3 :*/ 1; // TODO power up
+    const angleOffset = /*powerUpActive ? (i - 1) * (Math.PI / 18) :*/ 0; // TODO power up
+    for (let i = 0; i < projectilesToFire; i++) {
+      this.projectiles.push(new RegularProjectile(this.game, angleOffset, chargeDuration, false));
+    }
+
+    this.sounds.fire.cloneNode().play();
   }
 }
 

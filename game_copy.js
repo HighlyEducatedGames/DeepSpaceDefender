@@ -2,10 +2,6 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 const soundEffectsVolumeSlider = document.getElementById('soundEffectsVolume');
-const PROJECTILE_DAMAGE = 10;
-const PARTIALLY_CHARGED_PROJECTILE_DAMAGE = 50;
-const FULLY_CHARGED_PROJECTILE_DAMAGE = 150;
-const SPLIT_PROJECTILE_DAMAGE = 25;
 const MAX_POWER_UPS = 3;
 const VERTICAL_MARGIN = 50;
 const MAX_REGULAR_ENEMIES = 6; // Adjust as needed
@@ -31,9 +27,6 @@ let powerUpSpawnTime = 0;
 let powerUpDirection = 1;
 let powerUpZigZagSpeed = 100;
 let powerUpSpawned = false;
-let spacebarPressedTime = 0;
-let isCharging = false;
-let chargingSoundTimeout;
 let bombs = 0;
 let bombPowerUp = null;
 let bombSpawnTime = 0;
@@ -95,7 +88,6 @@ let flameParticles = [];
 let flamethrowerExpirationTime = 0;
 
 // Load audio
-const fireSound = document.getElementById('fireSound');
 const collisionSound = document.getElementById('collisionSound');
 const chargingSound = document.getElementById('chargingSound');
 const boostSound = document.getElementById('boostSound');
@@ -106,12 +98,10 @@ const spiralShotSound = document.getElementById('spiralShotSound');
 const teleportSound = document.getElementById('teleportSound');
 const explosionSound = document.getElementById('explosionSound');
 const hazardSound = document.getElementById('hazardSound');
-const flameSound = document.getElementById('flameSound');
 const torchSound = document.getElementById('torchSound');
 const biomechEatSound = document.getElementById('biomechEatSound');
 
 const soundEffects = [
-  fireSound,
   collisionSound,
   chargingSound,
   boostSound,
@@ -131,97 +121,9 @@ const soundEffects = [
 bossMusic.volume = 0.5;
 soundEffects.forEach((sound) => (sound.volume = 0.5));
 
-// Cheat codes definition
-const cheatCodes = {
-  invincibility: ['i', 'd', 'd', 'q', 'd'],
-  bombsAndMissiles: ['i', 'd', 'f', 'a'],
-  unlimitedBoost: ['i', 'd', 'b', 'o', 'o', 's', 't'],
-};
-let currentCheatIndex = {
-  invincibility: 0,
-  bombsAndMissiles: 0,
-  unlimitedBoost: 0,
-};
-
-let isCheatCodeActivated = false; // Track if the cheat code is activated
-let isUnlimitedBoostActivated = false;
-
-function handleKeyUp(e) {
-  keys[e.key] = false;
-
-  if (e.key === ' ') {
-    fireProjectile();
-    isCharging = false;
-    clearTimeout(chargingSoundTimeout);
-    chargingSound.pause();
-    chargingSound.currentTime = 0;
-    flameSound.pause();
-    flameSound.currentTime = 0;
-  }
-}
-
 function handleKeyDown(e) {
-  // Check for invincibility cheat code sequence
-  if (e.key === cheatCodes.invincibility[currentCheatIndex.invincibility]) {
-    currentCheatIndex.invincibility++;
-    if (currentCheatIndex.invincibility === cheatCodes.invincibility.length) {
-      isInvincible = !isInvincible;
-      isCheatCodeActivated = isInvincible; // Track if cheat code is activated
-      currentCheatIndex.invincibility = 0;
-    }
-  } else {
-    currentCheatIndex.invincibility = 0;
-  }
-
-  // Check for bombs and missiles cheat code sequence
-  if (e.key === cheatCodes.bombsAndMissiles[currentCheatIndex.bombsAndMissiles]) {
-    currentCheatIndex.bombsAndMissiles++;
-    if (currentCheatIndex.bombsAndMissiles === cheatCodes.bombsAndMissiles.length) {
-      bombs += 20;
-      homingMissilesInventory += 20;
-      currentCheatIndex.bombsAndMissiles = 0;
-    }
-  } else {
-    currentCheatIndex.bombsAndMissiles = 0;
-  }
-
-  // Check for unlimited boost cheat code sequence
-  if (e.key === cheatCodes.unlimitedBoost[currentCheatIndex.unlimitedBoost]) {
-    currentCheatIndex.unlimitedBoost++;
-    if (currentCheatIndex.unlimitedBoost === cheatCodes.unlimitedBoost.length) {
-      isUnlimitedBoostActivated = !isUnlimitedBoostActivated; // Toggle unlimited boost
-      currentCheatIndex.unlimitedBoost = 0;
-    }
-  } else {
-    currentCheatIndex.unlimitedBoost = 0;
-  }
-
-  if (backgroundMusic.paused && !gameOver && !isMenuOpen) {
-    startBackgroundMusic();
-  }
-
   if (e.key === ' ' && isMenuOpen) {
-    toggleMenu();
     initializeGame();
-    requestAnimationFrame(gameLoop);
-  } else if (e.key === ' ' && !isMenuOpen) {
-    if (!isCharging) {
-      isCharging = true;
-      spacebarPressedTime = performance.now();
-      chargingSoundTimeout = setTimeout(() => {
-        if (!flamethrowerActive && !chargingSound.playing) {
-          chargingSound.play();
-        }
-      }, 250);
-    }
-  }
-
-  if (e.key === 'b' || e.key === 'B') {
-    useBomb();
-  }
-
-  if (e.key === 'x' || e.key === 'X') {
-    useBoost();
   }
 
   if (e.key === '0') {
@@ -247,10 +149,6 @@ function handleKeyDown(e) {
   if (e.key === '4') {
     level = 25;
     initLevel(level);
-  }
-
-  if (e.key === 'h' || e.key === 'H') {
-    useHomingMissile();
   }
 }
 
@@ -281,7 +179,6 @@ function initializeGame() {
   powerUpZigZagSpeed = 100;
   powerUpSpawned = false;
   spacebarPressedTime = 0;
-  isCharging = false;
   chargingSoundTimeout = null;
   nextLifeScore = 1500;
   bombs = 0;
@@ -333,12 +230,6 @@ function stopGameOverMusic() {
   gameOverMusic.pause();
   gameOverMusic.currentTime = 0;
 }
-
-document.addEventListener('keydown', function (event) {
-  if (event.code === 'KeyB' && gameOver) {
-    restartGame();
-  }
-});
 
 function updateCyberDragon(deltaTime, timestamp) {
   if (!cyberDragon || !cyberDragon.alive) return;
@@ -1632,35 +1523,7 @@ function updateProjectiles(deltaTime, timestamp) {
       projectile.directionX /= directionLength;
       projectile.directionY /= directionLength;
     }
-
-    projectile.x += (projectile.speed * projectile.directionX * deltaTime) / 1000;
-    projectile.y += (projectile.speed * projectile.directionY * deltaTime) / 1000;
-    projectile.traveledDistance += (projectile.speed * deltaTime) / 1000;
-
-    if (projectile.traveledDistance > projectile.maxDistance) {
-      projectiles.splice(index, 1);
-      return;
-    }
-
-    if (projectile.isCharged) {
-      if (projectile.traveledDistance >= 300) {
-        splitChargedProjectile(projectile);
-        projectiles.splice(index, 1);
-        return;
-      }
-    }
-
-    if (projectile.fromPlayer) {
-      if (projectile.x < 0) projectile.x = canvas.width;
-      if (projectile.x > canvas.width) projectile.x = 0;
-      if (projectile.y < 0) projectile.y = canvas.height;
-      if (projectile.y > canvas.height) projectile.y = 0;
-    }
-
-    if (projectile.traveledDistance > 800) {
-      projectiles.splice(index, 1);
-      return;
-    }
+    /*****************************/
 
     if (projectile.fromPlayer) {
       if (
@@ -3092,43 +2955,24 @@ function getOffScreenSpawnPosition(width, height) {
 }
 
 function fireProjectile() {
-  if (isMenuOpen || flamethrowerActive || empDisableFire) return; // Prevent firing if EMP effect is active
-
-  const chargeDuration = (performance.now() - spacebarPressedTime) / 1000;
-  let projectileSize = 5;
-  let projectileSpeed = 500;
-  let damage = PROJECTILE_DAMAGE;
-  let isCharged = false;
-
-  if (chargeDuration >= 2) {
-    projectileSize = 30;
-    projectileSpeed = 300;
-    damage = FULLY_CHARGED_PROJECTILE_DAMAGE;
-    isCharged = true;
-  } else if (chargeDuration >= 1) {
-    projectileSize = 20;
-    projectileSpeed = 400;
-    damage = PARTIALLY_CHARGED_PROJECTILE_DAMAGE;
+  if (empDisableFire) {
+    const nofireSoundClone = nofireSound.cloneNode();
+    nofireSoundClone.volume = nofireSound.volume; // Ensure the cloned sound has the same volume
+    nofireSoundClone.play(); // Play the cloned sound
+    return; // Prevent firing if EMP effect is active
   }
 
-  const projectilesToFire = powerUpActive ? 3 : 1;
-  for (let i = 0; i < projectilesToFire; i++) {
-    const angleOffset = powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
-    let projectile = {
-      x: player.x + (Math.cos(player.rotation + angleOffset) * player.width) / 2,
-      y: player.y + (Math.sin(player.rotation + angleOffset) * player.height) / 2,
-      width: projectileSize,
-      height: projectileSize,
-      speed: projectileSpeed,
-      directionX: Math.cos(player.rotation + angleOffset),
-      directionY: Math.sin(player.rotation + angleOffset),
-      fromPlayer: true,
-      isCharged: isCharged,
-      traveledDistance: 0,
-      damage: damage,
-      split: false,
-    };
-    projectiles.push(projectile);
+  if (playerLaserPowerUpActive) {
+    // Fire laser beam
+    console.log('Firing player laser'); // Debugging statement
+    createPlayerLaserBeam(
+      player.x,
+      player.y,
+      Math.cos(player.rotation),
+      Math.sin(player.rotation),
+      'rgba(0, 255, 255, 1)',
+    );
+    return;
   }
 
   if (reversePowerUpActive) {
@@ -3151,10 +2995,6 @@ function fireProjectile() {
       projectiles.push(reverseProjectile);
     }
   }
-
-  const fireSoundClone = fireSound.cloneNode();
-  fireSoundClone.volume = fireSound.volume;
-  fireSoundClone.play();
 }
 
 function splitChargedProjectile(projectile) {
@@ -3805,25 +3645,6 @@ function gameLoop(timestamp) {
       flameSound.pause();
       flameSound.currentTime = 0;
     }
-
-    if (keys[' '] && !gameOver) {
-      if (!isCharging) {
-        isCharging = true;
-        spacebarPressedTime = timestamp;
-        chargingSoundTimeout = setTimeout(() => {
-          if (!flamethrowerActive && !chargingSound.playing) {
-            chargingSound.play();
-          }
-        }, 250);
-      }
-    } else {
-      if (isCharging) {
-        isCharging = false;
-        clearTimeout(chargingSoundTimeout);
-        chargingSound.pause();
-        chargingSound.currentTime = 0;
-      }
-    }
   }
 
   updateFlameParticles();
@@ -4268,11 +4089,6 @@ function drawProjectile() {
         projectile.height,
       );
     } else if (projectile.fromPlayer) {
-      // Draw player projectiles as blue circles
-      ctx.fillStyle = 'blue';
-      ctx.beginPath();
-      ctx.arc(projectile.x, projectile.y, projectile.width / 2, 0, Math.PI * 2);
-      ctx.fill();
     } else {
       // Draw other enemy projectiles as red circles
       ctx.fillStyle = 'red';

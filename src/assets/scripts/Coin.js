@@ -10,6 +10,7 @@ class Coin {
     this.bobbingSpeed = 6;
     this.bobbingAmplitude = 15;
     this.bobbingAngle = Math.random() * Math.PI * 2;
+    this.markedForDeletion = false;
 
     this.image = new Image();
     this.image.src = 'assets/images/coin.png';
@@ -27,12 +28,12 @@ class Coin {
     // Check collision with player
     if (this.game.checkCollision(playerCircle, coinCircle)) {
       this.game.score += this.points;
-      // coins.splice(coinIndex, 1); // TODO: delete coin - mark for deletion??
 
       // Increase player's health by 2, but do not exceed the maximum health
       this.game.player.health = Math.min(this.game.player.health + 2, this.game.player.maxHealth);
 
-      this.sound.cloneNode().play(); // TODO: ask task why are we cloning the sound
+      this.sound.cloneNode().play();
+      this.markedForDeletion = true;
     }
 
     this.bobbingAngle += this.bobbingSpeed * 0.01; // Update the bobbing angle
