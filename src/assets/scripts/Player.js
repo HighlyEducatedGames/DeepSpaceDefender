@@ -7,6 +7,7 @@ class Player {
     this.height = 50;
     this.x = this.game.canvas.width * 0.5;
     this.y = this.game.canvas.height * 0.5;
+    this.shiftAmount = 5;
     this.speed = 200;
     this.rotation = -Math.PI * 0.5;
     this.rotationSpeed = 4;
@@ -48,8 +49,15 @@ class Player {
 
   draw(ctx) {
     // Draw player
+
+    // Adjust the translation rotation center based on player rotation
+    // because the yShift property moved the image off center.
+    // This keeps the player centered in the hitbox when rotating
+    const yAdjustPos = Math.sin(this.rotation) * this.shiftAmount;
+    const xAdjustPos = Math.cos(this.rotation) * this.shiftAmount;
+
     ctx.save();
-    ctx.translate(this.x, this.y);
+    ctx.translate(this.x - xAdjustPos, this.y - yAdjustPos);
     ctx.rotate(this.rotation);
 
     let image;
@@ -63,6 +71,14 @@ class Player {
 
     ctx.drawImage(image, -this.width * 0.5, -this.height * 0.5, this.width, this.height);
     ctx.restore();
+
+    // DEBUG - Hitbox
+    if (this.game.debug) {
+      ctx.strokeStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 
   update(deltaTime) {

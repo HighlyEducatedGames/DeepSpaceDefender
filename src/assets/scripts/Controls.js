@@ -7,7 +7,7 @@ class Controls {
     this.gamepadIndex = null;
     this.prevGamepadState = {};
     this.usingGamepad = {
-      _value: true,
+      _value: false,
       get value() {
         return this._value;
       },
@@ -50,6 +50,7 @@ class Controls {
 
     // Gamepad connection listeners
     window.addEventListener('gamepadconnected', (e) => {
+      this.usingGamepad.value = true;
       this.gamepadIndex = e.gamepad.index;
       this.prevGamepadState[this.gamepadIndex] = {
         buttons: [],
@@ -58,6 +59,7 @@ class Controls {
     });
 
     window.addEventListener('gamepaddisconnected', () => {
+      this.usingGamepad.value = false;
       delete this.prevGamepadState[this.gamepadIndex];
       this.gamepadIndex = null;
     });
@@ -201,6 +203,11 @@ class Controls {
   handleKeyDown(e) {
     // Track keys
     if (this.keys.indexOf(e.key) === -1) this.keys.push(e.key);
+
+    // Toggle debug mode
+    if (this.isPressed('Delete')) {
+      this.game.debug = !this.game.debug;
+    }
 
     // Menu
     if (this.isPressed('m') || this.isPressed('M')) {
