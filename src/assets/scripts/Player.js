@@ -118,7 +118,7 @@ class Player {
     this.velocity.x += (Math.cos(this.rotation) * this.thrust * deltaTime) / 1000;
     this.velocity.y += (Math.sin(this.rotation) * this.thrust * deltaTime) / 1000;
 
-    if (!this.game.keys.isPressed('ArrowUp') && !!this.game.keys.isPressed('ArrowDown')) {
+    if (!this.game.keys.isPressed('ArrowUp') && !this.game.keys.isPressed('ArrowDown')) {
       this.velocity.x *= this.deceleration;
       this.velocity.y *= this.deceleration;
     }
