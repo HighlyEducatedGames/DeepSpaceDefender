@@ -153,6 +153,17 @@ let playerLasersArray = [];
 let playerLaserPowerUp = null;
 let playerLaserSpawnedThisLevel = false;
 
+let particleBombPowerUp = null;
+let particleBombSpawnTime = 0;
+let particleBombSpawnedThisLevel = false;
+let particleBombActive = false;
+let particleBombExpirationTime = 0;
+let particleBombParticles = [];
+
+const particleBombPowerUpImage = new Image();
+particleBombPowerUpImage.src = 'assets/images/particleBomb.png';
+
+
 
 
 // Load images
@@ -267,8 +278,11 @@ const nofireSound = document.getElementById('nofireSound');
 const empSound = document.getElementById('empSound');
 const laserHitSound = document.getElementById('laserHitSound');
 const laserFireSound = document.getElementById('laserFireSound');
+const particleBombFireSound = document.getElementById('particleBombFireSound');
 
-const soundEffects = [coinSound, fireSound, powerUpSound, collisionSound, chargingSound, accelerationSound, bombSound, boostSound, reverseSound, homingMissileSound, allySound, allyOver, circularOrbitSound, followPlayerSound, lifeLostSound, tractorBeamSound, splatSound, empSound, laserChargingSound, spiralShotSound, teleportSound, explosionSound, hazardSound, flameSound, torchSound, biomechEatSound, nofireSound, empSound, laserHitSound, laserFireSound];
+
+
+const soundEffects = [coinSound, fireSound, powerUpSound, collisionSound, chargingSound, accelerationSound, bombSound, boostSound, reverseSound, homingMissileSound, allySound, allyOver, circularOrbitSound, followPlayerSound, lifeLostSound, tractorBeamSound, splatSound, empSound, laserChargingSound, spiralShotSound, teleportSound, explosionSound, hazardSound, flameSound, torchSound, biomechEatSound, nofireSound, empSound, laserHitSound, laserFireSound, particleBombFireSound];
 
 // Set initial volumes
 backgroundMusic.volume = 0.5;
@@ -438,8 +452,13 @@ function removeEventListeners() {
 function handleKeyUp(e) {
     keys[e.key] = false;
 
-    if (e.key === ' ') {
-        fireProjectile();
+   if (e.key === ' ') {
+        if (particleBombActive) {
+            createParticleBombParticles();
+        } else {
+            fireProjectile();
+        }
+
         isCharging = false;
         clearTimeout(chargingSoundTimeout);
         chargingSound.pause();
@@ -449,7 +468,6 @@ function handleKeyUp(e) {
         playerLaserActive = false;
         playerLasersArray = []; // Clear the laser beam and particles
     }
-
     if (e.key === 'ArrowUp') {
         accelerationSound.pause();
         accelerationSound.currentTime = 0;
@@ -513,6 +531,8 @@ function handleKeyDown(e) {
     } else if (e.key === ' ' && !isMenuOpen) {
         if (playerLaserPowerUpActive) {
             playerLaserActive = true;
+        } else if (particleBombActive) {
+            // No specific action needed for particle bomb in keydown, just let it fire in keyup
         } else if (!flamethrowerActive && !isCharging) {
             isCharging = true;
             spacebarPressedTime = performance.now();
@@ -2893,6 +2913,18 @@ function updateProjectiles(deltaTime, timestamp) {
             }
         });
     }
+
+    // Update particle bomb particles
+    for (let i = particleBombParticles.length - 1; i >= 0; i--) {
+        const particle = particleBombParticles[i];
+        particle.x += particle.speed * particle.directionX * deltaTime / 1000;
+        particle.y += particle.speed * particle.directionY * deltaTime / 1000;
+        particle.lifetime -= deltaTime;
+
+        if (particle.lifetime <= 0) {
+            particleBombParticles.splice(i, 1);
+        }
+    }
 }
 
 
@@ -3185,25 +3217,6 @@ function handleWormholeTeleportation() {
             });
         }
     });
-}
-
-
-function updatePowerUpPosition(powerUpObj, deltaTime) {
-    if (powerUpObj) {
-        powerUpObj.x += powerUpObj.speed * powerUpObj.directionX * deltaTime / 1000;
-        powerUpObj.y += powerUpObj.speed * powerUpObj.directionY * deltaTime / 1000;
-
-        if (powerUpObj.x < -powerUpObj.width || powerUpObj.x > canvas.width || powerUpObj.y < -powerUpObj.height || powerUpObj.y > canvas.height) {
-            if (powerUpObj === powerUp) powerUp = null;
-            else if (powerUpObj === bombPowerUp) bombPowerUp = null;
-            else if (powerUpObj === homingMissilePowerUp) homingMissilePowerUp = null;
-            else if (powerUpObj === shieldPowerUp) shieldPowerUp = null;
-            else if (powerUpObj === reversePowerUp) reversePowerUp = null;
-            else if (powerUpObj === boostPowerUp) boostPowerUp = null;
-            else if (powerUpObj === flamethrowerPowerUp) flamethrowerPowerUp = null;
-            else if (powerUpObj === playerLaserPowerUp) playerLaserPowerUp = null;
-        }
-    }
 }
 
 // Update the homing missile logic
@@ -3658,6 +3671,7 @@ function updateFlamethrowerPosition(deltaTime) {
 }
 
 function spawnPlayerLaserPowerUp() {
+if (level <= 10) return;
     const position = getOffScreenSpawnPosition(30, 30);
     playerLaserPowerUp = {
         x: position.x,
@@ -3749,8 +3763,13 @@ function resetPowerUpTimers() {
 
     playerLaserPowerUp = null;
     playerLaserSpawned = false;
-    playerLaserPowerUpSpawnTime = performance.now() + Math.random() * 5000 + 5000
+    playerLaserPowerUpSpawnTime = performance.now() + Math.random() * 5000 + 5000;
     playerLaserPowerUpSpawnedThisLevel = false;
+
+    particleBombPowerUp = null;
+    particleBombSpawned = false;
+    particleBombPowerUpSpawnTime = performance.now() + Math.random() * 5000 + 12000; // Adjust spawn time as needed
+    particleBombSpawnedThisLevel = false;
 }
 
 
@@ -4058,7 +4077,7 @@ if (boss && boss.health <= 0) {
 
 
 function updatePowerUps(deltaTime, timestamp) {
-    const totalPowerUps = (powerUp ? 1 : 0) + (bombPowerUp ? 1 : 0) + (homingMissilePowerUp ? 1 : 0) + (shieldPowerUp ? 1 : 0) + (reversePowerUp ? 1 : 0) + (boostPowerUp ? 1 : 0) + (playerLaserPowerUp ? 1 : 0) + (flamethrowerPowerUp ? 1 : 0);
+    const totalPowerUps = (powerUp ? 1 : 0) + (bombPowerUp ? 1 : 0) + (homingMissilePowerUp ? 1 : 0) + (shieldPowerUp ? 1 : 0) + (reversePowerUp ? 1 : 0) + (boostPowerUp ? 1 : 0) + (playerLaserPowerUp ? 1 : 0) + (flamethrowerPowerUp ? 1 : 0) + (particleBombPowerUp ? 1 : 0);
 
     if (!powerUp && timestamp >= powerUpSpawnTime && !powerUpSpawnedThisLevel && totalPowerUps < MAX_POWER_UPS) {
         spawnPowerUp();
@@ -4085,14 +4104,16 @@ function updatePowerUps(deltaTime, timestamp) {
         boostPowerUpSpawnedThisLevel = true;
     }
     if (!flamethrowerPowerUp && timestamp >= flamethrowerSpawnTime && !flamethrowerSpawnedThisLevel && totalPowerUps < MAX_POWER_UPS) {
-        console.log('Spawning Player Laser Power-Up at:', timestamp);
         spawnFlamethrowerPowerUp();
         flamethrowerSpawnedThisLevel = true;
     }
     if (!playerLaserPowerUp && timestamp >= playerLaserPowerUpSpawnTime && !playerLaserPowerUpSpawnedThisLevel && totalPowerUps < MAX_POWER_UPS) {
-        console.log('Spawning Player Laser Power-Up at:', timestamp);
         spawnPlayerLaserPowerUp();
         playerLaserPowerUpSpawnedThisLevel = true;
+    }
+    if (!particleBombPowerUp && timestamp >= particleBombSpawnTime && !particleBombSpawnedThisLevel && totalPowerUps < MAX_POWER_UPS) {
+        spawnParticleBombPowerUp();
+        particleBombSpawnedThisLevel = true;
     }
 
     updateSineWavePowerUp(powerUp, deltaTime, 'powerUp');
@@ -4103,6 +4124,7 @@ function updatePowerUps(deltaTime, timestamp) {
     updateSineWavePowerUp(boostPowerUp, deltaTime, 'boostPowerUp');
     updateSineWavePowerUp(flamethrowerPowerUp, deltaTime, 'flamethrowerPowerUp');
     updateSineWavePowerUp(playerLaserPowerUp, deltaTime, 'playerLaserPowerUp');
+    updateSineWavePowerUp(particleBombPowerUp, deltaTime, 'particleBombPowerUp');
 }
 
 function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
@@ -4131,9 +4153,12 @@ function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
             } else if (type === 'flamethrowerPowerUp') {
                 flamethrowerActive = true;
                 flamethrowerExpirationTime = performance.now() + 10000; // Set the flamethrower duration to 10 seconds
-            } else if (type === 'playerLaserPowerUp') { // Activate the player laser power-up
+            } else if (type === 'playerLaserPowerUp') {
                 playerLaserPowerUpActive = true;
-    		playerLaserPowerUpExpirationTime = performance.now() + 10000;
+                playerLaserPowerUpExpirationTime = performance.now() + 10000; // Set the player laser power-up duration to 10 seconds
+            } else if (type === 'particleBombPowerUp') {
+                particleBombActive = true;
+                particleBombExpirationTime = performance.now() + 10000; // Set the particle bomb power-up duration to 10 seconds
             }
             const powerUpSoundClone = powerUpSound.cloneNode();
             powerUpSoundClone.volume = soundEffectsVolumeSlider.value;
@@ -4148,6 +4173,7 @@ function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
             else if (type === 'boostPowerUp') boostPowerUp = null;
             else if (type === 'flamethrowerPowerUp') flamethrowerPowerUp = null;
             else if (type === 'playerLaserPowerUp') playerLaserPowerUp = null;
+            else if (type === 'particleBombPowerUp') particleBombPowerUp = null;
         } else {
             powerUpObj.x += powerUpObj.speed * powerUpObj.directionX * deltaTime / 1000;
             powerUpObj.y += Math.sin(powerUpObj.x / 50) * 1.5; // Sine wave motion
@@ -4166,6 +4192,7 @@ function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
                 else if (type === 'boostPowerUp') boostPowerUp = null;
                 else if (type === 'flamethrowerPowerUp') flamethrowerPowerUp = null;
                 else if (type === 'playerLaserPowerUp') playerLaserPowerUp = null;
+                else if (type === 'particleBombPowerUp') particleBombPowerUp = null;
             }
         }
     }
@@ -4405,13 +4432,7 @@ function fireProjectile() {
         return; // Prevent firing if EMP effect is active
     }
 
-    if (playerLaserPowerUpActive) {
-        // Fire laser beam
-        console.log('Firing player laser'); // Debugging statement
-        createPlayerLaserBeam(player.x, player.y, Math.cos(player.rotation), Math.sin(player.rotation), 'rgba(0, 255, 255, 1)');
-        return;
-    }
-
+    // Regular projectile firing code
     const chargeDuration = (performance.now() - spacebarPressedTime) / 1000;
     let projectileSize = 5;
     let projectileSpeed = 500;
@@ -5360,6 +5381,236 @@ function updateBombs(deltaTime) {
     }
 }
 
+// particle bomb 
+function spawnParticleBombPowerUp() {
+if (level <= 15) return;
+    const position = getOffScreenSpawnPosition(30, 30);
+    particleBombPowerUp = {
+        x: position.x,
+        y: position.y,
+        width: 30,
+        height: 30,
+        speed: 100,
+        directionX: position.directionX,
+        directionY: position.directionY
+    };
+    particleBombSpawnedThisLevel = true;
+}
+
+function updateParticleBombPosition(deltaTime) {
+    if (particleBombPowerUp) {
+        particleBombPowerUp.x += particleBombPowerUp.speed * particleBombPowerUp.directionX * deltaTime / 1000;
+        particleBombPowerUp.y += particleBombPowerUp.speed * particleBombPowerUp.directionY * deltaTime / 1000;
+
+        if (particleBombPowerUp.x < -particleBombPowerUp.width || particleBombPowerUp.x > canvas.width || particleBombPowerUp.y < -particleBombPowerUp.height || particleBombPowerUp.y > canvas.height) {
+            particleBombPowerUp = null;
+        }
+    }
+}
+
+function createParticleBombParticles() {
+            const particleBombFireSoundClone = particleBombFireSound.cloneNode();
+            particleBombFireSoundClone.volume = particleBombFireSound.volume;
+            particleBombFireSoundClone.play();
+    const numParticles = 20; // Number of particles to generate
+    for (let i = 0; i < numParticles; i++) {
+        const angle = (i / numParticles) * Math.PI * 2;
+        const particle = {
+            x: player.x,
+            y: player.y,
+            size: 5,
+            speed: 300,
+            directionX: Math.cos(angle),
+            directionY: Math.sin(angle),
+            alpha: 1, // Initial opacity
+            fadeRate: 0.03 // Rate at which the particle fades out
+        };
+        particleBombParticles.push(particle);
+    }
+}
+
+function updateParticleBombParticles(deltaTime) {
+    for (let i = particleBombParticles.length - 1; i >= 0; i--) {
+        const particle = particleBombParticles[i];
+        particle.x += particle.speed * particle.directionX * deltaTime / 1000;
+        particle.y += particle.speed * particle.directionY * deltaTime / 1000;
+        particle.alpha -= particle.fadeRate; // Reduce alpha
+
+        if (particle.alpha <= 0) {
+            particleBombParticles.splice(i, 1);
+        }
+    }
+}
+
+function drawParticleBombParticles(ctx) {
+    particleBombParticles.forEach(particle => {
+        ctx.fillStyle = `rgba(255, 165, 0, ${particle.alpha})`; // Use the alpha value
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+}
+
+
+function checkParticleBombDamage() {
+    particleBombParticles.forEach(particle => {
+        // Check damage to regular enemies
+        enemies.forEach((enemy, enemyIndex) => {
+            const dx = particle.x - (enemy.x + enemy.width / 2);
+            const dy = particle.y - (enemy.y + enemy.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < enemy.width / 2) {
+                enemy.health -= 10; // Adjust the damage value as needed
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+
+                if (enemy.health <= 0) {
+                    // Handle enemy death
+                    score += 10; // Increase score or any other logic
+                    createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+
+                    // Call the appropriate respawn function based on enemy type
+                    if (enemy.type === 'enemyTank') {
+                        respawnEnemyTank(5000);
+                    } else if (enemy.type === 'stealthEnemy') {
+                        respawnStealthEnemy(7000);
+                    } else {
+                        const enemySpeed = 50 + level * 10;
+                        respawnEnemyAfterDelay(enemySpeed, 7000);
+                    }
+
+                    enemies.splice(enemyIndex, 1);
+                }
+            }
+        });
+
+        // Check damage to projectiles
+        projectiles.forEach((projectile, index) => {
+            const dx = particle.x - (projectile.x + projectile.width / 2);
+            const dy = particle.y - (projectile.y + projectile.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < projectile.width / 2) {
+                // Remove the projectile
+                projectiles.splice(index, 1);
+            }
+        });
+
+        // Check damage to bosses
+        if (boss) {
+            const dx = particle.x - (boss.x + boss.width / 2);
+            const dy = particle.y - (boss.y + boss.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < boss.width / 2) {
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+                boss.health -= 1; 
+                if (boss.health <= 0) {
+                    // Handle boss death
+                    score += 1000; // Increase score or any other logic
+                    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+                    explosionSound.play();
+
+                    boss = null; // Remove the boss
+                }
+            }
+        }
+
+        // Check damage to Cyber Dragon
+        if (cyberDragon) {
+            const dx = particle.x - (cyberDragon.x + cyberDragon.width / 2);
+            const dy = particle.y - (cyberDragon.y + cyberDragon.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < cyberDragon.width / 2) {
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+                cyberDragon.health -= 3; 
+                if (cyberDragon.health <= 0) {
+                    // Handle Cyber Dragon death
+                    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                    explosionSound.play();
+                    score += 3000; // Increase score or any other logic
+                    cyberDragon = null; // Remove the Cyber Dragon
+                }
+            }
+        }
+
+        // Check damage to Biomech
+        if (biomechLeviathan) {
+            const dx = particle.x - (biomechLeviathan.x + biomechLeviathan.width / 2);
+            const dy = particle.y - (biomechLeviathan.y + biomechLeviathan.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < biomechLeviathan.width / 2) {
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+                biomechLeviathan.health -= 2; 
+                if (biomechLeviathan.health <= 0) {
+                    // Handle Biomech death
+                    score += 2000; // Increase score or any other logic
+                    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                    explosionSound.play();
+
+                    biomechLeviathan = null; // Remove the Biomech
+                }
+            }
+        }
+
+        // Check damage to Temporal Serpent head only
+        if (temporalSerpent) {
+            const head = temporalSerpent.segments[0];
+            const dx = particle.x - (head.x + head.radius);
+            const dy = particle.y - (head.y + head.radius);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < head.radius) {
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+                temporalSerpent.health -= 4; // Slow but constant damage to the Temporal Serpent
+                if (temporalSerpent.health <= 0) {
+                    // Handle Temporal Serpent death
+                    score += 3000; // Increase score or any other logic
+                    createExplosion(head.x + head.width / 2, head.y + head.height / 2);
+                    explosionSound.play();
+
+                    temporalSerpent = null; // Remove the Temporal Serpent
+                }
+            }
+        }
+
+        // Check damage to hazardous zones
+        hazardousZones.forEach((zone, zoneIndex) => {
+            const dx = particle.x - zone.x;
+            const dy = particle.y - zone.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < zone.radius) {
+                // Remove the hazardous zone
+                hazardousZones.splice(zoneIndex, 1);
+            }
+        });
+
+        // Check damage to hazard particles
+        hazardParticles.forEach((hazardParticle, hazardIndex) => {
+            const dx = particle.x - hazardParticle.x;
+            const dy = particle.y - hazardParticle.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < hazardParticle.size) {
+                // Remove the hazard particle
+                hazardParticles.splice(hazardIndex, 1);
+            }
+        });
+    });
+}
 
 
 function useHomingMissile() {
@@ -5423,7 +5674,6 @@ flameSound.volume = 0.5;
 
 function gameLoop(timestamp) {
     checkGamepadMenuButton();
-    console.log(projectiles.length);
 
     // Handle gamepad input in any state
     handleGamepadInput();
@@ -5595,8 +5845,19 @@ function gameLoop(timestamp) {
         laser.startY = startY;
     });
 
+    if (particleBombActive) {
+        if (timestamp > particleBombExpirationTime) {
+            particleBombActive = false;
+        }
+    }
+
+    // Update particle bomb particles
+    updateParticleBombParticles(deltaTime);
+    checkParticleBombDamage();
+
+    // update flame thrower particles
     updateFlameParticles();
-    checkFlameDamage(); // Check for flame damage to enemies, projectiles, and bosses
+    checkFlameDamage(); 
 
     requestAnimationFrame(gameLoop);
 }
@@ -5634,15 +5895,6 @@ function isBoostReady() {
 function update(deltaTime, timestamp) {
     const rotationSpeed = 4;
     const thrustAcceleration = 300;
-
-    // Update power-up positions
-    updatePowerUpPosition(powerUp, deltaTime);
-    updatePowerUpPosition(bombPowerUp, deltaTime);
-    updatePowerUpPosition(homingMissilePowerUp, deltaTime);
-    updatePowerUpPosition(shieldPowerUp, deltaTime);
-    updatePowerUpPosition(reversePowerUp, deltaTime);
-    updatePowerUpPosition(boostPowerUp, deltaTime);
-    updatePowerUpPosition(playerLaserPowerUp, deltaTime);
 
     updateInkClouds(deltaTime);  // Update ink cloud here
     updateLaserCharge(deltaTime);
@@ -6300,6 +6552,11 @@ function draw() {
         ctx.drawImage(playerLaserPowerUpImage, playerLaserPowerUp.x, playerLaserPowerUp.y, playerLaserPowerUp.width, playerLaserPowerUp.height);
     }
 
+    if (particleBombPowerUp) {
+        ctx.drawImage(particleBombPowerUpImage, particleBombPowerUp.x, particleBombPowerUp.y, particleBombPowerUp.width, particleBombPowerUp.height);
+    }
+
+
     // Draw projectiles
     projectiles.forEach(projectile => {
         if (projectile.isLaser) {
@@ -6347,6 +6604,9 @@ function draw() {
 
     // Draw particles
     drawParticles(ctx);
+
+    // Draw particle bomb particles
+    drawParticleBombParticles(ctx);
 
     if (reversePowerUpActive) {
         ctx.strokeStyle = 'yellow';
