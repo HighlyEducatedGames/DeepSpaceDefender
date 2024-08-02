@@ -43,6 +43,7 @@ class Player {
       fire: new Audio('assets/audio/fire.mp3'),
       charging: new Audio('assets/audio/charging.mp3'),
       flame: new Audio('assets/audio/flame.mp3'),
+      teleport: new Audio('assets/audio/teleport.mp3'),
     };
     this.setVolumes(0.5); // Initialize volume at 0.5 // TODO: load from localstorage, maybe in window load event
   }

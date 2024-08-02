@@ -38,6 +38,10 @@ class TemporalSerpent {
     this.images.head.src = 'assets/images/serpentHead.png';
     this.images.segment.src = 'assets/images/serpentSegment.png';
 
+    this.sounds = {
+      hazard: new Audio('assets/audio/hazardZone.mp3'),
+    };
+
     spawnOffScreenRandomSide(this, 100);
   }
 

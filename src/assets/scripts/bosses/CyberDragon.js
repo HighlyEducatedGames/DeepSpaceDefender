@@ -38,6 +38,7 @@ class CyberDragon {
 
     this.sounds = {
       laserCharging: new Audio('assets/audio/laser_charging.mp3'),
+      spiralShot: new Audio('assets/audio/spiralShot.mp3'),
     };
 
     spawnOffScreenRandomSide(this, 100);
