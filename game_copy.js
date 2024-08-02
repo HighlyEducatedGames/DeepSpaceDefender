@@ -14,6 +14,7 @@ let isBoosting = false;
 let boostEndTime = 0;
 let boostCooldownEndTime = 0;
 let isInvincible = false;
+this.bombPowerUp = null;
 let bossHitByBomb = false;
 let biomechHitByBomb = false;
 let cyberDragonHitByBomb = false;
@@ -27,18 +28,6 @@ let powerUpSpawnTime = 0;
 let powerUpDirection = 1;
 let powerUpZigZagSpeed = 100;
 let powerUpSpawned = false;
-let bombs = 0;
-let bombPowerUp = null;
-let bombSpawnTime = 0;
-let bombActive = false;
-let bombFlashTime = 0;
-let bombSpawned = false;
-let bomb = {
-  x: 0,
-  y: 0,
-  radius: BOMB_RADIUS,
-  active: false,
-};
 let boss = null;
 let homingMissilePowerUp = null;
 let homingMissileSpawned = false;
@@ -88,18 +77,19 @@ let flameParticles = [];
 let flamethrowerExpirationTime = 0;
 
 // Load audio
-const collisionSound = document.getElementById('collisionSound');
-const chargingSound = document.getElementById('chargingSound');
-const boostSound = document.getElementById('boostSound');
-const lifeLostSound = document.getElementById('lifeLostSound');
-const splatSound = document.getElementById('splatSound');
-const empSound = document.getElementById('empSound'); // Add the EMP sound file
+// CYBER
 const spiralShotSound = document.getElementById('spiralShotSound');
+
+// WORHOLES
 const teleportSound = document.getElementById('teleportSound');
+
+// MULTIPLE - SPLIT
 const explosionSound = document.getElementById('explosionSound');
+
+// TEMPORAL
 const hazardSound = document.getElementById('hazardSound');
-const torchSound = document.getElementById('torchSound');
-const biomechEatSound = document.getElementById('biomechEatSound');
+
+
 
 const soundEffects = [
   collisionSound,
@@ -3249,11 +3239,6 @@ function checkFlameDamage() {
 }
 
 function useBomb() {
-  if (bombs > 0 && !bombActive) {
-    bombs--;
-    bombActive = true;
-    bombFlashTime = performance.now(); // Set the flash start time
-
     // Play bomb sound
     bombSound.currentTime = 0;
     bombSound.play();

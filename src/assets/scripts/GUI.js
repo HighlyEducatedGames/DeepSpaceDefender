@@ -21,6 +21,13 @@ class GUI {
     this.shieldBarHeight = 20;
     this.shieldBarX = this.chargeBarX;
     this.shieldBarY = this.chargeBarY + this.chargeBarHeight + 5;
+
+    this.images = {
+      bomb: new Image(),
+      missile: new Image(),
+    };
+    this.images.bomb.src = 'assets/images/bombPowerUp.png';
+    this.images.missile.src = 'assets/images/homingMissilePowerUp.png';
   }
 
   draw(ctx) {
@@ -47,7 +54,7 @@ class GUI {
   }
 
   drawBoostBar(ctx) {
-    ctx.fillStyle = 'gray';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(this.boostBarX, this.boostBarY, this.boostBarWidth, this.boostBarHeight);
 
     const currentTime = performance.now();
@@ -63,9 +70,11 @@ class GUI {
       );
     }
 
-    ctx.fillStyle = 'green';
+    ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
     ctx.fillRect(this.boostBarX, this.boostBarY, this.boostBarWidth * boostProgress, this.boostBarHeight);
+
     ctx.strokeStyle = 'gray';
+    ctx.strokeRect(this.boostBarX, this.boostBarY, this.boostBarWidth, this.boostBarHeight);
 
     if (this.game.powerUps.boost.isActive) {
       ctx.strokeStyle = 'white';
@@ -75,11 +84,11 @@ class GUI {
   }
 
   drawHealthBar(ctx) {
-    ctx.fillStyle = 'gray';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(this.healthBarX, this.healthBarY, this.healthBarWidth, this.healthBarHeight);
 
     const healthRatio = this.game.player.health / this.game.player.maxHealth;
-    ctx.fillStyle = 'red';
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
     ctx.fillRect(this.healthBarX, this.healthBarY, this.healthBarWidth * healthRatio, this.healthBarHeight);
 
     ctx.strokeStyle = 'gray';
@@ -87,16 +96,19 @@ class GUI {
   }
 
   drawChargeBar(ctx) {
-    const isCharging = false; // TODO get from player
-    const spacebarPressedTime = 0; // TODO get from keys??
+    const isCharging = this.game.player.isCharging;
+    const spacebarHeldTime = this.game.player.spacebarHeldTime;
     const flamethrowerActive = false; // TODO get from flamethrower class??
 
-    ctx.fillStyle = 'gray';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(this.chargeBarX, this.chargeBarY, this.chargeBarWidth, this.chargeBarHeight);
+
+    ctx.strokeStyle = 'gray';
+    ctx.strokeRect(this.chargeBarX, this.chargeBarY, this.chargeBarWidth, this.chargeBarHeight);
 
     if (isCharging) {
       const currentTime = performance.now();
-      const chargeDuration = (currentTime - spacebarPressedTime) / 1000;
+      const chargeDuration = (currentTime - spacebarHeldTime) / 1000;
       const chargeProgress = Math.min(chargeDuration / 2, 1);
 
       if (flamethrowerActive) {
@@ -128,7 +140,7 @@ class GUI {
     const shieldActive = false; // TODO get from player??
     const shieldPowerUpExpirationTime = 0; // TODO get from player??
 
-    ctx.fillStyle = 'gray';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(this.shieldBarX, this.shieldBarY, this.shieldBarWidth, this.shieldBarHeight);
 
     if (shieldActive) {
@@ -138,7 +150,7 @@ class GUI {
       ctx.fillRect(this.shieldBarX, this.shieldBarY, this.shieldBarWidth * shieldProgress, this.shieldBarHeight);
     }
 
-    ctx.strokeStyle = 'black';
+    ctx.strokeStyle = 'gray';
     ctx.strokeRect(this.shieldBarX, this.shieldBarY, this.shieldBarWidth, this.shieldBarHeight);
   }
 
@@ -149,13 +161,13 @@ class GUI {
     ctx.font = '15px "Press Start 2P", cursive';
     ctx.fillText(':' + this.game.player.lives, livesIconX + 25, this.healthBarY + 18);
 
-    // const bombIconX = this.chargeBarX + this.chargeBarWidth + 10; // TODO once bombs are established
-    // ctx.drawImage(bombPowerUpImage, bombIconX, this.chargeBarY, 20, 20);
-    // ctx.fillText(': ' + bombs, bombIconX + 25, this.chargeBarY + 15);
+    const bombIconX = this.chargeBarX + this.chargeBarWidth + 10;
+    ctx.drawImage(this.images.bomb, bombIconX, this.chargeBarY, 20, 20);
+    ctx.fillText(':' + this.game.player.bombs.length, bombIconX + 25, this.chargeBarY + 18);
 
-    // const missileIconX = this.shieldBarX + this.shieldBarWidth + 10; // TODO once missiles are established
-    // ctx.drawImage(homingMissilePowerUpImage, missileIconX, this.shieldBarY, 20, 20);
-    // ctx.fillText(': ' + homingMissilesInventory, missileIconX + 25, this.shieldBarY + 15);
+    const missileIconX = this.shieldBarX + this.shieldBarWidth + 10;
+    ctx.drawImage(this.images.missile, missileIconX, this.shieldBarY, 20, 20);
+    ctx.fillText(':' + this.game.player.missiles.length, missileIconX + 25, this.shieldBarY + 18);
   }
 }
 

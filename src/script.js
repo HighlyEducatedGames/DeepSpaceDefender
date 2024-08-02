@@ -16,6 +16,7 @@ class Game {
     this.titleScreenImage = new Image();
     this.titleScreenImage.src = 'assets/images/title_screen.png';
     this.backgroundMusic = new Audio('assets/audio/background-music.mp3');
+    this.debug = true;
 
     // Instantiate resettable properties
     this.resetGame();

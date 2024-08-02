@@ -227,9 +227,9 @@ class Controls {
     // Check for codes
     for (const key in this.codes) {
       const code = this.codes[key];
-      if (e.key === code[code.index]) {
+      if (e.key === code.code[code.index]) {
         code.index++;
-        if (code.index === code.length) {
+        if (code.index === code.code.length) {
           code.enabled = !code.enabled;
           code.index = 0;
         }

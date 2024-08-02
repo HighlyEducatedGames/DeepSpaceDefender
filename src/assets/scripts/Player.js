@@ -7,7 +7,7 @@ class Player {
     this.height = 50;
     this.x = this.game.canvas.width * 0.5;
     this.y = this.game.canvas.height * 0.5;
-    this.offset = 5;
+    this.offset = 4;
     this.speed = 200;
     this.rotation = -Math.PI * 0.5;
     this.rotationSpeed = 4;
@@ -27,6 +27,12 @@ class Player {
     this.chargingSoundTimeout = null;
     this.spacebarHeldTime = 0;
     this.projectiles = [];
+    this.bombs = [];
+    this.missiles = [];
+    // this.bombSpawnTime = 0;
+    // this.bombActive = false;
+    // this.bombFlashTime = 0;
+    // this.bombSpawned = false;
 
     this.images = {
       idle: new Image(),
@@ -43,7 +49,10 @@ class Player {
       fire: new Audio('assets/audio/fire.mp3'),
       charging: new Audio('assets/audio/charging.mp3'),
       flame: new Audio('assets/audio/flame.mp3'),
-      teleport: new Audio('assets/audio/teleport.mp3'),
+      torchedEnemy: new Audio('assets/audio/torch.mp3'),
+      collision: new Audio('assets/audio/collision.mp3'),
+      boost: new Audio('assets/audio/boost.mp3'),
+      lostLife: new Audio('assets/audio/lifeLost.mp3'),
     };
     this.setVolumes(0.5); // Initialize volume at 0.5 // TODO: load from localstorage, maybe in window load event
   }
@@ -72,6 +81,18 @@ class Player {
 
     ctx.drawImage(image, -this.width * 0.5, -this.height * 0.5, this.width, this.height);
     ctx.restore();
+
+    // Invincibility Shield
+    if (this.game.keys.codes.invincibility.enabled) {
+      const gradient = ctx.createRadialGradient(this.x, this.y, this.width / 2, this.x, this.y, this.width);
+      gradient.addColorStop(0, 'rgba(255, 69, 0, 0.5)'); // Red/orange color with 50% opacity
+      gradient.addColorStop(0.7, 'rgba(255, 140, 0, 0.2)'); // Lighter orange color with 20% opacity
+      gradient.addColorStop(1, 'rgba(255, 165, 0, 0)'); // Even lighter orange color with 0% opacity
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
+      ctx.fill();
+    }
 
     // DEBUG - Hitbox
     if (this.game.debug) {
@@ -138,7 +159,7 @@ class Player {
       }
 
       if (keys.isPressed('b') || keys.isPressed('B')) {
-        // this.useBomb(); // TODO
+        this.useBomb();
       }
       if (keys.isPressed('x') || keys.isPressed('X')) {
         // this.useBoost(); // TODO
@@ -194,6 +215,14 @@ class Player {
     }
 
     this.sounds.fire.cloneNode().play();
+  }
+
+  useBomb() {
+    if (this.bombs <= 0 || this.bombActive) return;
+
+    this.bombs--;
+    this.bombActive = true;
+    this.bombFlashTime = performance.now();
   }
 }
 

@@ -24,6 +24,10 @@ class BiomechLeviathan {
 
     this.sounds = {
       tractorBeam: new Audio('assets/audio/tractorBeamSound.mp3'),
+      emp: new Audio('assets/audio/empSound.mp3'),
+      eat: new Audio('assets/audio/biomechEat.mp3'),
+      splat: new Audio('assets/audio/splatSound.mp3'),
+      noFire: new Audio('assets/audio/nofire.mp3'),
     };
 
     spawnOffScreenRandomSide(this, 100);
