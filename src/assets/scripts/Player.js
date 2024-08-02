@@ -137,6 +137,8 @@ class Player {
 
     if (!this.game.menu.isOpen && !this.game.gameOver) {
       // Space
+      if (keys.justPressed(' ')) this.fireProjectile();
+
       if (keys.isPressed(' ')) {
         if (!this.isCharging) {
           this.isCharging = true;
@@ -148,7 +150,6 @@ class Player {
             }
           }, 250);
         }
-        this.fireProjectile();
       } else {
         this.isCharging = false;
         clearTimeout(this.chargingSoundTimeout);
@@ -206,6 +207,7 @@ class Player {
   }
 
   fireProjectile() {
+    console.log('FIRE');
     if (this.game.menu.isOpen /*|| flamethrowerActive || empDisableFire*/) return; // TODO
     const chargeDuration = (performance.now() - this.spacebarHeldTime) / 1000;
     const projectilesToFire = /*powerUpActive ? 3 :*/ 1; // TODO power up

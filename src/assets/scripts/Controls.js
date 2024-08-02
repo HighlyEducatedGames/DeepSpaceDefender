@@ -3,7 +3,7 @@
 class Controls {
   constructor(game) {
     this.game = game;
-    this.keys = [];
+    this.keys = {};
     this.gamepadIndex = null;
     this.prevGamepadState = {};
     this.usingGamepad = {
@@ -24,7 +24,7 @@ class Controls {
         index: 0,
         enabled: false,
       },
-      unlimitedAmmunition: {
+      unlimitedAmmo: {
         code: ['i', 'd', 'f', 'a'],
         index: 0,
         enabled: false,
@@ -66,7 +66,11 @@ class Controls {
   }
 
   isPressed(key) {
-    return this.keys.indexOf(key) > -1;
+    return this.keys[key];
+  }
+
+  justPressed(key) {
+    return this.keys[key] && this.keys[key].firstFrame;
   }
 
   handleGamepadInput() {
@@ -200,13 +204,25 @@ class Controls {
     return this.prevGamepadState[this.gamepadIndex].buttons[index];
   }
 
+  update() {
+    // Set any existing keys with true to false signifying the inout is no longer on the first frame discovered
+    /*for (const key in this.keys) {
+      if (this.keys[key].firstFrame) this.keys[key].firstFrame = false;
+    }*/
+  }
+
   handleKeyDown(e) {
     // Track keys
-    if (this.keys.indexOf(e.key) === -1) this.keys.push(e.key);
+    if (this.keys[e.key]) {
+      if (this.keys[e.key].firstFrame) this.keys[e.key] = { firstFrame: false };
+    } else {
+      this.keys[e.key] = { firstFrame: true };
+    }
 
     // Toggle debug mode
     if (this.isPressed('Delete')) {
       this.game.debug = !this.game.debug;
+      this.codes.invincibility.enabled = this.game.debug;
     }
 
     // Menu
@@ -241,8 +257,7 @@ class Controls {
 
   handleKeyUp(e) {
     // Track keys
-    const index = this.keys.indexOf(e.key);
-    if (index > -1) this.keys.splice(index, 1);
+    if (this.keys[e.key]) delete this.keys[e.key];
   }
 
   // Check if 2 arrays contain the same data, not by reference, but by values
