@@ -85,11 +85,11 @@ class Game {
     }
   }
 
-  checkCollision(circle1, circle2) {
-    const dx = circle1.x - circle2.x;
-    const dy = circle1.y - circle2.y;
+  checkCollision(object1, object2) {
+    const dx = object1.x - object2.x;
+    const dy = object1.y - object2.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < circle1.radius + circle2.radius;
+    return distance < object1.width * 0.5 + object2.width * 0.5;
   }
 
   startBackgroundMusic() {

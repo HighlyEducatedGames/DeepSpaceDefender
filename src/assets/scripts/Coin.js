@@ -1,14 +1,14 @@
 class Coin {
   constructor(game) {
     this.game = game;
-    this.x = Math.random() * (this.game.canvas.width - 20);
+    this.x = Math.random() * (this.game.canvas.width - 20) + 40;
     this.y = Math.random() * (this.game.canvas.height - 20 - this.game.topMargin) + this.game.topMargin;
     this.width = 20;
     this.height = 20;
     this.points = 20;
-    this.offsetY = 0;
+    this.bobbingOffset = 0;
     this.bobbingSpeed = 6;
-    this.bobbingAmplitude = 15;
+    this.bobbingAmplitude = 1;
     this.bobbingAngle = Math.random() * Math.PI * 2;
     this.markedForDeletion = false;
 
@@ -18,15 +18,20 @@ class Coin {
   }
 
   draw(ctx) {
-    ctx.drawImage(this.image, this.x, this.y + this.offsetY, this.width, this.height);
+    ctx.drawImage(this.image, this.x - this.width * 0.5, this.y - this.height * 0.5, this.width, this.height);
+
+    // DEBUG - Hitbox
+    if (this.game.debug) {
+      ctx.strokeStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 
   update() {
-    const playerCircle = { x: this.game.player.x, y: this.game.player.y, radius: this.game.player.width / 2 };
-    const coinCircle = { x: this.x + this.width / 2, y: this.y + this.height / 2, radius: this.width / 2 };
-
     // Check collision with player
-    if (this.game.checkCollision(playerCircle, coinCircle)) {
+    if (this.game.checkCollision(this, this.game.player)) {
       this.game.score += this.points;
 
       // Increase player's health by 2, but do not exceed the maximum health
@@ -36,8 +41,8 @@ class Coin {
       this.markedForDeletion = true;
     }
 
-    this.bobbingAngle += this.bobbingSpeed * 0.01; // Update the bobbing angle
-    this.offsetY = Math.sin(this.bobbingAngle) * this.bobbingAmplitude; // Calculate the vertical offset
+    this.bobbingAngle += this.bobbingSpeed * 0.01;
+    this.y += Math.sin(this.bobbingAngle) * this.bobbingAmplitude;
   }
 }
 
