@@ -226,6 +226,23 @@ class Player {
   useBoost() {}
 
   useMissile() {}
+
+  takeDamage(amount) {
+    this.game.controls.playHaptic(100, 0.25);
+    if (this.game.controls.codes.invincibility.enabled) return;
+
+    this.health -= amount;
+    if (this.health <= 0) {
+      this.lives--;
+      this.health = this.maxHealth;
+      this.sounds.lostLife.cloneNode().play();
+    }
+    if (this.lives < 0) {
+      this.health = 0;
+      this.lives = 0;
+      this.game.gameOver();
+    }
+  }
 }
 
 export default Player;

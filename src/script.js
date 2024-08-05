@@ -5,6 +5,7 @@ import Star from './assets/scripts/Star.js';
 import Coin from './assets/scripts/Coin.js';
 import Controls from './assets/scripts/controls/Controls.js';
 import Menu from './assets/scripts/Menu.js';
+import { RegularEnemy, StealthEnemy, TankEnemy } from './assets/scripts/enemies/BasicEnemies.js';
 
 class Game {
   constructor(canvas) {
@@ -16,6 +17,7 @@ class Game {
     this.GUI = new GUI(this);
     this.menu = new Menu(this);
     this.topMargin = 120;
+    this.boss = null;
 
     this.images = {
       title: new Image(),
@@ -61,10 +63,27 @@ class Game {
       this.coins.push(new Coin(this));
     }
 
+    this.enemies = []; // TODO: enemy manager and limiting enemies as a conditional to not have too many on screen
+    // TODO use overlapping logic to prevent enemy overlaps
+    this.maxEnemies = 1;
+    this.maxTankEnemies = 1;
+    this.maxStealthEnemies = 1;
+    for (let i = 0; i < this.maxEnemies; i++) {
+      this.enemies.push(new RegularEnemy(this));
+    }
+    for (let i = 0; i < this.maxStealthEnemies; i++) {
+      // if (level % 5 === 0 || level <= 10) return;// TODO: Only spawn if over level 10 and not on a boss level
+      this.enemies.push(new StealthEnemy(this));
+    }
+    for (let i = 0; i < this.maxTankEnemies; i++) {
+      // if (level % 5 === 0 || level <= 5) return; // TODO: Only spawn if iver level 5 and not on boss level
+      this.enemies.push(new TankEnemy(this));
+    }
+
     this.stopMusic(this.music.gameOver);
   }
 
-  handleGeneralGameControls() {
+  handleMainGameControls() {
     // Toggle debug mode
     if (this.controls.keys.debug.justPressed()) {
       this.debug = !this.debug;
@@ -82,43 +101,57 @@ class Game {
     }
 
     // Restart game
-    if (this.controls.keys.restart.justPressed() || (this.isGameOver && this.controls.keys.bombs.justPressed())) {
+    if (this.controls.keys.restart.justPressed() || (this.isGameOver && this.controls.keys.bomb.justPressed())) {
       this.resetGame(false);
     }
   }
 
   render(ctx, deltaTime) {
-    const projectiles = [this.projectiles, this.player.projectiles];
-    if (this.debug) console.debug('Projectiles: ', projectiles.flat().length);
+    this.projectiles = [this.player.projectiles];
+    if (this.debug) console.debug('Projectiles: ', this.projectiles.flat().length);
 
-    /* DRAW */
+    this.draw(ctx);
+    this.update(deltaTime);
+    this.updateMusic();
+    this.deleteOldObjects();
+  }
+
+  draw(ctx) {
     this.stars.forEach((star) => star.draw(ctx)); // Draw stars before other elements
     this.coins.forEach((coin) => coin.draw(ctx));
-    projectiles.forEach((projectileArray) => {
+    this.projectiles.forEach((projectileArray) => {
       projectileArray.forEach((projectile) => projectile.draw(ctx));
     });
+    this.enemies.forEach((enemy) => enemy.draw(ctx));
     this.player.draw(ctx);
     this.GUI.draw(ctx); // Draw the GUI last so it is always on top
+  }
 
-    /* UPDATE */
+  update(deltaTime) {
     if (!this.isGameOver) {
-      this.stars.forEach((star) => star.update());
-      projectiles.forEach((projectileArray) => {
+      this.stars.forEach((star) => star.update(deltaTime));
+      this.coins.forEach((coin) => coin.update(deltaTime));
+      this.projectiles.forEach((projectileArray) => {
         projectileArray.forEach((projectile) => projectile.update(deltaTime));
       });
+      this.enemies.forEach((enemy) => enemy.update(deltaTime));
       this.player.update(deltaTime);
-      this.coins.forEach((coin) => coin.update());
     }
+  }
 
+  deleteOldObjects() {
     /* DELETION */
     this.coins.forEach((coin, index) => {
       if (coin.markedForDeletion) this.coins.splice(index, 1);
     });
-    for (let i = 0; i < projectiles.length; i++) {
-      for (let j = 0; j < projectiles[i].length; j++) {
-        if (projectiles[i][j].markedForDeletion) projectiles[i].splice(j, 1);
+    for (let i = 0; i < this.projectiles.length; i++) {
+      for (let j = 0; j < this.projectiles[i].length; j++) {
+        if (this.projectiles[i][j].markedForDeletion) this.projectiles[i].splice(j, 1);
       }
     }
+    this.enemies.forEach((enemy, index) => {
+      if (enemy.markedForDeletion) this.enemies.splice(index, 1);
+    });
   }
 
   checkCollision(object1, object2) {
@@ -126,6 +159,17 @@ class Game {
     const dy = object1.y - object2.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     return distance < object1.width * 0.5 + object2.width * 0.5;
+  }
+
+  updateMusic() {
+    const isBossLevel = this.level % 5 === 0;
+    if (isBossLevel && !this.boss && !this.boss.music.paused) {
+      this.stopMusic(this.music.background);
+      this.startMusic(this.boss.music);
+    } else if (!isBossLevel && this.music.background.paused) {
+      if (this.boss) this.stopMusic(this.boss.music);
+      this.startMusic(this.music.background);
+    }
   }
 
   startMusic(music) {
@@ -144,7 +188,7 @@ class Game {
   gameOver() {
     this.isGameOver = true;
     this.stopMusic(this.music.background);
-    // Stop any boss music // TODO
+    if (this.boss && this.boss.music) this.stopMusic(this.boss.music);
     this.startMusic(this.music.gameOver);
   }
 }
@@ -168,7 +212,7 @@ window.addEventListener('load', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     game.controls.update(); // Update all player inputs
-    game.handleGeneralGameControls();
+    game.handleMainGameControls();
 
     if (!game.menu.isOpen) {
       game.render(ctx, deltaTime);

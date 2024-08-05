@@ -166,6 +166,7 @@ class Controls {
         else this.holdKey(rightKey);
       }
     } else {
+      // TODO make this not override dpad inputs
       this.releaseKey(leftKey);
       this.releaseKey(rightKey);
     }
@@ -193,7 +194,7 @@ class Controls {
     return true;
   }
 
-  playHaptic(duration) {
+  playHaptic(duration, magnitude = 1) {
     const gamePad = navigator.getGamepads()[this.gamepadIndex];
     if (!gamePad) return;
     if (!gamePad.vibrationActuator) return;
@@ -201,8 +202,8 @@ class Controls {
     gamePad.vibrationActuator.playEffect('dual-rumble', {
       startDelay: 0,
       duration,
-      weakMagnitude: 1.0,
-      strongMagnitude: 1.0,
+      weakMagnitude: Math.min(magnitude, 1),
+      strongMagnitude: Math.min(magnitude, 1),
     });
   }
 

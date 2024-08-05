@@ -1,9 +1,5 @@
 const soundEffectsVolumeSlider = document.getElementById('soundEffectsVolume');
 const MAX_POWER_UPS = 3;
-const VERTICAL_MARGIN = 50;
-const MAX_REGULAR_ENEMIES = 6; // Adjust as needed
-const MAX_ENEMY_TANKS = 3; // Adjust as needed
-const MAX_STEALTH_ENEMIES = 4; // Adjust as needed
 
 let enemyRespawnTimeouts = [];
 let nextLifeScore = 1500;
@@ -104,17 +100,6 @@ function handleKeyDown(e) {
   if (e.key === '4') {
     level = 25;
     initLevel(level);
-  }
-}
-
-function manageMusic() {
-  const isBossLevel = level % 5 === 0;
-  if (isBossLevel && !bossMusic.playing) {
-    stopBackgroundMusic();
-    startBossMusic();
-  } else if (!isBossLevel && !backgroundMusic.playing) {
-    stopBossMusic();
-    startBackgroundMusic();
   }
 }
 
@@ -1463,43 +1448,6 @@ function updateProjectiles(deltaTime, timestamp) {
       ) {
         handleProjectileReflection(projectile);
       } else {
-        enemies.forEach((enemy, enemyIndex) => {
-          if (enemy.type === 'stealthEnemy' && !enemy.visible) {
-            return;
-          }
-
-          const projectileCircle = { x: projectile.x, y: projectile.y, radius: projectile.width / 2 };
-          const enemyCircle = { x: enemy.x + enemy.width / 2, y: enemy.y + enemy.height / 2, radius: enemy.width / 2 };
-
-          if (checkCollision(projectileCircle, enemyCircle)) {
-            const collisionSoundClone = collisionSound.cloneNode();
-            collisionSoundClone.volume = collisionSound.volume;
-            collisionSoundClone.play();
-
-            if (enemy.health) {
-              enemy.health -= projectile.damage;
-              if (enemy.health <= 0) {
-                if (enemy.type === 'enemyTank') {
-                  respawnEnemyTank(5000);
-                } else if (enemy.type === 'stealthEnemy') {
-                  respawnStealthEnemy(7000);
-                } else {
-                  const enemySpeed = 50 + level * 10;
-                  respawnEnemyAfterDelay(enemySpeed, 7000);
-                }
-
-                enemies.splice(enemyIndex, 1);
-                score += 10;
-              }
-            } else {
-              enemies.splice(enemyIndex, 1);
-              score += 10;
-            }
-
-            projectiles.splice(index, 1);
-          }
-        });
-
         if (cyberDragon && cyberDragon.alive) {
           const projectileCircle = { x: projectile.x, y: projectile.y, radius: projectile.width / 2 };
           const dragonCenterX = cyberDragon.x;
@@ -2120,16 +2068,6 @@ function updateHomingMissiles(deltaTime) {
         } else {
           missile.target.alive = false;
           enemies = enemies.filter((enemy) => enemy.alive);
-
-          if (missile.target.type === 'enemyTank') {
-            respawnEnemyTank(5000);
-          } else if (missile.target.type === 'stealthEnemy') {
-            respawnStealthEnemy(7000);
-          } else {
-            const enemySpeed = 50 + level * 10;
-            respawnEnemyAfterDelay(enemySpeed, 7000);
-          }
-          score += 10;
         }
 
         // Play collision sound and remove the missile
@@ -2437,34 +2375,7 @@ function initLevel(level) {
     }
     countdown = Infinity;
   } else {
-    const enemySpeed = 50 + level;
-    let numRegularEnemies = Math.min(level, MAX_REGULAR_ENEMIES);
-    let numEnemyTanks = level >= 3 ? Math.min(Math.ceil(level * 0.3), MAX_ENEMY_TANKS) : 0;
-    let numStealthEnemies = level >= 6 ? Math.min(Math.ceil(level * 0.2), MAX_STEALTH_ENEMIES) : 0;
-
-    for (let i = 0; i < numRegularEnemies; i++) {
-      spawnEnemy(enemySpeed);
-    }
-
-    for (let i = 0; i < numEnemyTanks; i++) {
-      spawnEnemyTank();
-    }
-
-    for (let i = 0; i < numStealthEnemies; i++) {
-      spawnStealthEnemy();
-    }
-
     countdown = levelDuration / 1000; // Set countdown for non-boss levels
-  }
-
-  coins = [];
-  for (let i = 0; i < 5; i++) {
-    coins.push({
-      x: Math.random() * (canvas.width - 20),
-      y: Math.random() * (canvas.height - 20),
-      width: 20,
-      height: 20,
-    });
   }
 
   resetPowerUpTimers();
@@ -2715,93 +2626,6 @@ function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
   }
 }
 
-function spawnEnemy() {
-  const currentRegularEnemies = enemies.filter((enemy) => enemy.type === 'regular').length;
-  if (currentRegularEnemies >= MAX_REGULAR_ENEMIES) return;
-
-  const position = getOffScreenSpawnPosition(50, 50);
-  let enemy = {
-    type: 'regular',
-    x: position.x,
-    y: position.y,
-    width: 50,
-    height: 50,
-    speed: 50 + level,
-    directionX: position.directionX,
-    directionY: position.directionY,
-    shootInterval: Math.random() * 2000 + 3000,
-    lastShotTime: 0,
-    canShoot: false,
-    alive: true,
-    health: ENEMY_HEALTH,
-  };
-  enemies.push(enemy);
-
-  setTimeout(() => {
-    enemy.canShoot = true;
-  }, 2000);
-}
-
-function spawnEnemyTank() {
-  const currentEnemyTanks = enemies.filter((enemy) => enemy.type === 'enemyTank').length;
-  if (currentEnemyTanks >= MAX_ENEMY_TANKS) return;
-
-  const position = getOffScreenSpawnPosition(60, 60);
-  let enemyTank = {
-    type: 'enemyTank',
-    x: position.x,
-    y: position.y,
-    width: 60,
-    height: 60,
-    speed: 60,
-    directionX: position.directionX,
-    directionY: position.directionY,
-    shootInterval: Math.random() * 1000 + 2000,
-    lastShotTime: 0,
-    canShoot: false,
-    alive: true,
-    health: TANK_HEALTH,
-  };
-  enemies.push(enemyTank);
-
-  setTimeout(() => {
-    enemyTank.canShoot = true;
-  }, 2000);
-}
-
-function spawnStealthEnemy() {
-  const currentStealthEnemies = enemies.filter((enemy) => enemy.type === 'stealthEnemy').length;
-  if (currentStealthEnemies >= MAX_STEALTH_ENEMIES) return;
-
-  const position = getOffScreenSpawnPosition(50, 50);
-  let stealthEnemy = {
-    type: 'stealthEnemy',
-    x: position.x,
-    y: position.y,
-    width: 50,
-    height: 50,
-    speed: 150,
-    directionX: position.directionX,
-    directionY: position.directionY,
-    visible: false,
-    opacity: 0,
-    visibleStartTime: performance.now(),
-    visibleDuration: 3000, // 3 seconds visible
-    invisibleDuration: 3000, // 3 seconds invisible
-    health: ENEMY_HEALTH,
-    alive: true,
-    canShoot: false,
-    lastShotTime: 0,
-    shootInterval: Math.random() * 1000 + 1000, // Random shooting interval between 2-5 seconds
-  };
-
-  enemies.push(stealthEnemy);
-
-  setTimeout(() => {
-    stealthEnemy.canShoot = true;
-  }, 2000);
-}
-
 function respawnEnemyAfterDelay(speed, delay) {
   if (level % 5 === 0) return;
 
@@ -2812,72 +2636,6 @@ function respawnEnemyAfterDelay(speed, delay) {
     }
   }, delay);
   enemyRespawnTimeouts.push(timeout);
-}
-
-function respawnEnemyTank(delay) {
-  if (level % 5 === 0 || level <= 5) return;
-
-  const timeout = setTimeout(() => {
-    const currentEnemyTanks = enemies.filter((enemy) => enemy.type === 'enemyTank').length;
-    if (currentEnemyTanks >= MAX_ENEMY_TANKS) return;
-
-    let position;
-    let distance;
-    let isOverlapping;
-    do {
-      position = getRandomBorderPosition();
-      distance = Math.sqrt((player.x - position.x) ** 2 + (player.y - position.y) ** 2);
-
-      // Check if the new enemy tank overlaps with existing enemies
-      isOverlapping = enemies.some((enemy) => {
-        const enemyDistance = Math.sqrt((enemy.x - position.x) ** 2 + (enemy.y - position.y) ** 2);
-        return enemyDistance < enemy.width + 60; // Add a buffer to prevent overlapping
-      });
-    } while (distance < 400 || isOverlapping);
-
-    let enemyTank = {};
-    enemies.push(enemyTank);
-  }, delay + 1000);
-  enemyRespawnTimeouts.push(timeout);
-}
-
-function respawnStealthEnemy(delay) {
-  if (level % 5 === 0 || level <= 10) return;
-
-  const timeout = setTimeout(() => {
-    const currentStealthEnemies = enemies.filter((enemy) => enemy.type === 'stealthEnemy').length;
-    if (currentStealthEnemies >= MAX_STEALTH_ENEMIES) return;
-
-    let position;
-    let distance;
-    let isOverlapping;
-    do {
-      position = getRandomBorderPosition();
-      distance = Math.sqrt((player.x - position.x) ** 2 + (player.y - position.y) ** 2);
-
-      // Check if the new stealth enemy overlaps with existing enemies
-      isOverlapping = enemies.some((enemy) => {
-        const enemyDistance = Math.sqrt((enemy.x - position.x) ** 2 + (enemy.y - position.y) ** 2);
-        return enemyDistance < enemy.width + 50; // Add a buffer to prevent overlapping
-      });
-    } while (distance < 400 || isOverlapping);
-
-    let stealthEnemy = {};
-
-    enemies.push(stealthEnemy);
-  }, delay);
-  enemyRespawnTimeouts.push(timeout);
-}
-
-function getOffScreenSpawnPosition(width, height) {
-  const side = Math.random() < 0.5 ? 'left' : 'right'; // Randomly choose left or right side
-  const position = {
-    x: side === 'left' ? -width : canvas.width,
-    y: VERTICAL_MARGIN + Math.random() * (canvas.height - height - 2 * VERTICAL_MARGIN), // Ensure vertical spawn within margin
-    directionX: side === 'left' ? 1 : -1, // Set direction based on spawn position
-    directionY: 0, // Only horizontal movement
-  };
-  return position;
 }
 
 function fireProjectile() {
@@ -3042,17 +2800,6 @@ function checkFlameDamage() {
           score += 10; // Increase score or any other logic
           createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
 
-          // Call the appropriate respawn function based on enemy type
-          if (enemy.type === 'enemyTank') {
-            respawnEnemyTank(5000);
-          } else if (enemy.type === 'stealthEnemy') {
-            respawnStealthEnemy(7000);
-          } else {
-            const enemySpeed = 50 + level * 10;
-            respawnEnemyAfterDelay(enemySpeed, 7000);
-          }
-
-          enemies.splice(enemyIndex, 1);
         }
       }
     });
@@ -3185,19 +2932,7 @@ function useBomb() {
     // Handle enemy destruction
     enemies = enemies.filter((enemy) => {
       const enemyCircle = { x: enemy.x + enemy.width / 2, y: enemy.y + enemy.height / 2, radius: enemy.width / 2 };
-      if (checkCollision(playerCircle, enemyCircle)) {
-        if (enemy.type === 'enemyTank') {
-          respawnEnemyTank(5000);
-        } else if (enemy.type === 'stealthEnemy') {
-          respawnStealthEnemy(7000);
-        } else {
-          const enemySpeed = 50 + level * 10;
-          respawnEnemyAfterDelay(enemySpeed, 7000);
-        }
-        score += 10;
-        return false;
-      }
-      return true;
+      return !checkCollision(playerCircle, enemyCircle);
     });
 
     // Handle projectile destruction
@@ -3352,19 +3087,7 @@ function updateBombs(deltaTime) {
     enemies = enemies.filter((enemy) => {
       const playerCircle = { x: player.x, y: player.y, radius: BOMB_RADIUS };
       const enemyCircle = { x: enemy.x + enemy.width / 2, y: enemy.y + enemy.height / 2, radius: enemy.width / 2 };
-      if (checkCollision(playerCircle, enemyCircle)) {
-        if (enemy.type === 'enemyTank') {
-          respawnEnemyTank(5000);
-        } else if (enemy.type === 'stealthEnemy') {
-          respawnStealthEnemy(7000);
-        } else {
-          const enemySpeed = 50 + level * 10;
-          respawnEnemyAfterDelay(enemySpeed, 7000);
-        }
-        score += 10;
-        return false;
-      }
-      return true;
+      return !checkCollision(playerCircle, enemyCircle);
     });
 
     // Check for collisions with asteroids
@@ -3683,110 +3406,6 @@ function update(deltaTime, timestamp) {
     updateBiomechLeviathan(deltaTime, timestamp); // Ensure this calls inkCloud initialization
   }
 
-  // Update enemies and handle their movement, shooting, and collisions
-  enemies.forEach((enemy, enemyIndex) => {
-    const enemyMoveDistance = (enemy.speed * deltaTime) / 1000;
-    enemy.x += enemyMoveDistance * enemy.directionX;
-    enemy.y += enemyMoveDistance * enemy.directionY;
-
-    if (enemy.x < 0 || enemy.x + enemy.width > canvas.width) {
-      enemy.directionX *= -1;
-      enemy.x = Math.max(0, Math.min(enemy.x, canvas.width - enemy.width));
-    }
-    if (enemy.y < 0 || enemy.y + enemy.height > canvas.height) {
-      enemy.directionY *= -1;
-      enemy.y = Math.max(0, Math.min(enemy.y, canvas.height - enemy.height));
-    }
-
-    // Handle stealth enemy visibility and opacity
-    if (enemy.type === 'stealthEnemy') {
-      const currentTime = performance.now();
-      const elapsedTime = currentTime - enemy.visibleStartTime;
-
-      if (enemy.visible) {
-        if (elapsedTime < 1000) {
-          enemy.opacity = elapsedTime / 1000; // Gradually increase opacity
-        } else if (elapsedTime >= enemy.visibleDuration) {
-          enemy.visible = false;
-          enemy.visibleStartTime = currentTime;
-          enemy.opacity = 1; // Fully opaque
-        }
-      } else {
-        if (elapsedTime < 1000) {
-          enemy.opacity = 1 - elapsedTime / 1000; // Gradually decrease opacity
-        } else if (elapsedTime >= enemy.invisibleDuration) {
-          enemy.visible = true;
-          enemy.visibleStartTime = currentTime;
-          enemy.opacity = 0; // Fully invisible
-        }
-      }
-    }
-
-    // Add visibility check for stealth enemy before shooting
-    if (
-      (enemy.type !== 'stealthEnemy' || enemy.visible) &&
-      enemy.canShoot &&
-      timestamp - enemy.lastShotTime > enemy.shootInterval
-    ) {
-      let projectile = {
-        x: enemy.x + enemy.width / 2,
-        y: enemy.y + enemy.height / 2,
-        width: 5,
-        height: 5,
-        speed: 300,
-        directionX: (player.x - enemy.x) / Math.sqrt((player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2),
-        directionY: (player.y - enemy.y) / Math.sqrt((player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2),
-        fromPlayer: false,
-      };
-      projectiles.push(projectile);
-      enemy.lastShotTime = timestamp;
-    }
-
-    const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-    const enemyCircle = { x: enemy.x + enemy.width / 2, y: enemy.y + enemy.height / 2, radius: enemy.width / 2 };
-
-    if (!isInvincible && !shieldActive && checkCollision(playerCircle, enemyCircle)) {
-      const collisionSoundClone = collisionSound.cloneNode();
-      collisionSoundClone.volume = collisionSound.volume;
-      collisionSoundClone.play();
-      player.health -= 10;
-
-      if (player.health <= 0) {
-        player.lives--;
-        player.health = PLAYER_MAX_HEALTH;
-        lifeLostSound.play();
-        if (player.lives <= 0) {
-        }
-      }
-
-      if (enemy.type === 'enemyTank') {
-        respawnEnemyTank(5000); // Example respawn delay of 5 seconds for tanks
-      } else if (enemy.type === 'stealthEnemy') {
-        respawnStealthEnemy(7000); // Example respawn delay of 7 seconds for stealth enemies
-      } else {
-        const enemySpeed = 50 + level * 10;
-        respawnEnemyAfterDelay(enemySpeed, 7000); // Respawn regular enemies after 7 seconds
-      }
-
-      enemies.splice(enemyIndex, 1);
-      score += 10;
-    }
-
-    if (enemy.health <= 0) {
-      if (enemy.type === 'enemyTank') {
-        respawnEnemyTank(5000); // Example respawn delay of 5 seconds for tanks
-      } else if (enemy.type === 'stealthEnemy') {
-        respawnStealthEnemy(7000); // Example respawn delay of 7 seconds for stealth enemies
-      } else {
-        const enemySpeed = 50 + level * 10;
-        respawnEnemyAfterDelay(enemySpeed, 7000); // Respawn regular enemies after 7 seconds
-      }
-
-      enemies.splice(enemyIndex, 1);
-      score += 10;
-    }
-  });
-
   // Update homing missiles
   updateHomingMissiles(deltaTime);
 
@@ -4012,26 +3631,6 @@ function drawProjectile() {
 
 function draw() {
   drawWormholes();
-
-  enemies.forEach((enemy) => {
-    if (enemy.type === 'stealthEnemy') {
-      if (enemy.visible) {
-        ctx.save();
-        ctx.globalAlpha = enemy.opacity;
-        ctx.drawImage(stealthEnemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 1.5, 0, 2 * Math.PI);
-        ctx.fill();
-      }
-    } else if (enemy.type === 'enemyTank') {
-      ctx.drawImage(enemyTankImage, enemy.x, enemy.y, enemy.width, enemy.height);
-    } else {
-      ctx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
-    }
-  });
 
   if (powerUp) {
     ctx.drawImage(powerUpImage, powerUp.x, powerUp.y, powerUp.width, powerUp.height);
