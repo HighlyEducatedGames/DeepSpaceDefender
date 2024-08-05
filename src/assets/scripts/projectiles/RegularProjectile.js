@@ -1,5 +1,5 @@
 class RegularProjectile {
-  constructor(game, angleOffset, chargeDuration, split) {
+  constructor(game, angleOffset, split) {
     this.game = game;
     this.angleOffset = angleOffset;
     this.x = this.game.player.x + (Math.cos(this.game.player.rotation + angleOffset) * this.game.player.width) / 2;
@@ -9,7 +9,7 @@ class RegularProjectile {
     this.speed = 500;
     this.directionX = Math.cos(this.game.player.rotation + angleOffset);
     this.directionY = Math.sin(this.game.player.rotation + angleOffset);
-    this.chargeDuration = chargeDuration;
+    this.chargeDuration = this.game.controls.keys.fire.pressedDuration / 1000;
     this.isCharged = false;
     this.split = split;
     this.damage = 10;

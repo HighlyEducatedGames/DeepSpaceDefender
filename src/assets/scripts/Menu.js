@@ -13,7 +13,7 @@ class Menu {
 
     this.backgroundMusicVolumeSlider.addEventListener('input', () => {
       this.bgVol = this.backgroundMusicVolumeSlider.value;
-      this.game.backgroundMusic.volume = this.bgVol;
+      this.game.music.background.volume = this.bgVol;
       // bossMusic.volume = backgroundMusicVolumeSlider.value;
       localStorage.setItem('bg_vol', this.bgVol);
     });
@@ -38,13 +38,13 @@ class Menu {
 
   showMenu() {
     this.menu.style.display = 'block';
-    this.game.stopBackgroundMusic();
+    this.game.pauseMusic(this.game.music.background);
     this.isOpen = true;
   }
 
   hideMenu() {
     this.menu.style.display = 'none';
-    this.game.startBackgroundMusic();
+    this.game.startMusic(this.game.music.background);
     this.isOpen = false;
   }
 

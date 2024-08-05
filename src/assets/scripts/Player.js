@@ -1,4 +1,5 @@
 import RegularProjectile from './projectiles/RegularProjectile.js';
+import Bomb from './projectiles/Bomb.js';
 
 class Player {
   constructor(game) {
@@ -20,19 +21,20 @@ class Player {
     this.lastCollisionTime = 0;
     this.maxHealth = 30;
     this.health = this.maxHealth;
+    this.maxLives = 3;
+    this.lives = this.maxLives;
     this.isBoosting = false;
     this.boostEndTime = 0;
     this.boostCooldownEndTime = 0;
     this.isCharging = false;
     this.chargingSoundTimeout = null;
-    this.spacebarHeldTime = 0;
     this.projectiles = [];
-    this.bombs = [];
+    this.bombs = 20;
     this.missiles = [];
     // this.bombSpawnTime = 0;
-    // this.bombActive = false;
     // this.bombFlashTime = 0;
     // this.bombSpawned = false;
+    this.powerUpActive = true; // TODO power up controller
 
     this.images = {
       idle: new Image(),
@@ -58,6 +60,8 @@ class Player {
   }
 
   draw(ctx) {
+    const keys = this.game.controls.keys; // Current keys state
+
     // Draw player
 
     // Adjust the translation rotation center based on player rotation
@@ -71,9 +75,9 @@ class Player {
     ctx.rotate(this.rotation);
 
     let image;
-    if (this.game.keys.isPressed('ArrowUp')) {
+    if (keys.up.isPressed) {
       image = this.images.thrust;
-    } else if (this.game.keys.isPressed('ArrowDown')) {
+    } else if (keys.down.isPressed) {
       image = this.images.reverse;
     } else {
       image = this.images.idle;
@@ -83,7 +87,7 @@ class Player {
     ctx.restore();
 
     // Invincibility Shield
-    if (this.game.keys.codes.invincibility.enabled) {
+    if (this.game.controls.codes.invincibility.enabled) {
       const gradient = ctx.createRadialGradient(this.x, this.y, this.width / 2, this.x, this.y, this.width);
       gradient.addColorStop(0, 'rgba(255, 69, 0, 0.5)'); // Red/orange color with 50% opacity
       gradient.addColorStop(0.7, 'rgba(255, 140, 0, 0.2)'); // Lighter orange color with 20% opacity
@@ -104,19 +108,17 @@ class Player {
   }
 
   update(deltaTime) {
-    const keys = this.game.keys; // Current keys state of controls
+    const keys = this.game.controls.keys; // Current keys state
 
     // Rotate player
-    if (keys.isPressed('ArrowLeft') && !keys.isPressed('ArrowRight'))
-      this.rotation -= (this.rotationSpeed * deltaTime) / 1000;
-    if (keys.isPressed('ArrowRight') && !keys.isPressed('ArrowLeft'))
-      this.rotation += (this.rotationSpeed * deltaTime) / 1000;
+    if (keys.left.isPressed && !keys.right.isPressed) this.rotation -= (this.rotationSpeed * deltaTime) / 1000;
+    if (keys.right.isPressed && !keys.left.isPressed) this.rotation += (this.rotationSpeed * deltaTime) / 1000;
 
     // Forward and reverse
-    if (keys.isPressed('ArrowUp')) {
+    if (keys.up.isPressed) {
       this.thrust = this.acceleration;
       if (this.sounds.acceleration.paused) this.sounds.acceleration.play();
-    } else if (keys.isPressed('ArrowDown')) {
+    } else if (keys.down.isPressed) {
       this.thrust = -this.acceleration;
       if (this.sounds.reverse.paused) this.sounds.reverse.play();
     } else {
@@ -124,57 +126,56 @@ class Player {
     }
 
     // Stop acceleration sound if no longer pressing ArrowUp
-    if (!keys.isPressed('ArrowUp') && !this.sounds.acceleration.paused) {
+    if (!keys.up.isPressed && !this.sounds.acceleration.paused) {
       this.sounds.acceleration.pause();
       this.sounds.acceleration.currentTime = 0;
     }
 
     // Stop reverse sound is no longer pressing ArrowDown or if ArrowUp IS pressed
-    if ((!keys.isPressed('ArrowDown') || keys.isPressed('ArrowUp')) && !this.sounds.reverse.paused) {
+    if ((!keys.down.isPressed || keys.up.isPressed) && !this.sounds.reverse.paused) {
       this.sounds.reverse.pause();
       this.sounds.reverse.currentTime = 0;
     }
 
-    if (!this.game.menu.isOpen && !this.game.gameOver) {
-      // Space
-      if (keys.justPressed(' ')) this.fireProjectile();
-
-      if (keys.isPressed(' ')) {
-        if (!this.isCharging) {
-          this.isCharging = true;
-          this.spacebarHeldTime = performance.now();
-          this.chargingSoundTimeout = setTimeout(() => {
-            if (/*!flamethrowerActive &&*/ this.sounds.charging.paused) {
-              // TODO: flamethrower conditional
-              this.sounds.charging.play();
-            }
-          }, 250);
-        }
-      } else {
-        this.isCharging = false;
-        clearTimeout(this.chargingSoundTimeout);
-        this.sounds.charging.pause();
-        this.sounds.charging.currentTime = 0;
-        this.sounds.flame.pause();
-        this.sounds.flame.currentTime = 0;
-      }
-
-      if (keys.isPressed('b') || keys.isPressed('B')) {
-        this.useBomb();
-      }
-      if (keys.isPressed('x') || keys.isPressed('X')) {
-        // this.useBoost(); // TODO
-      }
-      if (keys.isPressed('h') || keys.isPressed('H')) {
-        // useHomingMissile(); // TODO
-      }
+    // Game over if player is out of lives and health
+    if (this.lives <= 0 && this.health <= 0) {
+      this.game.gameOver();
     }
+
+    if (!this.game.menu.isOpen && !this.game.gameOver) {
+      if (keys.fire.justPressed()) this.fireProjectile();
+      if (keys.bomb.justPressed()) this.useBomb();
+      if (keys.boost.justPressed()) this.useBoost();
+      if (keys.missile.justPressed()) this.useMissile();
+    }
+
+    /*if (keys.fire.isPressed) {
+      if (!this.isCharging) {
+        this.isCharging = true;
+        // this.spacebarHeldTime = performance.now();
+        this.chargingSoundTimeout = setTimeout(() => {
+          if (/!*!flamethrowerActive &&*!/ this.sounds.charging.paused) {
+            // TODO: flamethrower conditional
+            this.sounds.charging.play();
+          }
+        }, 250);
+      }
+    } else {
+      this.isCharging = false;
+      clearTimeout(this.chargingSoundTimeout);
+      this.sounds.charging.pause();
+      this.sounds.charging.currentTime = 0;
+      this.sounds.flame.pause();
+      this.sounds.flame.currentTime = 0;
+    }
+
+  }*/
 
     // Basic movement
     this.velocity.x += (Math.cos(this.rotation) * this.thrust * deltaTime) / 1000;
     this.velocity.y += (Math.sin(this.rotation) * this.thrust * deltaTime) / 1000;
 
-    if (!this.game.keys.isPressed('ArrowUp') && !this.game.keys.isPressed('ArrowDown')) {
+    if (!keys.up.isPressed && !keys.down.isPressed) {
       this.velocity.x *= this.deceleration;
       this.velocity.y *= this.deceleration;
     }
@@ -207,25 +208,24 @@ class Player {
   }
 
   fireProjectile() {
-    console.log('FIRE');
-    if (this.game.menu.isOpen /*|| flamethrowerActive || empDisableFire*/) return; // TODO
-    const chargeDuration = (performance.now() - this.spacebarHeldTime) / 1000;
-    const projectilesToFire = /*powerUpActive ? 3 :*/ 1; // TODO power up
-    const angleOffset = /*powerUpActive ? (i - 1) * (Math.PI / 18) :*/ 0; // TODO power up
+    // if (/*|| flamethrowerActive || empDisableFire*/) return; // TODO
+    const projectilesToFire = this.powerUpActive ? 3 : 1;
     for (let i = 0; i < projectilesToFire; i++) {
-      this.projectiles.push(new RegularProjectile(this.game, angleOffset, chargeDuration, false));
+      const angleOffset = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
+      this.projectiles.push(new RegularProjectile(this.game, angleOffset, false));
     }
-
     this.sounds.fire.cloneNode().play();
   }
 
   useBomb() {
-    if (this.bombs <= 0 || this.bombActive) return;
-
+    if (this.bombs <= 0) return;
     this.bombs--;
-    this.bombActive = true;
-    this.bombFlashTime = performance.now();
+    this.projectiles.push(new Bomb(this.game));
   }
+
+  useBoost() {}
+
+  useMissile() {}
 }
 
 export default Player;

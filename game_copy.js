@@ -1,6 +1,3 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
 const soundEffectsVolumeSlider = document.getElementById('soundEffectsVolume');
 const MAX_POWER_UPS = 3;
 const VERTICAL_MARGIN = 50;
@@ -13,8 +10,7 @@ let nextLifeScore = 1500;
 let isBoosting = false;
 let boostEndTime = 0;
 let boostCooldownEndTime = 0;
-let isInvincible = false;
-this.bombPowerUp = null;
+let bombPowerUp = null;
 let bossHitByBomb = false;
 let biomechHitByBomb = false;
 let cyberDragonHitByBomb = false;
@@ -77,39 +73,8 @@ let flameParticles = [];
 let flamethrowerExpirationTime = 0;
 
 // Load audio
-// CYBER
-const spiralShotSound = document.getElementById('spiralShotSound');
-
-// WORHOLES
-const teleportSound = document.getElementById('teleportSound');
-
 // MULTIPLE - SPLIT
 const explosionSound = document.getElementById('explosionSound');
-
-// TEMPORAL
-const hazardSound = document.getElementById('hazardSound');
-
-
-
-const soundEffects = [
-  collisionSound,
-  chargingSound,
-  boostSound,
-  lifeLostSound,
-  splatSound,
-  empSound,
-  spiralShotSound,
-  teleportSound,
-  explosionSound,
-  hazardSound,
-  flameSound,
-  torchSound,
-  biomechEatSound,
-];
-
-// Set initial volumes
-bossMusic.volume = 0.5;
-soundEffects.forEach((sound) => (sound.volume = 0.5));
 
 function handleKeyDown(e) {
   if (e.key === ' ' && isMenuOpen) {
@@ -174,7 +139,6 @@ function initializeGame() {
   bombs = 0;
   bombPowerUp = null;
   bombSpawned = false;
-  bombActive = false;
   bombFlashTime = 0;
   boss = null;
   cyberDragon = null;
@@ -201,24 +165,6 @@ function initializeGame() {
   flamethrowerActive = false;
   initLevel(level);
   stopBossMusic();
-}
-
-function handleGameOver() {
-  // Stop background and boss music
-  stopBackgroundMusic();
-  stopBossMusic();
-
-  // Play game over music
-  gameOverMusic.currentTime = 0; // Reset the music to start
-  gameOverMusic.play().catch((error) => {
-    console.error('Error playing game over music:', error);
-  });
-}
-
-function stopGameOverMusic() {
-  const gameOverMusic = document.getElementById('gameOverMusic');
-  gameOverMusic.pause();
-  gameOverMusic.currentTime = 0;
 }
 
 function updateCyberDragon(deltaTime, timestamp) {
@@ -382,8 +328,6 @@ function updateAsteroids(deltaTime) {
           player.lives--;
           player.health = PLAYER_MAX_HEALTH;
           if (player.lives <= 0) {
-            gameOver = true;
-            handleGameOver();
           }
         }
       }
@@ -538,8 +482,6 @@ function checkSpiralCollisions() {
           player.lives--;
           player.health = PLAYER_MAX_HEALTH;
           if (player.lives <= 0) {
-            gameOver = true;
-            handleGameOver();
           }
         }
       } else if (shieldActive) {
@@ -1018,8 +960,6 @@ function checkPlayerInHazardousZone(player, timestamp) {
           player.lives--;
           player.health = PLAYER_MAX_HEALTH;
           if (player.lives <= 0) {
-            gameOver = true;
-            handleGameOver();
           }
         }
       }
@@ -1225,8 +1165,6 @@ function handleSegmentExplosions(timestamp) {
             player.health = PLAYER_MAX_HEALTH;
             lifeLostSound.play();
             if (player.lives <= 0) {
-              gameOver = true;
-              handleGameOver();
             }
           }
         }
@@ -1700,8 +1638,6 @@ function updateProjectiles(deltaTime, timestamp) {
             player.health = PLAYER_MAX_HEALTH;
             lifeLostSound.play();
             if (player.lives <= 0) {
-              gameOver = true;
-              handleGameOver();
             }
           }
         }
@@ -3820,8 +3756,6 @@ function update(deltaTime, timestamp) {
         player.health = PLAYER_MAX_HEALTH;
         lifeLostSound.play();
         if (player.lives <= 0) {
-          gameOver = true;
-          handleGameOver();
         }
       }
 
@@ -3883,8 +3817,6 @@ function update(deltaTime, timestamp) {
         player.health = PLAYER_MAX_HEALTH;
         lifeLostSound.play();
         if (player.lives <= 0) {
-          gameOver = true;
-          handleGameOver();
         }
       }
       const collisionSoundClone = collisionSound.cloneNode();
@@ -3918,8 +3850,6 @@ function update(deltaTime, timestamp) {
         player.health = PLAYER_MAX_HEALTH;
         lifeLostSound.play();
         if (player.lives <= 0) {
-          gameOver = true;
-          handleGameOver();
         }
       }
       const collisionSoundClone = collisionSound.cloneNode();
@@ -3976,8 +3906,6 @@ function update(deltaTime, timestamp) {
           player.health = PLAYER_MAX_HEALTH;
           lifeLostSound.play();
           if (player.lives <= 0) {
-            gameOver = true;
-            handleGameOver();
           }
         }
 
@@ -4006,8 +3934,6 @@ function update(deltaTime, timestamp) {
         player.health = PLAYER_MAX_HEALTH;
         lifeLostSound.play();
         if (player.lives <= 0) {
-          gameOver = true;
-          handleGameOver();
         }
       }
 
@@ -4190,21 +4116,6 @@ function draw() {
     ctx.strokeStyle = 'blue';
     ctx.lineWidth = 3;
     ctx.strokeRect(chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight);
-  }
-
-  if (bombActive) {
-    const timeSinceBomb = performance.now() - bombFlashTime;
-    if (timeSinceBomb < 1000) {
-      // Flash for 1 second
-      const flashPeriod = 200; // Flash every 200ms
-      const flashDuration = 100; // Duration of each flash
-      if (timeSinceBomb % flashPeriod < flashDuration) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, BOMB_RADIUS, 0, 2 * Math.PI);
-        ctx.fill();
-      }
-    }
   }
 
   if (cyberDragon) {

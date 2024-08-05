@@ -1,22 +1,31 @@
+/* global menuBack */
 import Player from './assets/scripts/Player.js';
 import GUI from './assets/scripts/GUI.js';
 import Star from './assets/scripts/Star.js';
 import Coin from './assets/scripts/Coin.js';
-import Controls from './assets/scripts/Controls.js';
+import Controls from './assets/scripts/controls/Controls.js';
 import Menu from './assets/scripts/Menu.js';
 
 class Game {
   constructor(canvas) {
+    this.debug = false;
     this.canvas = canvas;
     this.width = this.canvas.width;
     this.height = this.canvas.height;
-    this.keys = new Controls(this);
+    this.controls = new Controls(this);
     this.GUI = new GUI(this);
     this.menu = new Menu(this);
-    this.titleScreenImage = new Image();
-    this.titleScreenImage.src = 'assets/images/title_screen.png';
-    this.backgroundMusic = new Audio('assets/audio/background-music.mp3');
-    this.debug = true;
+    this.topMargin = 120;
+
+    this.images = {
+      title: new Image(),
+    };
+    this.images.title.src = 'assets/images/title_screen.png';
+
+    this.music = {
+      background: new Audio('assets/audio/background-music.mp3'),
+      gameOver: new Audio('assets/audio/gameOverMusic.mp3'),
+    };
 
     // Instantiate resettable properties
     this.resetGame();
@@ -24,9 +33,9 @@ class Game {
   }
 
   // Put any property instantiation here that needs to be reset on game over or reset
-  resetGame() {
-    this.menu.showMenu();
-    this.gameOver = false;
+  resetGame(showMenu = true) {
+    if (showMenu) this.menu.showMenu();
+    this.isGameOver = false;
     this.score = 0;
     this.level = 1;
     this.levelStartTime = 0;
@@ -48,15 +57,39 @@ class Game {
     }
 
     this.coins = [];
-    this.topMargin = 120;
     for (let i = 0; i < 5; i++) {
       this.coins.push(new Coin(this));
+    }
+
+    this.stopMusic(this.music.gameOver);
+  }
+
+  handleGeneralGameControls() {
+    // Toggle debug mode
+    if (this.controls.keys.debug.justPressed()) {
+      this.debug = !this.debug;
+      this.controls.codes.invincibility.enabled = this.debug;
+    }
+
+    // Toggle pause menu
+    if (this.controls.keys.pause.justPressed()) {
+      this.menu.toggleMenu();
+    }
+
+    // Back out of menu option to main menu with Escape
+    if (this.controls.keys.esc.justPressed() && this.menu.isOpen) {
+      menuBack();
+    }
+
+    // Restart game
+    if (this.controls.keys.restart.justPressed() || (this.isGameOver && this.controls.keys.bombs.justPressed())) {
+      this.resetGame(false);
     }
   }
 
   render(ctx, deltaTime) {
-    const projectiles = [this.player.projectiles];
-    console.log('projectiles: ', projectiles.flat().length);
+    const projectiles = [this.projectiles, this.player.projectiles];
+    if (this.debug) console.debug('Projectiles: ', projectiles.flat().length);
 
     /* DRAW */
     this.stars.forEach((star) => star.draw(ctx)); // Draw stars before other elements
@@ -68,12 +101,14 @@ class Game {
     this.GUI.draw(ctx); // Draw the GUI last so it is always on top
 
     /* UPDATE */
-    this.stars.forEach((star) => star.update());
-    projectiles.forEach((projectileArray) => {
-      projectileArray.forEach((projectile) => projectile.update(deltaTime));
-    });
-    this.player.update(deltaTime);
-    this.coins.forEach((coin) => coin.update());
+    if (!this.isGameOver) {
+      this.stars.forEach((star) => star.update());
+      projectiles.forEach((projectileArray) => {
+        projectileArray.forEach((projectile) => projectile.update(deltaTime));
+      });
+      this.player.update(deltaTime);
+      this.coins.forEach((coin) => coin.update());
+    }
 
     /* DELETION */
     this.coins.forEach((coin, index) => {
@@ -93,13 +128,24 @@ class Game {
     return distance < object1.width * 0.5 + object2.width * 0.5;
   }
 
-  startBackgroundMusic() {
-    this.backgroundMusic.play();
+  startMusic(music) {
+    music.play();
   }
 
-  stopBackgroundMusic() {
-    this.backgroundMusic.pause();
-    this.backgroundMusic.currentTime = 0;
+  pauseMusic(music) {
+    music.pause();
+  }
+
+  stopMusic(music) {
+    music.pause();
+    music.currentTime = 0;
+  }
+
+  gameOver() {
+    this.isGameOver = true;
+    this.stopMusic(this.music.background);
+    // Stop any boss music // TODO
+    this.startMusic(this.music.gameOver);
   }
 }
 
@@ -121,7 +167,8 @@ window.addEventListener('load', () => {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    game.keys.handleGamepadInput();
+    game.controls.update(); // Update all player inputs
+    game.handleGeneralGameControls();
 
     if (!game.menu.isOpen) {
       game.render(ctx, deltaTime);
@@ -129,7 +176,7 @@ window.addEventListener('load', () => {
       // TODO: Loop through all sounds and pause, but background is already getting paused in the menu class
 
       // Draw title screen
-      ctx.drawImage(game.titleScreenImage, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(game.images.title, 0, 0, canvas.width, canvas.height);
 
       // Draw PAUSED text
       ctx.fillStyle = 'white';
