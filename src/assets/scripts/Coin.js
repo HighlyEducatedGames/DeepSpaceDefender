@@ -6,9 +6,8 @@ class Coin {
     this.width = 20;
     this.height = 20;
     this.points = 20;
-    this.bobbingOffset = 0;
     this.bobbingSpeed = 6;
-    this.bobbingAmplitude = 1;
+    this.bobbingAmplitude = 0.9;
     this.bobbingAngle = Math.random() * Math.PI * 2;
     this.markedForDeletion = false;
 
