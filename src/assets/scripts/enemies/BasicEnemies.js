@@ -12,7 +12,9 @@ class Enemy {
     this.lastShotTime = 0;
     this.canShoot = false;
     this.markedForDeletion = false;
-    this.damage = 0;
+    this.maxHealth = 10;
+    this.health = this.maxHealth;
+    this.damage = 10;
     this.score = 10;
 
     this.image = new Image();
@@ -49,9 +51,17 @@ class Enemy {
     if (this.x < this.width * 0.5 && this.velocityX < 0) this.velocityX = 1;
     if (this.x > this.game.canvas.width - this.width * 0.5 && this.velocityX > 0) this.velocityX = -1;
 
+    this.checkCollisions();
+  }
+
+  checkCollisions() {
     // Collision with player projectiles
     this.game.player.projectiles.forEach((projectile) => {
-      if (this.game.checkCollision(projectile, this)) this.markedForDeletion = true;
+      if (this.game.checkCollision(projectile, this)) {
+        this.health -= projectile.damage;
+        if (this.health <= 0) this.markedForDeletion = true;
+        projectile.markedForDeletion = true;
+      }
     });
 
     // Collision with player
@@ -67,9 +77,6 @@ class Enemy {
 export class RegularEnemy extends Enemy {
   constructor(game) {
     super(game);
-    this.maxHealth = 10;
-    this.health = this.maxHealth;
-    this.damage = 10;
     this.shootInterval = Math.random() * 2000 + 3000;
     this.respawnTime = 7000;
   }
@@ -78,9 +85,7 @@ export class RegularEnemy extends Enemy {
 export class TankEnemy extends Enemy {
   constructor(game) {
     super(game);
-    this.maxHealth = 10;
-    this.health = this.maxHealth;
-    this.damage = 10;
+    this.health = 30;
     this.speed = 0.6;
     this.width = 60;
     this.height = 60;
@@ -95,9 +100,7 @@ export class TankEnemy extends Enemy {
 export class StealthEnemy extends Enemy {
   constructor(game) {
     super(game);
-    this.maxHealth = 10;
-    this.health = this.maxHealth;
-    this.damage = 10;
+    this.health = 20;
     this.visible = false;
     this.visibleStartTime = performance.now();
     this.opacity = 0;
@@ -111,7 +114,7 @@ export class StealthEnemy extends Enemy {
   }
 
   draw(ctx) {
-    if (this.visible) {
+    if (this.opacity > 0.2) {
       ctx.save();
       ctx.globalAlpha = this.opacity;
       ctx.drawImage(this.image, this.x - this.width * 0.5, this.y - this.height * 0.5, this.width, this.height);
@@ -139,43 +142,26 @@ export class StealthEnemy extends Enemy {
 
     if (this.visible) {
       if (elapsedTime < 1000) {
-        this.opacity = elapsedTime / 1000; // Gradually increase opacity
+        this.opacity = elapsedTime / 1000;
+      } else if (elapsedTime < this.visibleDuration) {
+        this.opacity = 1;
       } else if (elapsedTime >= this.visibleDuration) {
         this.visible = false;
         this.visibleStartTime = currentTime;
-        this.opacity = 1; // Fully opaque
+        this.opacity = 1;
       }
     } else {
       if (elapsedTime < 1000) {
-        this.opacity = 1 - elapsedTime / 1000; // Gradually decrease opacity
+        this.opacity = 1 - elapsedTime / 1000;
+      } else if (elapsedTime < this.invisibleDuration) {
+        this.opacity = 0;
       } else if (elapsedTime >= this.invisibleDuration) {
         this.visible = true;
         this.visibleStartTime = currentTime;
-        this.opacity = 0; // Fully invisible
+        this.opacity = 0;
       }
     }
   }
 
-  fire() {
-    // TODO
-    /*// Add visibility check for stealth enemy before shooting
-    if (
-      (enemy.type !== 'stealthEnemy' || enemy.visible) &&
-      enemy.canShoot &&
-      timestamp - enemy.lastShotTime > enemy.shootInterval
-    ) {
-      let projectile = {
-        x: enemy.x + enemy.width / 2,
-        y: enemy.y + enemy.height / 2,
-        width: 5,
-        height: 5,
-        speed: 300,
-        directionX: (player.x - enemy.x) / Math.sqrt((player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2),
-        directionY: (player.y - enemy.y) / Math.sqrt((player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2),
-        fromPlayer: false,
-      };
-      projectiles.push(projectile);
-      enemy.lastShotTime = timestamp;
-    }*/
-  }
+  fire() {}
 }

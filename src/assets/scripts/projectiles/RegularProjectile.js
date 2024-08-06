@@ -1,5 +1,5 @@
 class RegularProjectile {
-  constructor(game, angleOffset, split) {
+  constructor(game, angleOffset) {
     this.game = game;
     this.angleOffset = angleOffset;
     this.x = this.game.player.x + (Math.cos(this.game.player.rotation + angleOffset) * this.game.player.width) / 2;
@@ -9,19 +9,13 @@ class RegularProjectile {
     this.speed = 500;
     this.directionX = Math.cos(this.game.player.rotation + angleOffset);
     this.directionY = Math.sin(this.game.player.rotation + angleOffset);
-    this.chargeDuration = this.game.controls.keys.fire.pressedDuration / 1000;
-    this.isCharged = false;
-    this.split = split;
     this.damage = 10;
-    this.splitDamage = 25;
-    this.partialChargeDamage = 50;
-    this.fullChargeDamage = 150;
     this.maxDistance = 800;
     this.traveledDistance = 0;
     this.markedForDeletion = false;
 
-    this.setCharged();
-    this.setDirection();
+    // this.setCharged();
+    // this.setDirection();
   }
 
   setCharged() {
@@ -39,16 +33,16 @@ class RegularProjectile {
     }*/
   }
 
-  setDirection() {
-    if (this.split) {
+  // setDirection() {
+  /*    if (this.split) {
       this.directionX = Math.cos(this.angleOffset);
       this.directionY = Math.sin(this.angleOffset);
       this.damage = this.splitDamage;
-    } else {
-      this.directionX = Math.cos(this.game.player.rotation + this.angleOffset);
-      this.directionY = Math.sin(this.game.player.rotation + this.angleOffset);
-    }
-  }
+    } else {*/
+  // this.directionX = Math.cos(this.game.player.rotation + this.angleOffset);
+  // this.directionY = Math.sin(this.game.player.rotation + this.angleOffset);
+  // }
+  // }
 
   draw(ctx) {
     ctx.fillStyle = 'blue';

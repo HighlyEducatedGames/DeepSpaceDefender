@@ -6,6 +6,11 @@ import Coin from './assets/scripts/Coin.js';
 import Controls from './assets/scripts/controls/Controls.js';
 import Menu from './assets/scripts/Menu.js';
 import { RegularEnemy, StealthEnemy, TankEnemy } from './assets/scripts/enemies/BasicEnemies.js';
+import BiomechLeviathan from './assets/scripts/bosses/BiomechLeviathan.js';
+import MusicController from './assets/scripts/MusicController.js';
+import Boss from './assets/scripts/bosses/Boss.js';
+import CyberDragon from './assets/scripts/bosses/CyberDragon.js';
+import TemporalSerpent from './assets/scripts/bosses/TemporalSerpent.js';
 
 class Game {
   constructor(canvas) {
@@ -16,18 +21,17 @@ class Game {
     this.controls = new Controls(this);
     this.GUI = new GUI(this);
     this.menu = new Menu(this);
+    this.music = new MusicController(this);
     this.topMargin = 120;
-    this.boss = null;
+    this.boss = new CyberDragon(this);
+    this.tickMs = null;
+    this.targetFPS = 60;
+    this.targetFrameDuration = 1000 / this.targetFPS;
 
     this.images = {
       title: new Image(),
     };
     this.images.title.src = 'assets/images/title_screen.png';
-
-    this.music = {
-      background: new Audio('assets/audio/background-music.mp3'),
-      gameOver: new Audio('assets/audio/gameOverMusic.mp3'),
-    };
 
     // Instantiate resettable properties
     this.resetGame();
@@ -43,6 +47,7 @@ class Game {
     this.levelStartTime = 0;
     this.levelDuration = 30000;
     this.countdown = this.levelDuration / 1000;
+    this.effects = [];
     this.powerUps = {
       boost: { isActive: false },
     };
@@ -65,9 +70,9 @@ class Game {
 
     this.enemies = []; // TODO: enemy manager and limiting enemies as a conditional to not have too many on screen
     // TODO use overlapping logic to prevent enemy overlaps
-    this.maxEnemies = 1;
-    this.maxTankEnemies = 1;
-    this.maxStealthEnemies = 1;
+    this.maxEnemies = 0;
+    this.maxTankEnemies = 0;
+    this.maxStealthEnemies = 0;
     for (let i = 0; i < this.maxEnemies; i++) {
       this.enemies.push(new RegularEnemy(this));
     }
@@ -79,8 +84,10 @@ class Game {
       // if (level % 5 === 0 || level <= 5) return; // TODO: Only spawn if iver level 5 and not on boss level
       this.enemies.push(new TankEnemy(this));
     }
+  }
 
-    this.stopMusic(this.music.gameOver);
+  startLevel(level) {
+    this.level = level;
   }
 
   handleMainGameControls() {
@@ -107,12 +114,15 @@ class Game {
   }
 
   render(ctx, deltaTime) {
-    this.projectiles = [this.player.projectiles];
-    if (this.debug) console.debug('Projectiles: ', this.projectiles.flat().length);
+    const bossProjectiles = this.boss ? this.boss.projectiles : [];
+    this.projectiles = [this.player.projectiles, bossProjectiles];
+    this.effects.forEach((effect) => {
+      if (effect.particles) this.projectiles.push(effect.particles);
+    });
 
     this.draw(ctx);
     this.update(deltaTime);
-    this.updateMusic();
+    this.music.update();
     this.deleteOldObjects();
   }
 
@@ -123,6 +133,7 @@ class Game {
       projectileArray.forEach((projectile) => projectile.draw(ctx));
     });
     this.enemies.forEach((enemy) => enemy.draw(ctx));
+    if (this.boss) this.boss.draw(ctx);
     this.player.draw(ctx);
     this.GUI.draw(ctx); // Draw the GUI last so it is always on top
   }
@@ -135,12 +146,14 @@ class Game {
         projectileArray.forEach((projectile) => projectile.update(deltaTime));
       });
       this.enemies.forEach((enemy) => enemy.update(deltaTime));
+      if (this.boss) this.boss.update(deltaTime);
       this.player.update(deltaTime);
+      this.effects.forEach((effect) => effect.update(deltaTime));
     }
   }
 
   deleteOldObjects() {
-    /* DELETION */
+    /* DELETE OLD OBJECTS */
     this.coins.forEach((coin, index) => {
       if (coin.markedForDeletion) this.coins.splice(index, 1);
     });
@@ -152,50 +165,43 @@ class Game {
     this.enemies.forEach((enemy, index) => {
       if (enemy.markedForDeletion) this.enemies.splice(index, 1);
     });
+    if (this.boss && this.boss.markedForDeletion) this.boss = null;
+    this.effects.forEach((effect, index) => {
+      if (effect.markedForDeletion) this.effects.splice(index, 1);
+    });
   }
 
   checkCollision(object1, object2) {
     const dx = object1.x - object2.x;
     const dy = object1.y - object2.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < object1.width * 0.5 + object2.width * 0.5;
-  }
-
-  updateMusic() {
-    const isBossLevel = this.level % 5 === 0;
-    if (isBossLevel && !this.boss && !this.boss.music.paused) {
-      this.stopMusic(this.music.background);
-      this.startMusic(this.boss.music);
-    } else if (!isBossLevel && this.music.background.paused) {
-      if (this.boss) this.stopMusic(this.boss.music);
-      this.startMusic(this.music.background);
-    }
-  }
-
-  startMusic(music) {
-    music.play();
-  }
-
-  pauseMusic(music) {
-    music.pause();
-  }
-
-  stopMusic(music) {
-    music.pause();
-    music.currentTime = 0;
+    return distance < (object1.radius || object1.width * 0.5) + (object2.radius || object2.width * 0.5);
   }
 
   gameOver() {
     this.isGameOver = true;
-    this.stopMusic(this.music.background);
-    if (this.boss && this.boss.music) this.stopMusic(this.boss.music);
-    this.startMusic(this.music.gameOver);
+    // this.stopMusic(this.music.background);
+    // if (this.boss && this.boss.music) this.stopMusic(this.boss.music);
+    // this.startMusic(this.music.gameOver);
+  }
+
+  nextLevel() {
+    this.startLevel(this.level + 1);
+  }
+
+  outOfBounds(object, extraMargin = 0) {
+    const radius = (object.radius || object.width * 0.5) + extraMargin;
+    return (
+      object.x + radius < 0 ||
+      object.x - radius > this.canvas.width ||
+      object.y + radius < 0 ||
+      object.y - radius > this.canvas.height
+    );
   }
 }
 
 let lastTimestamp = 0; // milliseconds
-const targetFPS = 60;
-const targetFrameDuration = 1000 / targetFPS;
+let now = null;
 
 window.addEventListener('load', () => {
   const canvas = document.getElementById('gameCanvas');
@@ -206,6 +212,7 @@ window.addEventListener('load', () => {
   const game = new Game(canvas);
 
   function loop(timestamp = 0) {
+    now = performance.now(); // First to accurately calculate tick time
     let deltaTime = timestamp - lastTimestamp;
     lastTimestamp = timestamp;
 
@@ -232,10 +239,12 @@ window.addEventListener('load', () => {
       ctx.fillText(text, x, y);
     }
 
-    const delay = Math.max(0, targetFrameDuration - (performance.now() - timestamp));
+    const delay = Math.max(0, game.targetFrameDuration - (performance.now() - timestamp));
     setTimeout(() => {
       requestAnimationFrame(loop);
     }, delay);
+
+    game.tickMs = performance.now() - now; // Last to accurately calculate tick time
   }
 
   loop();

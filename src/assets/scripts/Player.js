@@ -34,7 +34,7 @@ class Player {
     // this.bombSpawnTime = 0;
     // this.bombFlashTime = 0;
     // this.bombSpawned = false;
-    this.powerUpActive = true; // TODO power up controller
+    this.powerUpActive = false; // TODO power up controller
 
     this.images = {
       idle: new Image(),
@@ -142,7 +142,7 @@ class Player {
       this.game.gameOver();
     }
 
-    if (!this.game.menu.isOpen && !this.game.gameOver) {
+    if (!this.game.menu.isOpen && !this.game.isGameOver) {
       if (keys.fire.justPressed()) this.fireProjectile();
       if (keys.bomb.justPressed()) this.useBomb();
       if (keys.boost.justPressed()) this.useBoost();
@@ -212,7 +212,7 @@ class Player {
     const projectilesToFire = this.powerUpActive ? 3 : 1;
     for (let i = 0; i < projectilesToFire; i++) {
       const angleOffset = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
-      this.projectiles.push(new RegularProjectile(this.game, angleOffset, false));
+      this.projectiles.push(new RegularProjectile(this.game, angleOffset));
     }
     this.sounds.fire.cloneNode().play();
   }
@@ -242,6 +242,23 @@ class Player {
       this.lives = 0;
       this.game.gameOver();
     }
+  }
+
+  addScore(number) {
+    this.score += number;
+    // Maybe play sound??
+  }
+
+  getAngleToPlayer(object) {
+    return Math.atan2(this.y - object.y, this.x - object.x);
+  }
+
+  getDistanceToPlayer(object) {
+    return Math.hypot(this.x - object.x, this.y - object.y);
+  }
+
+  getBomb() {
+    return this.projectiles.filter((projectile) => projectile instanceof Bomb)[0];
   }
 }
 

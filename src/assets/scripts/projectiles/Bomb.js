@@ -38,16 +38,9 @@ class Bomb {
   update() {
     this.timeSinceBomb = performance.now() - this.bombFlashTime;
     // Bomb only lasts for 1 second
-    if (this.timeSinceBomb >= 1000) this.markedForDeletion = true;
-
-    /*if (timeSinceBomb >= 1000) {
-      // Bomb is active for 1 second
-      bombActive = false;
-      bossHitByBomb = false;
-      biomechHitByBomb = false;
-      cyberDragonHitByBomb = false;
-      temporalSerpentHitByBomb = false;
-    }*/
+    if (this.timeSinceBomb >= 1000) {
+      this.markedForDeletion = true;
+    }
 
     // Follow the player
     this.x = this.game.player.x;

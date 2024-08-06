@@ -37,6 +37,7 @@ class GUI {
     this.drawChargeBar(ctx);
     this.drawShieldBar(ctx);
     this.drawInventories(ctx);
+    if (this.game.debug) this.drawDebug(ctx);
   }
 
   drawText(ctx) {
@@ -163,11 +164,28 @@ class GUI {
 
     const bombIconX = this.chargeBarX + this.chargeBarWidth + 10;
     ctx.drawImage(this.images.bomb, bombIconX, this.chargeBarY, 20, 20);
-    ctx.fillText(':' + this.game.player.bombs.length, bombIconX + 25, this.chargeBarY + 18);
+    ctx.fillText(':' + this.game.player.bombs, bombIconX + 25, this.chargeBarY + 18);
 
     const missileIconX = this.shieldBarX + this.shieldBarWidth + 10;
     ctx.drawImage(this.images.missile, missileIconX, this.shieldBarY, 20, 20);
     ctx.fillText(':' + this.game.player.missiles.length, missileIconX + 25, this.shieldBarY + 18);
+  }
+
+  drawDebug(ctx) {
+    ctx.fillStyle = 'white';
+    ctx.font = '10px "Press Start 2P", cursive';
+    const ms = Math.floor(this.game.tickMs * 10) / 10;
+    const percent = Math.floor(ms / this.game.tickMs);
+
+    const line4 = `Phase: ${this.game.boss ? this.game.boss.phase : 'none'}`;
+    const line3 = `Effects: ${this.game.effects.length}`;
+    const line2 = `Projectiles: ${this.game.projectiles.flat().length}`;
+    const line1 = `Tick: ${ms} - ${percent}%`;
+
+    ctx.fillText(line4, 10, this.game.canvas.height - 55);
+    ctx.fillText(line3, 10, this.game.canvas.height - 40);
+    ctx.fillText(line2, 10, this.game.canvas.height - 25);
+    ctx.fillText(line1, 10, this.game.canvas.height - 10);
   }
 }
 

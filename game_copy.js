@@ -7,9 +7,6 @@ let isBoosting = false;
 let boostEndTime = 0;
 let boostCooldownEndTime = 0;
 let bombPowerUp = null;
-let bossHitByBomb = false;
-let biomechHitByBomb = false;
-let cyberDragonHitByBomb = false;
 let temporalSerpentHitByBomb = false;
 let enemies = [];
 let projectiles = [];
@@ -20,7 +17,6 @@ let powerUpSpawnTime = 0;
 let powerUpDirection = 1;
 let powerUpZigZagSpeed = 100;
 let powerUpSpawned = false;
-let boss = null;
 let homingMissilePowerUp = null;
 let homingMissileSpawned = false;
 let homingMissiles = [];
@@ -44,7 +40,7 @@ let boostPowerUpSpawnTime = 0;
 let boostPowerUpSpawnedThisLevel = false;
 let boostPowerUpActive = false;
 let boostPowerUpExpirationTime = 0;
-let biomechLeviathan = null;
+
 let tractorBeam = null;
 let tractorBeamCooldown = false;
 let empBlast = {
@@ -60,7 +56,6 @@ let empBlastActive = false;
 let empPulseScale = 1;
 let empPulseTime = 0;
 let empDisableFire = false;
-let asteroids = [];
 let flamethrowerPowerUp = null;
 let flamethrowerSpawnTime = 0;
 let flamethrowerSpawnedThisLevel = false;
@@ -125,10 +120,7 @@ function initializeGame() {
   bombPowerUp = null;
   bombSpawned = false;
   bombFlashTime = 0;
-  boss = null;
-  cyberDragon = null;
   biomechLeviathan = null;
-  bossHitByBomb = false;
   homingMissiles = [];
   homingMissilePowerUp = null;
   homingMissilesInventory = 0;
@@ -149,265 +141,6 @@ function initializeGame() {
   flamethrowerSpawnedThisLevel = false;
   flamethrowerActive = false;
   initLevel(level);
-  stopBossMusic();
-}
-
-function updateCyberDragon(deltaTime, timestamp) {
-  if (!cyberDragon || !cyberDragon.alive) return;
-
-  // Movement towards the player
-  const angleToPlayer = Math.atan2(player.y - cyberDragon.y, player.x - cyberDragon.x);
-  cyberDragon.x += (Math.cos(angleToPlayer) * cyberDragon.speed * deltaTime) / 1000;
-  cyberDragon.y += (Math.sin(angleToPlayer) * cyberDragon.speed * deltaTime) / 1000;
-
-  // Phase transitions
-  if (cyberDragon.health <= cyberDragon.maxHealth * 0.75 && !cyberDragon.phaseTransitioned[0]) {
-    cyberDragon.phase = 2;
-    cyberDragon.phaseTransitioned[0] = true;
-  } else if (cyberDragon.health <= cyberDragon.maxHealth * 0.5 && !cyberDragon.phaseTransitioned[1]) {
-    cyberDragon.phase = 3;
-    cyberDragon.phaseTransitioned[1] = true;
-  } else if (cyberDragon.health <= cyberDragon.maxHealth * 0.25 && !cyberDragon.phaseTransitioned[2]) {
-    cyberDragon.phase = 4;
-    cyberDragon.phaseTransitioned[2] = true;
-  }
-
-  // Attack logic
-  if (cyberDragon.canAttack && timestamp - cyberDragon.lastAttackTime > cyberDragon.attackInterval) {
-    if (!cyberDragon.alive) return;
-    switch (cyberDragon.phase) {
-      case 1:
-        chargeLaser();
-        break;
-      case 2:
-        chargeLaser();
-        spawnAsteroid();
-        break;
-      case 4:
-        chargeLaser();
-        spawnAsteroid();
-        break;
-    }
-    cyberDragon.lastAttackTime = timestamp;
-  }
-
-  // Update laser charge
-  if (cyberDragon.laserCharging) {
-    updateLaserCharge(deltaTime);
-  }
-
-  // Handle spiral projectiles independently of phase checking
-  if (cyberDragon.phase >= 3) {
-    fireSpiralProjectiles(deltaTime, timestamp);
-  }
-  updateSpiralProjectiles(deltaTime);
-  checkSpiralCollisions();
-  drawSpiralProjectiles();
-}
-
-function fireLaser() {
-  if (!cyberDragon || !cyberDragon.alive) return;
-
-  if (cyberDragon.laserReady) {
-    const angleToPlayer = Math.atan2(player.y - cyberDragon.y, player.x - cyberDragon.x);
-    let laser = {
-      x: cyberDragon.x,
-      y: cyberDragon.y,
-      width: 10, // Laser width
-      height: 50, // Laser length
-      directionX: Math.cos(angleToPlayer),
-      directionY: Math.sin(angleToPlayer),
-      speed: 1000, // Speed of the laser
-      damage: 30, // Damage dealt by the laser
-      fromDragon: true,
-      isLaser: true, // Identify this as a laser
-    };
-    projectiles.push(laser);
-    cyberDragon.laserReady = false;
-  }
-}
-
-function updateLaserCharge(deltaTime) {
-  if (cyberDragon && cyberDragon.laserCharging) {
-    cyberDragon.laserChargeTime += deltaTime;
-    cyberDragon.laserChargeRadius = 5 + (cyberDragon.laserChargeTime / cyberDragon.laserChargeDuration) * 20; // Increase the radius over time
-
-    if (cyberDragon.laserChargeTime >= cyberDragon.laserChargeDuration) {
-      cyberDragon.laserReady = true;
-      cyberDragon.laserCharging = false;
-      fireLaser();
-      laserChargingSound.pause(); // Stop the charging sound
-      laserChargingSound.currentTime = 0; // Reset sound to start
-    }
-  }
-}
-
-function drawLaser(laser) {
-  ctx.save();
-  ctx.translate(laser.x, laser.y);
-  ctx.rotate(Math.atan2(laser.directionY, laser.directionX));
-  ctx.fillStyle = 'red';
-  ctx.fillRect(0, -laser.width / 2, laser.height, laser.width);
-  ctx.restore();
-}
-
-function drawLaserCharge() {
-  if (cyberDragon && cyberDragon.laserCharging) {
-    ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-    ctx.beginPath();
-    ctx.arc(cyberDragon.x, cyberDragon.y, cyberDragon.laserChargeRadius, 0, 2 * Math.PI);
-    ctx.fill();
-  }
-}
-
-function spawnAsteroid() {
-  if (!cyberDragon || !cyberDragon.alive) return;
-
-  const x = Math.random() * canvas.width;
-  const y = -ASTEROID_SIZES[0].height; // Start off screen at the top
-
-  // Randomly select a size
-  const size = ASTEROID_SIZES[Math.floor(Math.random() * ASTEROID_SIZES.length)];
-
-  const asteroid = {
-    x: x,
-    y: y,
-    width: size.width,
-    height: size.height,
-    speed: ASTEROID_SPEED,
-    alive: true,
-  };
-  asteroids.push(asteroid);
-
-  // Schedule the next asteroid spawn
-  asteroidSpawnTime = Math.random() * 2000 + 2000;
-  setTimeout(spawnAsteroid, asteroidSpawnTime);
-}
-function clearAsteroids() {
-  asteroids = [];
-  clearTimeout(asteroidSpawnTime); // Stop any scheduled asteroid spawns
-}
-
-function updateAsteroids(deltaTime) {
-  asteroids.forEach((asteroid, index) => {
-    asteroid.y += (asteroid.speed * deltaTime) / 1000;
-
-    // Check collision with player
-    const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-    const asteroidCircle = {
-      x: asteroid.x + asteroid.width / 2,
-      y: asteroid.y + asteroid.height / 2,
-      radius: asteroid.width / 2,
-    };
-
-    if (checkCollision(playerCircle, asteroidCircle)) {
-      // Play collision sound
-      const collisionSoundClone = collisionSound.cloneNode();
-      collisionSoundClone.volume = collisionSound.volume;
-      collisionSoundClone.play();
-
-      if (!isInvincible && !shieldActive) {
-        player.health -= ASTEROID_DAMAGE;
-
-        if (player.health <= 0) {
-          player.lives--;
-          player.health = PLAYER_MAX_HEALTH;
-          if (player.lives <= 0) {
-          }
-        }
-      }
-      asteroid.alive = false;
-    }
-
-    // Check collision with bomb
-    if (bomb.active) {
-      const bombCircle = { x: bomb.x, y: bomb.y, radius: bomb.radius };
-      if (checkCollision(bombCircle, asteroidCircle)) {
-        asteroid.alive = false;
-      }
-    }
-
-    // Remove asteroids that go off-screen
-    if (asteroid.y > canvas.height) {
-      asteroid.alive = false;
-    }
-
-    // Remove dead asteroids from the array
-    if (!asteroid.alive) {
-      asteroids.splice(index, 1);
-    }
-  });
-}
-
-function drawAsteroids() {
-  asteroids.forEach((asteroid) => {
-    if (asteroid.alive) {
-      // Draw the comet tail
-      const tailLength = 5; // Length of the tail
-      const tailOpacity = 0.1; // Starting opacity of the tail
-
-      for (let i = 0; i < tailLength; i++) {
-        ctx.fillStyle = `rgba(173, 216, 230, ${tailOpacity * (1 - i / tailLength)})`; // Light blue color
-        ctx.beginPath();
-        // Draw the tail circles centered relative to the asteroid
-        ctx.arc(
-          asteroid.x + asteroid.width / 2, // Center of the asteroid
-          asteroid.y + asteroid.height / 2 - i * 10, // Center vertically and add vertical offset
-          asteroid.width / 2 + i * 2, // Radius grows with each step
-          0,
-          2 * Math.PI,
-        );
-        ctx.fill();
-      }
-
-      // Draw the asteroid
-      ctx.drawImage(asteroidImage, asteroid.x, asteroid.y, asteroid.width, asteroid.height);
-    }
-  });
-}
-
-let spiralActive = false;
-let spiralStartTime = 0;
-let lastSpiralFireTime = 0; // Timer for controlling the rate of fire
-const spiralFireInterval = 100; // Interval in milliseconds between projectiles
-
-function fireSpiralProjectiles(deltaTime, timestamp) {
-  if (!cyberDragon || !cyberDragon.alive) return;
-
-  if (spiralActive) {
-    if (timestamp - spiralStartTime > 7000) {
-      spiralActive = false;
-      spiralShotSound.pause(); // Stop the sound
-      spiralShotSound.currentTime = 0; // Reset sound to start
-      spiralStartTime = timestamp;
-    } else {
-      // Only fire a projectile if the interval has passed
-      if (timestamp - lastSpiralFireTime > spiralFireInterval) {
-        const angle = cyberDragon.spiralAngle;
-        cyberDragon.spiralProjectiles.push({
-          x: cyberDragon.x,
-          y: cyberDragon.y,
-          directionX: Math.cos(angle),
-          directionY: Math.sin(angle),
-          speed: 150, // Adjust for desired speed of the projectiles
-          damage: 10, // Adjust for desired damage
-          radius: 5,
-          maxDistance: 800,
-          traveledDistance: 0,
-        });
-        cyberDragon.spiralAngle += 0.1; // Adjust for desired spiral tightness
-
-        // Update the last fire time
-        lastSpiralFireTime = timestamp;
-      }
-    }
-  } else {
-    if (timestamp - spiralStartTime > 3000) {
-      spiralActive = true;
-      playSpiralShotSound(); // Play the sound
-      spiralStartTime = timestamp;
-    }
-  }
 }
 
 function playSpiralShotSound() {
@@ -432,16 +165,6 @@ function updateSpiralProjectiles(deltaTime) {
     if (projectile.traveledDistance > projectile.maxDistance) {
       cyberDragon.spiralProjectiles.splice(index, 1);
     }
-  });
-}
-
-function drawSpiralProjectiles() {
-  cyberDragon.spiralProjectiles.forEach((projectile) => {
-    ctx.beginPath();
-    ctx.arc(projectile.x, projectile.y, projectile.radius, 0, 2 * Math.PI);
-    ctx.fillStyle = 'yellow';
-    ctx.fill();
-    ctx.closePath();
   });
 }
 
@@ -1166,62 +889,6 @@ function handleSegmentExplosions(timestamp) {
   }
 }
 
-// Function to create explosion effect
-class Particle {
-  constructor(x, y, color) {
-    this.x = x;
-    this.y = y;
-    this.color = color;
-    this.radius = Math.random() * 2 + 2; // Random size
-    this.life = 100; // Lifetime of the particle in frames
-    this.dx = (Math.random() - 0.5) * 5; // Horizontal velocity
-    this.dy = (Math.random() - 0.5) * 5; // Vertical velocity
-  }
-
-  update() {
-    this.x += this.dx;
-    this.y += this.dy;
-    this.life--;
-    if (this.life < 0) {
-      this.life = 0;
-    }
-  }
-
-  draw(ctx) {
-    if (this.life > 0) {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.fillStyle = this.color;
-      ctx.fill();
-    }
-  }
-}
-
-const particles = [];
-
-function createExplosion(x, y) {
-  const colors = ['red', 'orange', 'yellow'];
-  for (let i = 0; i < 50; i++) {
-    // Number of particles per explosion
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    particles.push(new Particle(x, y, color));
-  }
-}
-
-function updateParticles() {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const particle = particles[i];
-    particle.update();
-    if (particle.life <= 0) {
-      particles.splice(i, 1); // Remove dead particles
-    }
-  }
-}
-
-function drawParticles(ctx) {
-  particles.forEach((particle) => particle.draw(ctx));
-}
-
 // Function to draw detached segments
 function drawDetachedSegments(ctx) {
   detachedSegments.forEach((segment) => {
@@ -1464,18 +1131,6 @@ function updateProjectiles(deltaTime, timestamp) {
             collisionSoundClone.volume = collisionSound.volume;
             collisionSoundClone.play();
             projectiles.splice(index, 1);
-
-            if (cyberDragon && cyberDragon.health <= 0) {
-              cyberDragon.alive = false;
-              createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
-              explosionSound.play();
-              score += 3000;
-              cyberDragon = null;
-              clearAsteroids();
-              level++;
-              initLevel(level);
-              lastTime = performance.now();
-            }
           }
         }
 
@@ -1618,26 +1273,6 @@ function updateProjectiles(deltaTime, timestamp) {
     });
 
     projectiles = projectiles.filter((_, index) => !projectilesToRemove.has(index));
-  });
-
-  projectiles.forEach((projectile, index) => {
-    asteroids.forEach((asteroid, asteroidIndex) => {
-      const projectileCircle = { x: projectile.x, y: projectile.y, radius: projectile.width / 2 };
-      const asteroidCircle = {
-        x: asteroid.x + asteroid.width / 2,
-        y: asteroid.y + asteroid.height / 2,
-        radius: asteroid.width / 2,
-      };
-
-      if (checkCollision(projectileCircle, asteroidCircle)) {
-        asteroid.alive = false;
-        projectiles.splice(index, 1);
-
-        const collisionSoundClone = collisionSound.cloneNode();
-        collisionSoundClone.volume = collisionSound.volume;
-        collisionSoundClone.play();
-      }
-    });
   });
 
   // Ensure spiral projectiles are updated correctly
@@ -2347,8 +1982,6 @@ function initLevel(level) {
   }
   tractorBeamCooldown = false;
 
-  // Clear asteroids
-  asteroids = [];
   // Clear serpent segments
   clearSerpentSegments();
 
@@ -2385,108 +2018,6 @@ function initLevel(level) {
 
   manageMusic();
   initWormholes(level);
-}
-
-function bossAttackPattern1() {
-  // Simple projectile attack
-  let bossProjectile = {
-    x: boss.x + boss.width / 2,
-    y: boss.y + boss.height,
-    width: 40,
-    height: 40,
-    speed: 250,
-    directionX: (player.x - boss.x) / Math.sqrt((player.x - boss.x) ** 2 + (player.y - boss.y) ** 2),
-    directionY: (player.y - boss.y) / Math.sqrt((player.x - boss.x) ** 2 + (player.y - boss.y) ** 2),
-    fromPlayer: false,
-    fromBoss: true,
-    heatSeeking: true,
-  };
-  projectiles.push(bossProjectile);
-}
-
-function bossAttackPattern2() {
-  // Spread shot attack
-  for (let i = -2; i <= 2; i++) {
-    let angle = Math.atan2(player.y - boss.y, player.x - boss.x) + (i * Math.PI) / 12;
-    let bossProjectile = {
-      x: boss.x + boss.width / 2,
-      y: boss.y + boss.height,
-      width: 25,
-      height: 25,
-      speed: 275,
-      directionX: Math.cos(angle),
-      directionY: Math.sin(angle),
-      fromPlayer: false,
-      fromBoss: true,
-      heatSeeking: false,
-    };
-    projectiles.push(bossProjectile);
-  }
-}
-
-function bossAttackPattern3() {
-  const numberOfProjectiles = 10;
-  const angleIncrement = (2 * Math.PI) / numberOfProjectiles;
-
-  for (let i = 0; i < numberOfProjectiles; i++) {
-    let angle = i * angleIncrement;
-    let bossProjectile = {
-      x: boss.x + boss.width / 2,
-      y: boss.y + boss.height / 2, // Ensure the projectiles start from the center of the boss
-      width: 20,
-      height: 20,
-      speed: 350,
-      directionX: Math.cos(angle),
-      directionY: Math.sin(angle),
-      fromPlayer: false,
-      fromBoss: true,
-      heatSeeking: false,
-    };
-    projectiles.push(bossProjectile);
-  }
-}
-
-function updateBoss(deltaTime, timestamp) {
-  if (!boss) return;
-
-  const angleToPlayer = Math.atan2(player.y - boss.y, player.x - boss.x);
-  boss.x += (Math.cos(angleToPlayer) * boss.speed * deltaTime) / 1000;
-  boss.y += (Math.sin(angleToPlayer) * boss.speed * deltaTime) / 1000;
-
-  if (boss.health < boss.maxHealth * 0.6 && boss.phase === 1 && !boss.phaseTransitioned[1]) {
-    boss.phase = 2;
-    boss.phaseTransitioned[1] = true;
-    boss.speed += 20;
-  } else if (boss.health < boss.maxHealth * 0.2 && boss.phase === 2 && !boss.phaseTransitioned[2]) {
-    boss.phase = 3;
-    boss.phaseTransitioned[2] = true;
-    boss.shootInterval = 1000;
-  }
-
-  if (boss.canShoot && timestamp - boss.lastShotTime > boss.shootInterval) {
-    switch (boss.phase) {
-      case 1:
-        bossAttackPattern1();
-        break;
-      case 2:
-        bossAttackPattern2();
-        break;
-      case 3:
-        bossAttackPattern3();
-        break;
-    }
-    boss.lastShotTime = timestamp;
-  }
-
-  if (boss && boss.health <= 0) {
-    boss.alive = false;
-    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
-    score += 1000;
-    boss = null;
-    level++;
-    initLevel(level);
-    lastTime = performance.now();
-  }
 }
 
 function updatePowerUps(deltaTime, timestamp) {
@@ -3052,21 +2583,6 @@ function useBomb() {
         }
       }
     }
-
-    // Handle asteroid destruction
-    asteroids.forEach((asteroid) => {
-      const asteroidCircle = {
-        x: asteroid.x + asteroid.width / 2,
-        y: asteroid.y + asteroid.height / 2,
-        radius: asteroid.width / 2,
-      };
-      if (checkCollision(playerCircle, asteroidCircle)) {
-        asteroid.alive = false;
-      }
-    });
-
-    // Remove dead asteroids from the array
-    asteroids = asteroids.filter((asteroid) => asteroid.alive);
   }
 }
 
@@ -3088,25 +2604,6 @@ function updateBombs(deltaTime) {
       const playerCircle = { x: player.x, y: player.y, radius: BOMB_RADIUS };
       const enemyCircle = { x: enemy.x + enemy.width / 2, y: enemy.y + enemy.height / 2, radius: enemy.width / 2 };
       return !checkCollision(playerCircle, enemyCircle);
-    });
-
-    // Check for collisions with asteroids
-    asteroids.forEach((asteroid, index) => {
-      const bombCircle = { x: bomb.x, y: bomb.y, radius: bomb.radius };
-      const asteroidCircle = {
-        x: asteroid.x + asteroid.width / 2,
-        y: asteroid.y + asteroid.height / 2,
-        radius: asteroid.width / 2,
-      };
-
-      if (checkCollision(bombCircle, asteroidCircle)) {
-        asteroid.alive = false;
-      }
-
-      // Remove dead asteroids from the array
-      if (!asteroid.alive) {
-        asteroids.splice(index, 1);
-      }
     });
 
     // Check for collisions with projectiles
@@ -3190,7 +2687,6 @@ function gameLoop(timestamp) {
     ctx.fillText('Level: ' + level, canvas.width / 2 - 30, canvas.height / 2 + 70);
     ctx.fillText('Press B to Restart', canvas.width / 2 - 30, canvas.height / 2 + 100);
     stopBackgroundMusic();
-    stopBossMusic();
     return;
   }
 
@@ -3208,20 +2704,14 @@ function gameLoop(timestamp) {
     // Update bombs before other entities
     updateBombs(deltaTime);
 
-    if (boss) {
-      updateBoss(deltaTime, timestamp);
-    }
-
     if (biomechLeviathan) {
       updateBiomechLeviathan(deltaTime, timestamp);
     }
 
     if (cyberDragon) {
       updateCyberDragon(deltaTime, timestamp);
-      updateAsteroids(deltaTime, timestamp);
       drawCyberDragon();
       drawLaserCharge();
-      drawAsteroids();
       drawSpiralProjectiles();
     }
 
@@ -3246,7 +2736,6 @@ function gameLoop(timestamp) {
     if (cyberDragon) {
       drawCyberDragon();
       drawLaserCharge();
-      drawAsteroids();
       drawSpiralProjectiles();
     }
 
@@ -3566,7 +3055,6 @@ function update(deltaTime, timestamp) {
     updateCyberDragon(deltaTime, timestamp);
     drawCyberDragon();
     drawLaserCharge();
-    drawAsteroids();
   }
 
   // Level timing and progression

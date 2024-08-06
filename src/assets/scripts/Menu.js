@@ -38,13 +38,11 @@ class Menu {
 
   showMenu() {
     this.menu.style.display = 'block';
-    this.game.pauseMusic(this.game.music.background);
     this.isOpen = true;
   }
 
   hideMenu() {
     this.menu.style.display = 'none';
-    this.game.startMusic(this.game.music.background);
     this.isOpen = false;
   }
 
