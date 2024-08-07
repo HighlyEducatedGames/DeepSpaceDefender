@@ -268,11 +268,8 @@ class Player {
       (!this.game.controls.code.unlimitedBoost.enabled && this.game.timestamp < this.boostCooldownEndTime)
     )
       return;
-    // isBoosting = true;
-    // if (!isInvincible) {
-    //   // Only set isInvincible if it's not already true
-    //   isInvincible = true;
-    // }
+
+    this.isBoosting = true;
     // boostEndTime = performance.now() + 500;
     // boostCooldownEndTime = performance.now() + (boostPowerUpActive ? 500 : 7000); // Reduced cooldown if boost power-up is active
     // const boostSoundClone = boostSound.cloneNode();
@@ -285,7 +282,7 @@ class Player {
   isBoostReady() {
     return (
       !this.isBoosting &&
-      (this.game.controls.code.unlimitedBoost.enabled || performance.now() >= this.boostCooldownEndTime)
+      (this.game.controls.code.unlimitedBoost.enabled || this.game.timestamp >= this.boostCooldownEndTime)
     );
   }
 

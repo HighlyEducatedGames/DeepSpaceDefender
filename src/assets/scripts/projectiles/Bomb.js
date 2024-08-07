@@ -45,6 +45,15 @@ class Bomb {
     // Follow the player
     this.x = this.game.player.x;
     this.y = this.game.player.y;
+
+    this.checkCollisions();
+  }
+
+  checkCollisions() {
+    // Check Enemies
+    // Check projectiles
+    // Check spiral projections
+    // Check bosses
   }
 }
 

@@ -121,6 +121,7 @@ class TemporalSerpent {
   checkCollisions() {
     // BOMD // TODO
     // Temporarily make the serpent leave the screen
+    // Return the serpent after 5 seconds
   }
 }
 

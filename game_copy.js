@@ -2,9 +2,6 @@ const soundEffectsVolumeSlider = document.getElementById('soundEffectsVolume');
 const MAX_POWER_UPS = 3;
 
 let enemyRespawnTimeouts = [];
-let isBoosting = false;
-let boostEndTime = 0;
-let boostCooldownEndTime = 0;
 let bombPowerUp = null;
 let temporalSerpentHitByBomb = false;
 let enemies = [];
@@ -2259,38 +2256,6 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
   }
 
-  function useBoost() {
-    if (isBoosting || (!isUnlimitedBoostActivated && performance.now() < boostCooldownEndTime)) return;
-
-    isBoosting = true;
-    if (!isInvincible) {
-      // Only set isInvincible if it's not already true
-      isInvincible = true;
-    }
-    boostEndTime = performance.now() + 500;
-    boostCooldownEndTime = performance.now() + (boostPowerUpActive ? 500 : 7000); // Reduced cooldown if boost power-up is active
-
-    const boostSoundClone = boostSound.cloneNode();
-    boostSoundClone.volume = boostSound.volume;
-    boostSoundClone.play();
-
-    player.velocity.x = Math.cos(player.rotation) * player.maxSpeed * 2;
-    player.velocity.y = Math.sin(player.rotation) * player.maxSpeed * 2;
-  }
-
-  // Function to end the boost
-  function endBoost() {
-    isBoosting = false;
-    if (!isCheatCodeActivated) {
-      // Only reset isInvincible if the cheat code is not active
-      isInvincible = false;
-    }
-  }
-
-  function isBoostReady() {
-    return !isBoosting && (isUnlimitedBoostActivated || performance.now() >= boostCooldownEndTime);
-  }
-
   function update(deltaTime, timestamp) {
     const rotationSpeed = 4;
     const thrustAcceleration = 300;
@@ -2326,29 +2291,6 @@ function gameLoop(timestamp) {
     // Reverse Power-up active check
     if (reversePowerUpActive && timestamp >= reversePowerUpExpirationTime) {
       reversePowerUpActive = false;
-    }
-
-    // Boost handling
-    if (isBoosting) {
-      player.velocity.x = Math.cos(player.rotation) * player.maxSpeed * 2;
-      player.velocity.y = Math.sin(player.rotation) * player.maxSpeed * 2;
-
-      // Check if the boost duration has ended
-      if (performance.now() >= boostEndTime) {
-        endBoost();
-      }
-    } else {
-      // Basic movement
-    }
-
-    if (isBoosting && performance.now() > boostEndTime) {
-      isBoosting = false;
-      isInvincible = false;
-      const speed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.y * player.velocity.y);
-      if (speed > player.maxSpeed) {
-        player.velocity.x *= player.maxSpeed / speed;
-        player.velocity.y *= player.maxSpeed / speed;
-      }
     }
 
     // Call the updated power-up logic
