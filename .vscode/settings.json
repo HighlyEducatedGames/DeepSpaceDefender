@@ -1,0 +1,4 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "liveServer.settings.mount": [["/", "./src"]]
+}
