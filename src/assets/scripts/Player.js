@@ -282,7 +282,7 @@ class Player {
   isBoostReady() {
     return (
       !this.isBoosting &&
-      (this.game.controls.code.unlimitedBoost.enabled || this.game.timestamp >= this.boostCooldownEndTime)
+      (this.game.controls.codes.unlimitedBoost.enabled || this.game.timestamp >= this.boostCooldownEndTime)
     );
   }
 

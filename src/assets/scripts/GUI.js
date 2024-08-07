@@ -77,11 +77,11 @@ class GUI {
     ctx.strokeStyle = 'gray';
     ctx.strokeRect(this.boostBarX, this.boostBarY, this.boostBarWidth, this.boostBarHeight);
 
-    if (this.game.powerUps.boost.isActive) {
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(this.boostBarX - 3, this.boostBarY - 3, this.boostBarWidth + 6, this.boostBarHeight + 6);
-    }
+    // if (this.game.powerUps.boost.isActive) { // TODO once powerups are addded
+    //   ctx.strokeStyle = 'white';
+    //   ctx.lineWidth = 3;
+    //   ctx.strokeRect(this.boostBarX - 3, this.boostBarY - 3, this.boostBarWidth + 6, this.boostBarHeight + 6);
+    // }
   }
 
   drawHealthBar(ctx) {
