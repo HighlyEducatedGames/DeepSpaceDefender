@@ -55,7 +55,7 @@ class Enemy {
   }
 
   checkCollisions() {
-    // Collision with player projectiles
+    // Enemy collision with player projectiles
     this.game.player.projectiles.forEach((projectile) => {
       if (this.game.checkCollision(projectile, this)) {
         this.health -= projectile.damage;
@@ -64,10 +64,12 @@ class Enemy {
       }
     });
 
-    // Collision with player
+    // Enemy collision with player
     if (this.game.checkCollision(this.game.player, this)) {
-      this.game.player.takeDamage(this.damage);
-      this.game.player.sounds.collision.cloneNode().play();
+      if (!(this instanceof StealthEnemy) || (this instanceof StealthEnemy && this.visible)) {
+        this.game.player.takeDamage(this.damage);
+        this.game.player.sounds.collision.cloneNode().play();
+      }
     }
   }
 
