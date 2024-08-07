@@ -1,7 +1,7 @@
 export default class MusicController {
   constructor(game) {
     this.game = game;
-    this.active = null;
+    this.currentTrack = null;
 
     this.tracks = {
       background: new Audio('assets/audio/background-music.mp3'),
@@ -9,34 +9,34 @@ export default class MusicController {
     };
   }
 
-  startMusic(music) {
-    if (music) music.play();
+  setTrack(track) {
+    if (!(track instanceof Audio)) return;
+    if (this.currentTrack === track) return;
+    this.stop();
+    this.currentTrack = track;
+    this.currentTrack.currentTrack = 0;
   }
 
-  pauseMusic(music) {
-    if (music) music.pause();
+  play() {
+    if (!this.currentTrack) return;
+    this.currentTrack.play();
   }
 
-  stopMusic(music) {
-    if (music) {
-      music.pause();
-      music.currentTime = 0;
-    }
+  pause() {
+    if (!this.currentTrack) return;
+    this.currentTrack.pause();
   }
 
-  update() {
-    // const isBossLevel = this.level % 5 === 0;
-    /*if (this.boss && this.boss.music.paused) {
-      this.stopMusic(this.music.background);
-      this.startMusic(this.boss.music);
-    } else if (this.music.background.paused) {
-      if (this.boss) this.stopMusic(this.boss.music);
-      this.startMusic(this.music.background);
-    }*/
-    /*if (this.menu.isOpen) {
-      this.pauseMusic(this.music.background);
-    } else {
-      this.startMusic(this.music.background);
-    }*/
+  stop() {
+    if (!this.currentTrack) return;
+    this.currentTrack.pause();
+    this.currentTrack.currentTime = 0;
   }
+
+  restart() {
+    this.stop();
+    this.play();
+  }
+
+  update() {}
 }

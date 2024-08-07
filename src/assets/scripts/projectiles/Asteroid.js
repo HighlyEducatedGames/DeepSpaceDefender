@@ -71,7 +71,7 @@ export default class Asteroid {
       }
     });
 
-    // Check collision with bomb // TODO -- remove asteroid
+    // Check collision with bomb
     const bomb = this.game.player.getBomb();
     if (bomb) {
       if (this.game.checkCollision(bomb, this)) this.markedForDeletion = true;

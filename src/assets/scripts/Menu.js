@@ -37,11 +37,13 @@ class Menu {
   }
 
   showMenu() {
+    this.game.music.pause();
     this.menu.style.display = 'block';
     this.isOpen = true;
   }
 
   hideMenu() {
+    this.game.music.play();
     this.menu.style.display = 'none';
     this.isOpen = false;
   }

@@ -84,6 +84,8 @@ class Game {
       // if (level % 5 === 0 || level <= 5) return; // TODO: Only spawn if iver level 5 and not on boss level
       this.enemies.push(new TankEnemy(this));
     }
+
+    this.music.setTrack(this.music.tracks.background);
   }
 
   startLevel(level) {

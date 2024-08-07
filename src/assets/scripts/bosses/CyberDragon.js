@@ -12,10 +12,11 @@ export default class CyberDragon {
     this.speed = 50;
     this.maxHealth = 3000;
     this.health = this.maxHealth;
-    this.lastAttackTime = Date.now();
+    this.lastAttackTime = 0;
     this.attackInterval = 2000;
+    this.asteroidInverval = 600;
     this.canAttack = true;
-    this.phase = 2;
+    this.phase = 3;
     this.phaseTransitioned = [false, false, false, false];
     this.laserCharging = false;
     this.laserChargeRadius = 5;
@@ -136,7 +137,7 @@ export default class CyberDragon {
     }
 
     // Attack logic
-    if (this.canAttack && Date.now() - this.lastAttackTime > this.attackInterval) {
+    if (this.canAttack && Date.now() - this.lastAttackTime > this.asteroidInverval) {
       switch (this.phase) {
         case 1:
           this.attackPattern1();
@@ -212,8 +213,6 @@ export default class CyberDragon {
 
   spawnAsteroid() {
     this.projectiles.push(new Asteroid(this.game));
-    // Schedule the next asteroid spawn
-    this.nextAsteroidTimer = setTimeout(() => this.spawnAsteroid(), Math.random() * 2000 + 2000);
   }
 
   takeDamage(damage) {
@@ -229,7 +228,9 @@ export default class CyberDragon {
   }
 
   fireSpiralProjectiles() {
-    /*if (this.spiralActive) {
+    const timestamp = Date.now();
+
+    if (this.spiralActive) {
       if (timestamp - this.spiralStartTime > 7000) {
         this.spiralActive = false;
         this.sounds.spiralShot.pause();
@@ -252,7 +253,7 @@ export default class CyberDragon {
         this.playSpiralShotSound();
         this.spiralStartTime = timestamp;
       }
-    }*/
+    }
   }
 
   playSpiralShotSound() {
@@ -324,14 +325,14 @@ class SpiralProjectile {
     this.maxDistance = 800;
     this.traveledDistance = 0;
     this.markedForDeletion = false;
+    console.log('created spiral projectile');
   }
 
   draw(ctx) {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     ctx.fillStyle = 'yellow';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.closePath();
   }
 
   update() {

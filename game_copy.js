@@ -63,10 +63,6 @@ let flamethrowerActive = false;
 let flameParticles = [];
 let flamethrowerExpirationTime = 0;
 
-// Load audio
-// MULTIPLE - SPLIT
-const explosionSound = document.getElementById('explosionSound');
-
 function handleKeyDown(e) {
   if (e.key === ' ' && isMenuOpen) {
     initializeGame();
@@ -152,20 +148,6 @@ function playSpiralShotSound() {
       spiralShotSound.play();
     }
   }, 3500); // Play the sound again after 4 seconds
-}
-
-function updateSpiralProjectiles(deltaTime) {
-  if (!cyberDragon || !cyberDragon.alive) return;
-
-  cyberDragon.spiralProjectiles.forEach((projectile, index) => {
-    projectile.x += (projectile.directionX * projectile.speed * deltaTime) / 1000;
-    projectile.y += (projectile.directionY * projectile.speed * deltaTime) / 1000;
-    projectile.traveledDistance += (projectile.speed * deltaTime) / 1000;
-
-    if (projectile.traveledDistance > projectile.maxDistance) {
-      cyberDragon.spiralProjectiles.splice(index, 1);
-    }
-  });
 }
 
 function checkSpiralCollisions() {
