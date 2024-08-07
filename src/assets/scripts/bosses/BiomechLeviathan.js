@@ -88,6 +88,9 @@ class BiomechLeviathan {
       this.game.player.takeDamage(this.damage);
       this.game.player.sounds.collision.cloneNode().play();
     }
+
+    // Bomb stops tractor beam and puts it on cooldown for 5 seconds // TODO
+    // Stop the tractor beam and start the cooldown
   }
 }
 

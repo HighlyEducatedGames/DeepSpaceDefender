@@ -104,7 +104,9 @@ class TemporalSerpent {
     ctx.restore();
   }
 
-  update() {}
+  update() {
+    this.checkCollisions();
+  }
 
   getDirectionTowardsPlayer() {
     const dx = this.game.player.x - this.x;
@@ -114,6 +116,12 @@ class TemporalSerpent {
     } else {
       return dy > 0 ? 'down' : 'up';
     }
+  }
+
+  checkCollisions() {
+    // BOMD // TODO
+    // Temporarily make the serpent leave the screen
+    // Return the serpent after 5 seconds
   }
 }
 

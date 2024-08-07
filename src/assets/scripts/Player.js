@@ -23,6 +23,7 @@ class Player {
     this.health = this.maxHealth;
     this.maxLives = 3;
     this.lives = this.maxLives;
+    this.nextLifeScore = 1500;
     this.isBoosting = false;
     this.boostEndTime = 0;
     this.boostCooldownEndTime = 0;
@@ -30,6 +31,7 @@ class Player {
     this.chargingSoundTimeout = null;
     this.projectiles = [];
     this.bombs = 20;
+    this.shieldActive = false;
     this.missiles = [];
     // this.bombSpawnTime = 0;
     // this.bombFlashTime = 0;
@@ -92,6 +94,30 @@ class Player {
       gradient.addColorStop(0, 'rgba(255, 69, 0, 0.5)'); // Red/orange color with 50% opacity
       gradient.addColorStop(0.7, 'rgba(255, 140, 0, 0.2)'); // Lighter orange color with 20% opacity
       gradient.addColorStop(1, 'rgba(255, 165, 0, 0)'); // Even lighter orange color with 0% opacity
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    // Boosting Effect
+    if (this.isBoosting) {
+      const gradient = ctx.createRadialGradient(this.x, this.y, this.width * 0.5, this.x, this.y, this.width);
+      gradient.addColorStop(0, 'rgba(0, 255, 255, 0.5)');
+      gradient.addColorStop(0.7, 'rgba(0, 255, 255, 0.2)');
+      gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    // Shield Effect
+    if (this.shieldActive) {
+      const gradient = ctx.createRadialGradient(this.x, this.y, this.width * 0.5, this.x, this.y, this.width);
+      gradient.addColorStop(0, 'rgba(0, 255, 255, 0.5)');
+      gradient.addColorStop(0.7, 'rgba(0, 255, 255, 0.2)');
+      gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
       ctx.fillStyle = gradient;
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
@@ -171,15 +197,26 @@ class Player {
 
   }*/
 
-    // Basic movement
-    this.velocity.x += (Math.cos(this.rotation) * this.thrust * deltaTime) / 1000;
-    this.velocity.y += (Math.sin(this.rotation) * this.thrust * deltaTime) / 1000;
+    // Boost handling
+    if (this.isBoosting) {
+      this.velocity.x = Math.cos(this.rotation) * this.maxSpeed * 2;
+      this.velocity.y = Math.sin(this.rotation) * this.maxSpeed * 2;
 
+      // Check if the boost duration has ended
+      if (this.game.timestamp >= this.boostEndTime) this.isBoosting = false;
+    } else {
+      // Basic movement
+      this.velocity.x += (Math.cos(this.rotation) * this.thrust * deltaTime) / 1000;
+      this.velocity.y += (Math.sin(this.rotation) * this.thrust * deltaTime) / 1000;
+    }
+
+    // Deceleration
     if (!keys.up.isPressed && !keys.down.isPressed) {
       this.velocity.x *= this.deceleration;
       this.velocity.y *= this.deceleration;
     }
 
+    // Speed limiter
     const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
     if (speed > this.maxSpeed) {
       this.velocity.x *= this.maxSpeed / speed;
@@ -195,10 +232,12 @@ class Player {
     if (this.x > this.game.canvas.width) this.x = 0;
     if (this.y < 0) this.y = this.game.canvas.height;
     if (this.y > this.game.canvas.height) this.y = 0;
-  }
 
-  isBoostReady() {
-    return !this.isBoosting && (this.game.isUnlimitedBoostActivated || performance.now() >= this.boostCooldownEndTime);
+    // Give extra life if target score reached
+    if (this.game.score >= this.nextLifeScore) {
+      this.lives++;
+      this.nextLifeScore += 1500;
+    }
   }
 
   setVolumes(value) {
@@ -223,7 +262,29 @@ class Player {
     this.projectiles.push(new Bomb(this.game));
   }
 
-  useBoost() {}
+  useBoost() {
+    if (
+      this.isBoosting ||
+      (!this.game.controls.code.unlimitedBoost.enabled && this.game.timestamp < this.boostCooldownEndTime)
+    )
+      return;
+
+    this.isBoosting = true;
+    // boostEndTime = performance.now() + 500;
+    // boostCooldownEndTime = performance.now() + (boostPowerUpActive ? 500 : 7000); // Reduced cooldown if boost power-up is active
+    // const boostSoundClone = boostSound.cloneNode();
+    // boostSoundClone.volume = boostSound.volume;
+    // boostSoundClone.play();
+    // player.velocity.x = Math.cos(player.rotation) * player.maxSpeed * 2;
+    // player.velocity.y = Math.sin(player.rotation) * player.maxSpeed * 2;
+  }
+
+  isBoostReady() {
+    return (
+      !this.isBoosting &&
+      (this.game.controls.code.unlimitedBoost.enabled || this.game.timestamp >= this.boostCooldownEndTime)
+    );
+  }
 
   useMissile() {}
 
@@ -259,6 +320,11 @@ class Player {
 
   getBomb() {
     return this.projectiles.filter((projectile) => projectile instanceof Bomb)[0];
+  }
+
+  stopPlayerMovement() {
+    this.velocity = { x: 0, y: 0 };
+    this.thrust = 0;
   }
 }
 

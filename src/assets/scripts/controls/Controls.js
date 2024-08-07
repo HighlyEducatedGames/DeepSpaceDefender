@@ -66,26 +66,27 @@ class Controls {
     window.addEventListener('keydown', (e) => {
       this.usingGamepad.value = false;
       const keyName = this.keyboardMap[e.key];
-      if (!keyName) return;
-      const key = this.keys[keyName];
-
-      if (!key.isPressed) {
-        this.pressKey(key);
-      } else {
-        this.holdKey(key);
+      if (keyName) {
+        const key = this.keys[keyName];
+        if (!key.isPressed) {
+          this.pressKey(key);
+        } else {
+          this.holdKey(key);
+        }
       }
 
       this.handleCodes(e.key);
-      this.handleKeyDown();
+      this.handleKeyDown(e.key);
     });
 
     window.addEventListener('keyup', (e) => {
       this.usingGamepad.value = false;
       const keyName = this.keyboardMap[e.key];
-      if (!keyName) return;
-      const key = this.keys[keyName];
-      this.releaseKey(key);
-      this.handleKeyUp();
+      if (keyName) {
+        const key = this.keys[keyName];
+        this.releaseKey(key);
+      }
+      this.handleKeyUp(e.key);
     });
 
     // Gamepad connection listeners
@@ -125,7 +126,12 @@ class Controls {
     }
   }
 
-  handleKeyDown() {}
+  handleKeyDown(key) {
+    // Boss selector if in degug mode
+    if (this.game.debug && /[1-9]/.test(key)) {
+      this.game.startLevel(parseInt(key) * 5);
+    }
+  }
 
   handleKeyUp() {}
 

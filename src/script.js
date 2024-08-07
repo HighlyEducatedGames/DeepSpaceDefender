@@ -23,73 +23,103 @@ class Game {
     this.menu = new Menu(this);
     this.music = new MusicController(this);
     this.topMargin = 120;
-    this.boss = new CyberDragon(this);
+    this.boss = null;
     this.tickMs = null;
     this.targetFPS = 60;
     this.targetFrameDuration = 1000 / this.targetFPS;
+    this.timestamp = 0;
 
     this.images = {
       title: new Image(),
     };
     this.images.title.src = 'assets/images/title_screen.png';
 
-    // Instantiate resettable properties
+    this.crateStars();
     this.resetGame();
     console.log(this);
   }
 
-  // Put any property instantiation here that needs to be reset on game over or reset
+  // Set any properties here that needs to be reset on game over or game reset
   resetGame(showMenu = true) {
     if (showMenu) this.menu.showMenu();
     this.isGameOver = false;
     this.score = 0;
-    this.level = 1;
-    this.levelStartTime = 0;
-    this.levelDuration = 30000;
-    this.countdown = this.levelDuration / 1000;
-    this.effects = [];
-    this.powerUps = {
-      boost: { isActive: false },
-    };
-    this.isUnlimitedBoostActivated = false;
-
     this.player = new Player(this);
+
+    this.startLevel(1);
+  }
+
+  // Set any properties here that reset on a new level
+  startLevel(level) {
+    this.level = level;
+    this.levelStartTime = performance.now();
+    this.levelDuration = 30000;
+    this.effects = [];
+    this.enemies = []; // TODO: enemy manager and limiting enemies as a conditional to not have too many on screen
     this.projectiles = [];
+    this.player.stopPlayerMovement();
 
-    const numStars = 50;
-    const starLayers = 3;
-    this.stars = [];
-    for (let i = 0; i < numStars; i++) {
-      this.stars.push(new Star(this, starLayers));
-    }
-
+    // Add new coins to this level
     this.coins = [];
     for (let i = 0; i < 5; i++) {
       this.coins.push(new Coin(this));
     }
 
-    this.enemies = []; // TODO: enemy manager and limiting enemies as a conditional to not have too many on screen
-    // TODO use overlapping logic to prevent enemy overlaps
-    this.maxEnemies = 0;
-    this.maxTankEnemies = 0;
-    this.maxStealthEnemies = 0;
-    for (let i = 0; i < this.maxEnemies; i++) {
-      this.enemies.push(new RegularEnemy(this));
-    }
-    for (let i = 0; i < this.maxStealthEnemies; i++) {
-      // if (level % 5 === 0 || level <= 10) return;// TODO: Only spawn if over level 10 and not on a boss level
-      this.enemies.push(new StealthEnemy(this));
-    }
-    for (let i = 0; i < this.maxTankEnemies; i++) {
-      // if (level % 5 === 0 || level <= 5) return; // TODO: Only spawn if iver level 5 and not on boss level
-      this.enemies.push(new TankEnemy(this));
+    // Initialize boss if boss level
+    if (this.level % 5 === 0) {
+      const bosses = [Boss, BiomechLeviathan, CyberDragon, TemporalSerpent];
+      const bossIndex = Math.floor((level - 5) / 5) % bosses.length;
+      this.boss = bosses[bossIndex];
+      this.music.setTrack(this.boss.music);
+    } else {
+      if (this.boss) this.boss = null;
+      this.music.setTrack(this.music.tracks.background);
     }
 
-    this.music.setTrack(this.music.tracks.background);
-  }
+    // Infinite time on boss levels
+    this.countdown = this.boss ? Infinity : this.levelDuration / 1000; // TODO: why not just use seconds??
 
-  startLevel(level) {
-    this.level = level;
+    // // TODO use overlapping logic to prevent enemy overlaps
+    // this.maxEnemies = 0;
+    // this.maxTankEnemies = 0;
+    // this.maxStealthEnemies = 0;
+    // for (let i = 0; i < this.maxEnemies; i++) {
+    //   this.enemies.push(new RegularEnemy(this));
+    // }
+    // for (let i = 0; i < this.maxStealthEnemies; i++) {
+    //   // if (level % 5 === 0 || level <= 10) return;// TODO: Only spawn if over level 10 and not on a boss level
+    //   this.enemies.push(new StealthEnemy(this));
+    // }
+    // for (let i = 0; i < this.maxTankEnemies; i++) {
+    //   // if (level % 5 === 0 || level <= 5) return; // TODO: Only spawn if iver level 5 and not on boss level
+    //   this.enemies.push(new TankEnemy(this));
+    // }
+
+    // this.powerUps = {
+    //   boost: { isActive: false },
+    // };
+    // this.isUnlimitedBoostActivated = false;
+
+    // Clear existing timeouts
+    // enemyRespawnTimeouts.forEach((timeout) => clearTimeout(timeout));
+    // enemyRespawnTimeouts = [];
+
+    // // Clear Tractor beam
+    // if (tractorBeam) {
+    //   tractorBeam.active = false;
+    //   tractorBeam.startX = 0;
+    //   tractorBeam.startY = 0;
+    //   tractorBeam.endX = 0;
+    //   tractorBeam.endY = 0;
+    //   tractorBeam.strength = 0;
+    //   tractorBeam = null;
+    // }
+    // tractorBeamCooldown = false;
+
+    // // Clear serpent segments
+    // clearSerpentSegments();
+    // resetPowerUpTimers();
+    // initWormholes(level);
   }
 
   handleMainGameControls() {
@@ -112,6 +142,15 @@ class Game {
     // Restart game
     if (this.controls.keys.restart.justPressed() || (this.isGameOver && this.controls.keys.bomb.justPressed())) {
       this.resetGame(false);
+    }
+  }
+
+  crateStars() {
+    const numStars = 50;
+    const parallaxLayers = 3;
+    this.stars = [];
+    for (let i = 0; i < numStars; i++) {
+      this.stars.push(new Star(this, parallaxLayers));
     }
   }
 
@@ -151,11 +190,12 @@ class Game {
       if (this.boss) this.boss.update(deltaTime);
       this.player.update(deltaTime);
       this.effects.forEach((effect) => effect.update(deltaTime));
+
+      this.levelUpdate();
     }
   }
 
   deleteOldObjects() {
-    /* DELETE OLD OBJECTS */
     this.coins.forEach((coin, index) => {
       if (coin.markedForDeletion) this.coins.splice(index, 1);
     });
@@ -191,6 +231,23 @@ class Game {
     this.startLevel(this.level + 1);
   }
 
+  levelUpdate() {
+    if (!this.boss) {
+      // Countdown if not a boss level
+      const elapsedTime = performance.now() - this.levelStartTime;
+      this.countdown = Math.max(0, ((this.levelDuration - elapsedTime) / 1000).toFixed(1));
+
+      // Advance to next level if time over, or if all coins collected and enemies killes
+      if (elapsedTime >= this.levelDuration || (this.coins.length === 0 && this.enemies.length === 0)) {
+        if (this.coins.length === 0 && this.enemies.length === 0) {
+          // Give points to player for completing the level with time to spare
+          this.player.addScore(Math.floor(this.countdown) * 5);
+        }
+        this.nextLevel();
+      }
+    }
+  }
+
   outOfBounds(object, extraMargin = 0) {
     const radius = (object.radius || object.width * 0.5) + extraMargin;
     return (
@@ -202,9 +259,6 @@ class Game {
   }
 }
 
-let lastTimestamp = 0; // milliseconds
-let now = null;
-
 window.addEventListener('load', () => {
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
@@ -212,11 +266,12 @@ window.addEventListener('load', () => {
   canvas.height = 700;
 
   const game = new Game(canvas);
+  let now = 0;
 
   function loop(timestamp = 0) {
     now = performance.now(); // First to accurately calculate tick time
-    let deltaTime = timestamp - lastTimestamp;
-    lastTimestamp = timestamp;
+    let deltaTime = timestamp - game.timestamp;
+    game.timestamp = timestamp;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -224,7 +279,20 @@ window.addEventListener('load', () => {
     game.handleMainGameControls();
 
     if (!game.menu.isOpen) {
+      // Main game play render
       game.render(ctx, deltaTime);
+      if (game.isGameOver) {
+        ctx.save();
+        ctx.fillStyle = 'red';
+        ctx.textAlign = 'center';
+        ctx.font = '40px Arial';
+        ctx.fillText('Game Over', canvas.width * 0.5, canvas.height / 2);
+        ctx.font = '20px Arial';
+        ctx.fillText('Score: ' + this.score, canvas.width * 0.5, canvas.height / 2 + 40);
+        ctx.fillText('Level: ' + this.level, canvas.width * 0.5, canvas.height / 2 + 70);
+        ctx.fillText('Press B to Restart', canvas.width * 0.5, canvas.height / 2 + 100);
+        ctx.restore();
+      }
     } else {
       // TODO: Loop through all sounds and pause, but background is already getting paused in the menu class
 
@@ -241,7 +309,7 @@ window.addEventListener('load', () => {
       ctx.fillText(text, x, y);
     }
 
-    const delay = Math.max(0, game.targetFrameDuration - (performance.now() - timestamp));
+    const delay = Math.max(0, game.targetFrameDuration - (now - game.timestamp));
     setTimeout(() => {
       requestAnimationFrame(loop);
     }, delay);
