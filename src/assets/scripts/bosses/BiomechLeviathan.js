@@ -364,6 +364,12 @@ class EmpBlast {
 
     this.checkCollisions();
 
+    // Update the EMP blast's position to follow the biomech Leviathan
+    // if (biomechLeviathan) {
+    //   empBlast.x = biomechLeviathan.x;
+    //   empBlast.y = biomechLeviathan.y;
+    // }
+
     // Re-enable player controls after the EMP blast ends
     // setTimeout(() => {
     //   empBlast.active = false;

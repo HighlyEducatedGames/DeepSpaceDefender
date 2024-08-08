@@ -341,6 +341,53 @@ class SpiralProjectile {
     this.traveledDistance += (this.speed * this) / 1000;
 
     if (this.traveledDistance > this.maxDistance) this.markedForDeletion = true;
+
+    // SPIRAL COLLISIONS
+    // cyberDragon.spiralProjectiles.forEach((projectile, index) => {
+    //   const dx = projectile.x - player.x;
+    //   const dy = projectile.y - player.y;
+    //   const distance = Math.sqrt(dx * dx + dy * dy);
+
+    //   // Check collision with player
+    //   if (distance < projectile.radius + player.width / 2) {
+    //     if (!isInvincible && !shieldActive) {
+    //       // Respect player's invincibility and shield status
+    //       // Apply damage to the player
+    //       player.health -= projectile.damage;
+
+    //       // Play the existing collision sound
+    //       const collisionSoundClone = collisionSound.cloneNode();
+    //       collisionSoundClone.volume = collisionSound.volume;
+    //       collisionSoundClone.play();
+
+    //       if (player.health <= 0) {
+    //         player.lives--;
+    //         player.health = PLAYER_MAX_HEALTH;
+    //         if (player.lives <= 0) {
+    //         }
+    //       }
+    //     } else if (shieldActive) {
+    //       // Play the existing collision sound for shield hit
+    //       const collisionSoundClone = collisionSound.cloneNode();
+    //       collisionSoundClone.volume = collisionSound.volume;
+    //       collisionSoundClone.play();
+    //     }
+
+    //     cyberDragon.spiralProjectiles.splice(index, 1);
+    //   }
+
+    //   // Check collision with bomb
+    //   if (bomb.active) {
+    //     const bombDx = projectile.x - bomb.x;
+    //     const bombDy = projectile.y - bomb.y;
+    //     const bombDistance = Math.sqrt(bombDx * bombDx + bombDy * bombDy);
+
+    //     if (bombDistance < projectile.radius + bomb.radius) {
+    //       // Remove the projectile if it collides with the bomb
+    //       cyberDragon.spiralProjectiles.splice(index, 1);
+    //     }
+    //   }
+    // });
   }
 }
 

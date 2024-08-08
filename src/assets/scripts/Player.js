@@ -197,6 +197,19 @@ export default class Player {
       this.sounds.flame.currentTime = 0;
     }
 
+      // EMP blast effect on player
+  if (empBlast && empBlast.active) {
+    const dx = empBlast.x - player.x;
+    const dy = empBlast.y - player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < empBlast.radius) {
+      // Apply EMP effects to the player
+      player.velocity.x = 0;
+      player.velocity.y = 0;
+    }
+  }
+
   }*/
 
     // Boost handling
@@ -265,6 +278,47 @@ export default class Player {
   }
 
   fireProjectile() {
+    // if (empDisableFire) {
+    //   const nofireSoundClone = nofireSound.cloneNode();
+    //   nofireSoundClone.volume = nofireSound.volume; // Ensure the cloned sound has the same volume
+    //   nofireSoundClone.play(); // Play the cloned sound
+    //   return; // Prevent firing if EMP effect is active
+    // }
+
+    // if (playerLaserPowerUpActive) {
+    //   // Fire laser beam
+    //   console.log('Firing player laser'); // Debugging statement
+    //   createPlayerLaserBeam(
+    //     player.x,
+    //     player.y,
+    //     Math.cos(player.rotation),
+    //     Math.sin(player.rotation),
+    //     'rgba(0, 255, 255, 1)',
+    //   );
+    //   return;
+    // }
+
+    // if (reversePowerUpActive) {
+    //   for (let i = 0; i < 3; i++) {
+    //     const angleOffset = (i - 1) * (Math.PI / 18);
+    //     let reverseProjectile = {
+    //       x: player.x - (Math.cos(player.rotation + angleOffset) * player.width) / 2,
+    //       y: player.y - (Math.sin(player.rotation + angleOffset) * player.height) / 2,
+    //       width: projectileSize,
+    //       height: projectileSize,
+    //       speed: projectileSpeed,
+    //       directionX: -Math.cos(player.rotation + angleOffset),
+    //       directionY: -Math.sin(player.rotation + angleOffset),
+    //       fromPlayer: true,
+    //       isCharged: isCharged,
+    //       traveledDistance: 0,
+    //       damage: damage,
+    //       split: false,
+    //     };
+    //     projectiles.push(reverseProjectile);
+    //   }
+    // }
+
     // if (/*|| flamethrowerActive || empDisableFire*/) return; // TODO
     const projectilesToFire = this.powerUpActive ? 3 : 1;
     for (let i = 0; i < projectilesToFire; i++) {

@@ -85,3 +85,28 @@ export default class RegularProjectile {
     }*/
   }
 }
+
+// function splitChargedProjectile(projectile) {
+//   const numberOfProjectiles = 8;
+//   const angleIncrement = (2 * Math.PI) / numberOfProjectiles;
+
+//   for (let i = 0; i < numberOfProjectiles; i++) {
+//     const angle = i * angleIncrement;
+//     let splitProjectile = {
+//       x: projectile.x,
+//       y: projectile.y,
+//       width: 5,
+//       height: 5,
+//       speed: 500,
+//       directionX: Math.cos(angle),
+//       directionY: Math.sin(angle),
+//       fromPlayer: true,
+//       isCharged: false,
+//       maxDistance: 800,
+//       traveledDistance: 0,
+//       damage: SPLIT_PROJECTILE_DAMAGE,
+//       split: true,
+//     };
+//     projectiles.push(splitProjectile);
+//   }
+// }

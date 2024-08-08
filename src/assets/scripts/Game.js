@@ -3,7 +3,7 @@ import Controls from './controls/Controls.js';
 import GUI from './GUI.js';
 import Menu from './Menu.js';
 import MusicController from './MusicController.js';
-import PowerUpManager from './powerUps/PowerUpManager.js';
+import PowerUpManager from './powerUps/PowerUpController.js';
 import Player from './Player.js';
 import Coin from './Coin.js';
 import Star from './Star.js';
@@ -47,6 +47,7 @@ export default class Game {
     this.isGameOver = false;
     this.score = 0;
     this.player = new Player(this);
+    this.powerUps.removeAll(); // TODO: Do we want to clear only on restart or also on next level??
 
     this.startLevel(1);
   }
@@ -58,6 +59,8 @@ export default class Game {
     this.levelDuration = 30000;
     this.effects = [];
     this.enemies = []; // TODO: enemy manager and limiting enemies as a conditional to not have too many on screen
+    if (this.enemyRespawnTimeouts) this.enemyRespawnTimeouts.forEach((timeout) => clearTimeout(timeout));
+    this.enemyRespawnTimeouts = [];
     this.projectiles = [];
     this.player.stopPlayerMovement();
 
@@ -128,6 +131,8 @@ export default class Game {
     // clearSerpentSegments();
     // resetPowerUpTimers();
     // initWormholes(level);
+
+    // Reset power up timers
   }
 
   handleMainGameControls() {
@@ -292,3 +297,15 @@ export default class Game {
     );
   }
 }
+
+// function respawnEnemyAfterDelay(speed, delay) {
+//   if (level % 5 === 0) return;
+
+//   const timeout = setTimeout(() => {
+//     const currentRegularEnemies = enemies.filter((enemy) => enemy.type === 'regular').length;
+//     if (currentRegularEnemies < MAX_REGULAR_ENEMIES) {
+//       spawnEnemy(speed);
+//     }
+//   }, delay);
+//   enemyRespawnTimeouts.push(timeout);
+// }
