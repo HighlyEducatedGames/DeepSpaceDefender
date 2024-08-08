@@ -56,7 +56,6 @@ export default class Player {
       charging: new Audio('assets/audio/charging.mp3'),
       flame: new Audio('assets/audio/flame.mp3'),
       torchedEnemy: new Audio('assets/audio/torch.mp3'),
-      collision: new Audio('assets/audio/collision.mp3'),
       boost: new Audio('assets/audio/boost.mp3'),
       lostLife: new Audio('assets/audio/lifeLost.mp3'),
     };
@@ -125,6 +124,9 @@ export default class Player {
       ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
       ctx.fill();
     }
+
+    //Projectiles
+    this.projectiles.forEach((projectile) => projectile.draw(ctx));
 
     // DEBUG - Hitbox
     if (this.game.debug) {
@@ -269,6 +271,9 @@ export default class Player {
       this.lives++;
       this.nextLifeScore += 1500;
     }
+
+    // Projectiles
+    this.projectiles.forEach((projectile) => projectile.update(deltaTime));
   }
 
   setVolumes(value) {
@@ -320,6 +325,7 @@ export default class Player {
     // }
 
     // if (/*|| flamethrowerActive || empDisableFire*/) return; // TODO
+
     const projectilesToFire = this.powerUpActive ? 3 : 1;
     for (let i = 0; i < projectilesToFire; i++) {
       const angleOffset = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
@@ -337,7 +343,7 @@ export default class Player {
   useBoost() {
     if (
       this.isBoosting ||
-      (!this.game.controls.code.unlimitedBoost.enabled && this.game.timestamp < this.boostCooldownEndTime)
+      (!this.game.controls.codes.unlimitedBoost.enabled && this.game.timestamp < this.boostCooldownEndTime)
     )
       return;
 

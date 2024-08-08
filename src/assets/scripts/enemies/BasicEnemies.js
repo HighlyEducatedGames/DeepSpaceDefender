@@ -1,39 +1,42 @@
+import { getRandomYwithMargin } from '../utilities.js';
+
 class Enemy {
   constructor(game) {
     this.game = game;
-    this.verticalMargin = 50;
+    this.margin = 50;
     this.side = Math.random() < 0.5 ? 'left' : 'right';
     this.width = 50;
     this.height = 50;
-    this.x = null;
-    this.y = null;
-    this.speed = 1.5; // 50 + level * 10 // TODO dynamic speed
-    this.velocityX = this.side === 'left' ? 1 : -1;
-    this.lastShotTime = 0;
+    this.x = this.side === 'left' ? -this.width * 0.5 : this.game.canvas.width + this.width * 0.5;
+    this.y = getRandomYwithMargin(this.game, this.margin);
+    this.speedMultiplier = this.game.level - 1 * 0.05;
+    this.speed = 1.5 * this.speedMultiplier;
+    this.vx = this.side === 'left' ? 1 : -1;
     this.canShoot = false;
-    this.markedForDeletion = false;
+    this.lastAttackTime = 0;
     this.maxHealth = 10;
     this.health = this.maxHealth;
     this.damage = 10;
     this.score = 10;
+    this.projectiles = [];
+    this.markedForDeletion = false;
 
     this.image = new Image();
     this.image.src = 'assets/images/enemy.png';
 
-    this.calculateStartPosition();
+    this.getSpawnPosition();
 
     setTimeout(() => {
       this.canShoot = true;
     }, 2000);
   }
 
-  calculateStartPosition() {
-    this.x = this.side === 'left' ? -this.width * 0.5 : this.game.canvas.width + this.width * 0.5;
-    this.y = Math.random() * (this.game.canvas.height - 2 * this.verticalMargin - this.height) + this.verticalMargin;
-  }
-
   draw(ctx) {
+    // Enemy
     ctx.drawImage(this.image, this.x - this.width * 0.5, this.y - this.height * 0.5, this.width, this.height);
+
+    // Projectiles
+    this.projectiles.forEach((projectile) => projectile.draw(ctx));
 
     // DEBUG - Hitbox
     if (this.game.debug) {
@@ -44,14 +47,26 @@ class Enemy {
     }
   }
 
-  update() {
-    this.x += this.speed * this.velocityX;
+  update(deltaTime) {
+    // Movement
+    this.x += this.speed * this.vx;
 
     // Bounce back and forth on the x-axis
-    if (this.x < this.width * 0.5 && this.velocityX < 0) this.velocityX = 1;
-    if (this.x > this.game.canvas.width - this.width * 0.5 && this.velocityX > 0) this.velocityX = -1;
+    if (this.x < this.width * 0.5 && this.vx < 0) this.vx = 1;
+    if (this.x > this.game.canvas.width - this.width * 0.5 && this.vx > 0) this.vx = -1;
+
+    // Projectiles
+    this.projectiles.forEach((projectile) => projectile.update(deltaTime));
+    this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
+
+    // TODO - Fire so
 
     this.checkCollisions();
+  }
+
+  getSpawnPosition() {
+    this.x = this.side === 'left' ? -this.width * 0.5 : this.game.canvas.width + this.width * 0.5;
+    this.y = getRandomYwithMargin(this.game, this.margin);
   }
 
   checkCollisions() {
@@ -66,14 +81,18 @@ class Enemy {
 
     // Enemy collision with player
     if (this.game.checkCollision(this.game.player, this)) {
+      // Only take damage from a stealth enemy if visible
       if (!(this instanceof StealthEnemy) || (this instanceof StealthEnemy && this.visible)) {
         this.game.player.takeDamage(this.damage);
-        this.game.player.sounds.collision.cloneNode().play();
+        this.game.playCollision();
       }
     }
   }
 
-  fire() {} // TODO
+  fire() {
+    this.projectiles.push(new EnemyProjectile(this.game, this.x, this.y));
+    this.lastAttackTime = this.game.timestamp;
+  }
 }
 
 export class RegularEnemy extends Enemy {
@@ -139,7 +158,7 @@ export class StealthEnemy extends Enemy {
 
   update() {
     super.update();
-    const currentTime = performance.now();
+    const currentTime = this.game.timestamp;
     const elapsedTime = currentTime - this.visibleStartTime;
 
     if (this.visible) {
@@ -164,6 +183,31 @@ export class StealthEnemy extends Enemy {
       }
     }
   }
+}
 
-  fire() {}
+class EnemyProjectile {
+  constructor(game, x, y) {
+    this.game = game;
+    this.x = x;
+    this.y = y;
+    this.width = 5;
+    this.height = 5;
+    this.speed = 500;
+    this.vx = 0;
+    this.vy = 0;
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  update(deltaTime) {
+    this.x += (this.speed * this.vx * deltaTime) / 1000;
+    this.y += (this.speed * this.vy * deltaTime) / 1000;
+    this.traveledDistance += (this.speed * deltaTime) / 1000;
+    if (this.game.outOfBounds(this)) this.markedForDeletion = true;
+  }
 }

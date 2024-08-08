@@ -4,14 +4,15 @@ import GUI from './GUI.js';
 import Menu from './Menu.js';
 import MusicController from './MusicController.js';
 import PowerUpManager from './powerUps/PowerUpController.js';
+import EnemyController from './enemies/EnemyController.js';
 import Player from './Player.js';
 import Coin from './Coin.js';
 import Star from './Star.js';
+import Ally from './Ally.js';
 import Boss from './bosses/Boss.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import TemporalSerpent from './bosses/TemporalSerpent.js';
 import CyberDragon from './bosses/CyberDragon.js';
-import Ally from './Ally.js';
 
 export default class Game {
   constructor(canvas) {
@@ -24,17 +25,21 @@ export default class Game {
     this.menu = new Menu(this);
     this.music = new MusicController(this);
     this.powerUps = new PowerUpManager(this);
+    this.enemies = new EnemyController(this);
     this.topMargin = 120;
     this.boss = null;
-    this.tickMs = null;
     this.targetFPS = 60;
     this.targetFrameDuration = 1000 / this.targetFPS;
     this.timestamp = 0;
+    this.tickMs = null;
 
     this.images = {
       title: new Image(),
     };
     this.images.title.src = 'assets/images/title_screen.png';
+    this.sounds = {
+      collision: new Audio('assets/audio/collision.mp3'),
+    };
 
     this.crateStars();
     this.resetGame();
@@ -47,21 +52,26 @@ export default class Game {
     this.score = 0;
     this.player = new Player(this);
     this.powerUps.removeAll(); // TODO: Do we want to clear only on restart or also on next level??
-
     this.startLevel(1);
   }
 
-  // Set any properties here that reset on a new level
+  // Set any properties here that change on a new level
   startLevel(level) {
     this.level = level;
-    this.levelStartTime = performance.now();
+    this.levelStartTime = this.timestamp;
     this.levelDuration = 30000;
     this.effects = [];
-    this.enemies = []; // TODO: enemy manager and limiting enemies as a conditional to not have too many on screen
-    if (this.enemyRespawnTimeouts) this.enemyRespawnTimeouts.forEach((timeout) => clearTimeout(timeout));
-    this.enemyRespawnTimeouts = [];
-    this.projectiles = [];
+    this.maxCoins = 5;
     this.player.stopPlayerMovement();
+
+    // Add new coins to this level
+    this.coins = [];
+    for (let i = 0; i < this.maxCoins; i++) {
+      this.coins.push(new Coin(this));
+    }
+
+    // Reset and spawn non-boss enemies
+    this.enemies.init();
 
     // Reset Ally
     this.ally = null;
@@ -69,17 +79,11 @@ export default class Game {
     this.allyInterval = 60000;
     this.allyWarningTime = 3000;
 
-    // Add new coins to this level
-    this.coins = [];
-    for (let i = 0; i < 5; i++) {
-      this.coins.push(new Coin(this));
-    }
-
     // Initialize boss if boss level
     if (this.level % 5 === 0) {
       const bosses = [Boss, BiomechLeviathan, CyberDragon, TemporalSerpent];
       const bossIndex = Math.floor((level - 5) / 5) % bosses.length;
-      this.boss = bosses[bossIndex];
+      this.boss = new bosses[bossIndex](this);
       this.music.setTrack(this.boss.music);
     } else {
       if (this.boss) this.boss = null;
@@ -87,51 +91,9 @@ export default class Game {
     }
 
     // Infinite time on boss levels
-    this.countdown = this.boss ? Infinity : this.levelDuration / 1000; // TODO: why not just use seconds??
+    this.countdown = this.boss ? Infinity : this.levelDuration / 1000;
 
-    // // TODO use overlapping logic to prevent enemy overlaps
-    // this.maxEnemies = 0;
-    // this.maxTankEnemies = 0;
-    // this.maxStealthEnemies = 0;
-    // for (let i = 0; i < this.maxEnemies; i++) {
-    //   this.enemies.push(new RegularEnemy(this));
-    // }
-    // for (let i = 0; i < this.maxStealthEnemies; i++) {
-    //   // if (level % 5 === 0 || level <= 10) return;// TODO: Only spawn if over level 10 and not on a boss level
-    //   this.enemies.push(new StealthEnemy(this));
-    // }
-    // for (let i = 0; i < this.maxTankEnemies; i++) {
-    //   // if (level % 5 === 0 || level <= 5) return; // TODO: Only spawn if iver level 5 and not on boss level
-    //   this.enemies.push(new TankEnemy(this));
-    // }
-
-    // this.powerUps = {
-    //   boost: { isActive: false },
-    // };
-    // this.isUnlimitedBoostActivated = false;
-
-    // Clear existing timeouts
-    // enemyRespawnTimeouts.forEach((timeout) => clearTimeout(timeout));
-    // enemyRespawnTimeouts = [];
-
-    // // Clear Tractor beam
-    // if (tractorBeam) {
-    //   tractorBeam.active = false;
-    //   tractorBeam.startX = 0;
-    //   tractorBeam.startY = 0;
-    //   tractorBeam.endX = 0;
-    //   tractorBeam.endY = 0;
-    //   tractorBeam.strength = 0;
-    //   tractorBeam = null;
-    // }
-    // tractorBeamCooldown = false;
-
-    // // Clear serpent segments
-    // clearSerpentSegments();
-    // resetPowerUpTimers();
-    // initWormholes(level);
-
-    // Reset power up timers
+    // initWormholes(level); // TODO
   }
 
   handleMainGameControls() {
@@ -139,6 +101,8 @@ export default class Game {
     if (this.controls.keys.debug.justPressed()) {
       this.debug = !this.debug;
       this.controls.codes.invincibility.enabled = this.debug;
+      this.controls.codes.unlimitedAmmo.enabled = this.debug;
+      this.controls.codes.unlimitedBoost.enabled = this.debug;
     }
 
     // Toggle pause menu
@@ -166,13 +130,8 @@ export default class Game {
     }
   }
 
+  // Main game loop
   render(ctx, deltaTime) {
-    const bossProjectiles = this.boss ? this.boss.projectiles : [];
-    this.projectiles = [this.player.projectiles, bossProjectiles];
-    this.effects.forEach((effect) => {
-      if (effect.particles) this.projectiles.push(effect.particles);
-    });
-
     this.draw(ctx);
     this.update(deltaTime);
     this.deleteOldObjects();
@@ -182,11 +141,9 @@ export default class Game {
   draw(ctx) {
     this.stars.forEach((star) => star.draw(ctx));
     this.coins.forEach((coin) => coin.draw(ctx));
-    this.projectiles.forEach((projectileArray) => {
-      projectileArray.forEach((projectile) => projectile.draw(ctx));
-    });
-    this.enemies.forEach((enemy) => enemy.draw(ctx));
     if (this.boss) this.boss.draw(ctx);
+    this.enemies.draw(ctx);
+    this.effects.forEach((effect) => effect.draw(ctx));
     this.powerUps.draw(ctx);
     this.player.draw(ctx);
     this.GUI.draw(ctx);
@@ -212,35 +169,19 @@ export default class Game {
     if (!this.isGameOver) {
       this.stars.forEach((star) => star.update(deltaTime));
       this.coins.forEach((coin) => coin.update(deltaTime));
-      this.projectiles.forEach((projectileArray) => {
-        projectileArray.forEach((projectile) => projectile.update(deltaTime));
-      });
-      this.enemies.forEach((enemy) => enemy.update(deltaTime));
       if (this.boss) this.boss.update(deltaTime);
+      this.enemies.update(deltaTime);
+      this.effects.forEach((effect) => effect.update(deltaTime));
       this.powerUps.update(deltaTime);
       this.player.update(deltaTime);
-      this.effects.forEach((effect) => effect.update(deltaTime));
-
-      this.levelUpdate();
+      this.levelUpdate(deltaTime);
     }
   }
 
   deleteOldObjects() {
-    this.coins.forEach((coin, index) => {
-      if (coin.markedForDeletion) this.coins.splice(index, 1);
-    });
-    for (let i = 0; i < this.projectiles.length; i++) {
-      for (let j = 0; j < this.projectiles[i].length; j++) {
-        if (this.projectiles[i][j].markedForDeletion) this.projectiles[i].splice(j, 1);
-      }
-    }
-    this.enemies.forEach((enemy, index) => {
-      if (enemy.markedForDeletion) this.enemies.splice(index, 1);
-    });
+    this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
     if (this.boss && this.boss.markedForDeletion) this.boss = null;
-    this.effects.forEach((effect, index) => {
-      if (effect.markedForDeletion) this.effects.splice(index, 1);
-    });
+    this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
   }
 
   checkCollision(object1, object2) {
@@ -262,28 +203,33 @@ export default class Game {
   levelUpdate() {
     if (!this.boss) {
       // Countdown if not a boss level
-      const elapsedTime = performance.now() - this.levelStartTime;
+      const elapsedTime = this.timestamp - this.levelStartTime;
       this.countdown = Math.max(0, ((this.levelDuration - elapsedTime) / 1000).toFixed(1));
 
-      // Advance to next level if time over, or if all coins collected and enemies killes
-      if (elapsedTime >= this.levelDuration || (this.coins.length === 0 && this.enemies.length === 0)) {
-        if (this.coins.length === 0 && this.enemies.length === 0) {
-          // Give points to player for completing the level with time to spare
-          this.player.addScore(Math.floor(this.countdown) * 5);
-        }
+      // Advance to next level if time over
+      if (elapsedTime >= this.levelDuration) {
+        this.nextLevel();
+        return;
+      }
+
+      // Advance to next level if all level objectives met
+      const clearedObjectives = this.coins.length === 0 && this.enemies.getLength() === 0;
+      if (clearedObjectives) {
+        // Give points to player for completing the level with time to spare
+        this.addScore(Math.floor(this.countdown) * 5);
         this.nextLevel();
       }
     }
 
     // Check if it's time to spawn the ally
-    if (this.timestamp > this.allySpawnTime + this.allyInterval) {
-      this.allySpawnTime = this.timestamp;
-      const ally = new Ally(this);
-      ally.sounds.warning.cloneNode().play();
-      setTimeout(() => {
-        this.ally = ally;
-      }, this.allyWarningTime);
-    }
+    // if (this.timestamp > this.allySpawnTime + this.allyInterval) {
+    //   this.allySpawnTime = this.timestamp;
+    //   const ally = new Ally(this);
+    //   ally.sounds.warning.cloneNode().play();
+    //   setTimeout(() => {
+    //     this.ally = ally;
+    //   }, this.allyWarningTime);
+    // }
   }
 
   outOfBounds(object, extraMargin = 0) {
@@ -295,16 +241,12 @@ export default class Game {
       object.y - radius > this.canvas.height
     );
   }
+
+  addScore(score) {
+    this.score += score;
+  }
+
+  playCollision() {
+    this.sounds.collision.cloneNode().play();
+  }
 }
-
-// function respawnEnemyAfterDelay(speed, delay) {
-//   if (level % 5 === 0) return;
-
-//   const timeout = setTimeout(() => {
-//     const currentRegularEnemies = enemies.filter((enemy) => enemy.type === 'regular').length;
-//     if (currentRegularEnemies < MAX_REGULAR_ENEMIES) {
-//       spawnEnemy(speed);
-//     }
-//   }, delay);
-//   enemyRespawnTimeouts.push(timeout);
-// }

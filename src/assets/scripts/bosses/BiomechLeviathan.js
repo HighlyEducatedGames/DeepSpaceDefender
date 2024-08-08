@@ -77,7 +77,7 @@ export default class BiomechLeviathan {
   }
 
   update(deltaTime) {
-    const angleToPlayer = this.game.player.angleToPlayer(this);
+    const angleToPlayer = this.game.player.getAngleToPlayer(this);
     this.x += (Math.cos(angleToPlayer) * this.speed * deltaTime) / 1000;
     this.y += (Math.sin(angleToPlayer) * this.speed * deltaTime) / 1000;
 

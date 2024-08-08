@@ -9,13 +9,13 @@ export default class PowerUpController {
   }
 
   draw(ctx) {
-    this.activePowerUps.forEach((powerUp) => powerUp.draw(ctx));
+    // this.activePowerUps.forEach((powerUp) => powerUp.draw(ctx));
   }
 
   update() {
-    this.activePowerUps.forEach((powerUp, index) => {
-      if (powerUp.markedForDeletion) this.activePowerUps.splice(index, 1);
-    });
+    // this.activePowerUps.forEach((powerUp, index) => {
+    //  if (powerUp.markedForDeletion) this.activePowerUps.splice(index, 1);
+    // });
   }
 
   removeAll() {

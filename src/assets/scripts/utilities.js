@@ -27,3 +27,7 @@ export function getRandomDirection() {
   const directions = ['right', 'down', 'left', 'up'];
   return directions[Math.floor(Math.random() * directions.length)];
 }
+
+export function getRandomYwithMargin(game, margin) {
+  return Math.random() * (game.canvas.height - game.topMargin - margin * 2) + game.topMargin + margin;
+}

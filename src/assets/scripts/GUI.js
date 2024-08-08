@@ -195,12 +195,12 @@ export default class GUI {
 
     const line4 = `Boss Phase: ${this.game.boss ? this.game.boss.phase : 0}`;
     const line3 = `Effects: ${this.game.effects.length}`;
-    const line2 = `Projectiles: ${this.game.projectiles.flat().length}`;
+    // const line2 = `Projectiles: ${this.game.projectiles.flat().length}`;
     const line1 = `Tick: ${ms}ms - ${percent}%`;
 
     ctx.fillText(line4, 10, this.game.canvas.height - 55);
     ctx.fillText(line3, 10, this.game.canvas.height - 40);
-    ctx.fillText(line2, 10, this.game.canvas.height - 25);
+    // ctx.fillText(line2, 10, this.game.canvas.height - 25);
     ctx.fillText(line1, 10, this.game.canvas.height - 10);
   }
 }
