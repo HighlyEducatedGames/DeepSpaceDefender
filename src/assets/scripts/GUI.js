@@ -45,7 +45,10 @@ export default class GUI {
     ctx.font = '15px "Press Start 2P", cursive';
     ctx.fillText('Score: ' + this.game.score, 10, 20);
     ctx.fillText('Level: ' + this.game.level, 10, 50);
-    ctx.fillText('Time: ' + Math.floor(this.game.countdown), this.game.canvas.width * 0.5 - 30, 20);
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.fillText('Time: ' + Math.floor(this.game.countdown), this.game.canvas.width * 0.5, 20);
+    ctx.restore();
 
     ctx.font = '10px "Press Start 2P", cursive';
     ctx.fillText('Booster', this.boostBarX - ctx.measureText('Booster').width - 10, this.boostBarY + 15);
@@ -187,12 +190,13 @@ export default class GUI {
   drawDebug(ctx) {
     ctx.fillStyle = 'white';
     ctx.font = '10px "Press Start 2P", cursive';
+    const ms = Math.floor(this.game.tickMs * 10) / 10;
     const percent = Math.floor(this.game.tickMs / this.game.targetFrameDuration);
 
-    const line4 = `Phase: ${this.game.boss ? this.game.boss.phase : 'none'}`;
+    const line4 = `Boss Phase: ${this.game.boss ? this.game.boss.phase : 0}`;
     const line3 = `Effects: ${this.game.effects.length}`;
     const line2 = `Projectiles: ${this.game.projectiles.flat().length}`;
-    const line1 = `Tick: ${this.game.tickMs}ms - ${percent}%`;
+    const line1 = `Tick: ${ms}ms - ${percent}%`;
 
     ctx.fillText(line4, 10, this.game.canvas.height - 55);
     ctx.fillText(line3, 10, this.game.canvas.height - 40);
