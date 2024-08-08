@@ -181,19 +181,18 @@ export default class GUI {
 
     const missileIconX = this.shieldBarX + this.shieldBarWidth + 10;
     ctx.drawImage(this.images.missile, missileIconX, this.shieldBarY, 20, 20);
-    ctx.fillText(':' + this.game.player.missiles.length, missileIconX + 25, this.shieldBarY + 18);
+    ctx.fillText(':' + this.game.player.missiles, missileIconX + 25, this.shieldBarY + 18);
   }
 
   drawDebug(ctx) {
     ctx.fillStyle = 'white';
     ctx.font = '10px "Press Start 2P", cursive';
-    const ms = Math.floor(this.game.tickMs * 10) / 10;
-    const percent = Math.floor(ms / this.game.tickMs);
+    const percent = Math.floor(this.game.tickMs / this.game.targetFrameDuration);
 
     const line4 = `Phase: ${this.game.boss ? this.game.boss.phase : 'none'}`;
     const line3 = `Effects: ${this.game.effects.length}`;
     const line2 = `Projectiles: ${this.game.projectiles.flat().length}`;
-    const line1 = `Tick: ${ms} - ${percent}%`;
+    const line1 = `Tick: ${this.game.tickMs}ms - ${percent}%`;
 
     ctx.fillText(line4, 10, this.game.canvas.height - 55);
     ctx.fillText(line3, 10, this.game.canvas.height - 40);

@@ -38,7 +38,6 @@ export default class Game {
 
     this.crateStars();
     this.resetGame();
-    console.log(this);
   }
 
   // Set any properties here that needs to be reset on game over or game reset
@@ -193,7 +192,7 @@ export default class Game {
     this.GUI.draw(ctx);
 
     // Game over text
-    if (this.game.isGameOver) {
+    if (this.isGameOver) {
       const centerX = this.game.canvas.width * 0.5;
       const centerY = this.game.canvas.height * 0.5;
       ctx.save();
