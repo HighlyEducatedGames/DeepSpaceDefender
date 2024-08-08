@@ -1,0 +1,20 @@
+{
+  "name": "deepspacedefender",
+  "version": "1.0.0",
+  "scripts": {
+    "prettier": "prettier --write ./src",
+    "lint": "eslint ./src"
+  },
+  "author": "taskrok",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HighlyEducatedGames/DeepSpaceDefender.git"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3"
+  }
+}

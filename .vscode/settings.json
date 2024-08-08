@@ -1,0 +1,8 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "liveServer.settings.mount": [["/", "./src"]],
+  "files.eol": "\n",
+  "files.autoSave": "onFocusChange",
+  "editor.tabSize": 2,
+  "a-file-icon-vscode.activeIconPacks": ["angular", "rails"]
+}

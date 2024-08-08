@@ -132,8 +132,36 @@ let empBlast = {
 
 let empBlastEndTime = 0;
 let empBlastActive = false;
+let empPulseScale = 1;
+let empPulseTime = 0;
 let isPlayerDisabledByEMP = false;
+let empDisableFire = false;
 let asteroids = [];
+let flamethrowerPowerUp = null;
+let flamethrowerSpawnTime = 0;
+let flamethrowerSpawnedThisLevel = false;
+let flamethrowerActive = false;
+let flameParticles = [];
+let flamethrowerExpirationTime = 0;
+
+const PLAYER_LASER_DURATION = 0
+const PLAYER_LASER_ENEMY_DAMAGE = 0.005; // Damage dealt to regular enemies
+const PLAYER_LASER_BOSS_DAMAGE = 0.0009;  // Reduced damage dealt to bosses
+let playerLaserPowerUpActive = false;
+let playerLaserPowerUpExpirationTime = 0;
+let playerLasersArray = [];
+let playerLaserPowerUp = null;
+let playerLaserSpawnedThisLevel = false;
+
+let particleBombPowerUp = null;
+let particleBombSpawnTime = 0;
+let particleBombSpawnedThisLevel = false;
+let particleBombActive = false;
+let particleBombExpirationTime = 0;
+let particleBombParticles = [];
+
+const particleBombPowerUpImage = new Image();
+particleBombPowerUpImage.src = 'assets/images/particleBomb.png';
 
 
 
@@ -211,31 +239,11 @@ serpentHead.src = 'assets/images/serpentHead.png'; // Update with the correct pa
 const serpentSegment = new Image();
 serpentSegment.src = 'assets/images/serpentSegment.png'; // Update with the correct path to your image
 
-const images = [
-    { image: titleScreenImage, src: 'assets/images/title_screen.png' },
-    { image: playerImage, src: 'assets/images/player.png' },
-    { image: playerReverseImage, src: 'assets/images/player_reverse.png' },
-    { image: enemyImage, src: 'assets/images/enemy.png' },
-    { image: coinImage, src: 'assets/images/coin.png' },
-    { image: powerUpImage, src: 'assets/images/powerUp.png' },
-    { image: bombPowerUpImage, src: 'assets/images/bombPowerUp.png' },
-    { image: playerThrustImage, src: 'assets/images/player_thrust.png' },
-    { image: bossImage, src: 'assets/images/boss.png' },
-    { image: bossProjectileImage, src: 'assets/images/boss_projectile.png' },
-    { image: homingMissilePowerUpImage, src: 'assets/images/homingMissilePowerUp.png' },
-    { image: homingMissileImage, src: 'assets/images/homing_missile.png' },
-    { image: shieldPowerUpImage, src: 'assets/images/shield_powerUp.png' },
-    { image: allyImage, src: 'assets/images/ally.png' },
-    { image: enemyTankImage, src: 'assets/images/enemy_tank.png' },
-    { image: stealthEnemyImage, src: 'assets/images/stealth_enemy.png' },
-    { image: reversePowerUpImage, src: 'assets/images/reversePowerUp.png' },
-    { image: boostPowerUpImage, src: 'assets/images/boostPowerUp.png' },
-    { image: biomechLeviathanImage, src: 'assets/images/biomech_leviathan2.png' },
-    { image: cyberDragonImage, src: 'assets/images/cyber_dragon.png' },
-    { image: asteroidImage, src: 'assets/images/asteroid.png' },
-    { image: temporalSerpentImage, src: 'assets/images/temporal_serpent.png' }
-];
+const flamethrowerPowerUpImage = new Image();
+flamethrowerPowerUpImage.src = 'assets/images/flamethrowerPowerUp.png';
 
+const playerLaserPowerUpImage = new Image();
+playerLaserPowerUpImage.src = 'assets/images/laserPowerUp.png';
 
 // Load audio
 const backgroundMusic = document.getElementById('backgroundMusic');
@@ -258,14 +266,23 @@ const followPlayerSound = document.getElementById('followPlayerSound');
 const lifeLostSound = document.getElementById('lifeLostSound');
 const tractorBeamSound = document.getElementById('tractorBeamSound');
 const splatSound = document.getElementById('splatSound');
-const empSound = document.getElementById('empSound'); // Add the EMP sound file
 const laserChargingSound = document.getElementById('laserChargingSound');
 const spiralShotSound = document.getElementById('spiralShotSound');
 const teleportSound = document.getElementById('teleportSound');
 const explosionSound = document.getElementById('explosionSound');
 const hazardSound = document.getElementById('hazardSound');
+const flameSound = document.getElementById('flameSound');
+const torchSound = document.getElementById('torchSound');
+const biomechEatSound = document.getElementById('biomechEatSound');
+const nofireSound = document.getElementById('nofireSound');
+const empSound = document.getElementById('empSound');
+const laserHitSound = document.getElementById('laserHitSound');
+const laserFireSound = document.getElementById('laserFireSound');
+const particleBombFireSound = document.getElementById('particleBombFireSound');
 
-const soundEffects = [coinSound, fireSound, powerUpSound, collisionSound, chargingSound, accelerationSound, bombSound, boostSound, reverseSound, homingMissileSound, allySound, allyOver, circularOrbitSound, followPlayerSound, lifeLostSound, tractorBeamSound, splatSound, empSound, laserChargingSound, spiralShotSound, teleportSound, explosionSound, hazardSound];
+
+
+const soundEffects = [coinSound, fireSound, powerUpSound, collisionSound, chargingSound, accelerationSound, bombSound, boostSound, reverseSound, homingMissileSound, allySound, allyOver, circularOrbitSound, followPlayerSound, lifeLostSound, tractorBeamSound, splatSound, empSound, laserChargingSound, spiralShotSound, teleportSound, explosionSound, hazardSound, flameSound, torchSound, biomechEatSound, nofireSound, empSound, laserHitSound, laserFireSound, particleBombFireSound];
 
 // Set initial volumes
 backgroundMusic.volume = 0.5;
@@ -312,8 +329,6 @@ function handleGamepadInput() {
         handleKeyDown({ key: ' ' });
     } else if (!buttons[0] && prevGamepadState[gamepadIndex].buttons[0]) {
         handleKeyUp({ key: ' ' });
-    } else if (buttons[0] && gameOver) {
-        restartGame();
     }
 
     // Bomb button (B button)
@@ -321,6 +336,8 @@ function handleGamepadInput() {
         handleKeyDown({ key: 'b' });
     } else if (!buttons[1] && prevGamepadState[gamepadIndex].buttons[1]) {
         handleKeyUp({ key: 'b' });
+    } else if (buttons[1] && gameOver) {
+        restartGame();
     }
 
     // Boost button (X button)
@@ -435,14 +452,22 @@ function removeEventListeners() {
 function handleKeyUp(e) {
     keys[e.key] = false;
 
-    if (e.key === ' ') {
-        fireProjectile();
+   if (e.key === ' ') {
+        if (particleBombActive) {
+            createParticleBombParticles();
+        } else {
+            fireProjectile();
+        }
+
         isCharging = false;
         clearTimeout(chargingSoundTimeout);
         chargingSound.pause();
         chargingSound.currentTime = 0;
+        flameSound.pause();
+        flameSound.currentTime = 0;
+        playerLaserActive = false;
+        playerLasersArray = []; // Clear the laser beam and particles
     }
-
     if (e.key === 'ArrowUp') {
         accelerationSound.pause();
         accelerationSound.currentTime = 0;
@@ -503,13 +528,18 @@ function handleKeyDown(e) {
     if (e.key === ' ' && isMenuOpen) {
         toggleMenu();
         initializeGame();
-        requestAnimationFrame(gameLoop);
     } else if (e.key === ' ' && !isMenuOpen) {
-        if (!isCharging) {
+        if (playerLaserPowerUpActive) {
+            playerLaserActive = true;
+        } else if (particleBombActive) {
+            // No specific action needed for particle bomb in keydown, just let it fire in keyup
+        } else if (!flamethrowerActive && !isCharging) {
             isCharging = true;
             spacebarPressedTime = performance.now();
             chargingSoundTimeout = setTimeout(() => {
-                chargingSound.play();
+                if (!flamethrowerActive && !chargingSound.playing) {
+                    chargingSound.play();
+                }
             }, 250);
         }
     }
@@ -600,6 +630,7 @@ function manageMusic() {
 }
 
 function initializeGame() {
+    initializeStars();
     player = {
         x: canvas.width / 2,
         y: canvas.height / 2,
@@ -612,16 +643,22 @@ function initializeGame() {
         deceleration: 0.98,
         maxSpeed: 300,
         lives: 3,
+        lastCollisionTime: 0,
         health: PLAYER_MAX_HEALTH
     };
 
     coins = [];
+    const topMargin = 120; // Adjust this value if needed
     for (let i = 0; i < 5; i++) {
         coins.push({
             x: Math.random() * (canvas.width - 20),
-            y: Math.random() * (canvas.height - 20),
+            y: Math.random() * (canvas.height - 20 - topMargin) + topMargin,
             width: 20,
-            height: 20
+            height: 20,
+            offsetY: 0,
+            bobbingSpeed: 0.5,  // Adjust the speed of the bobbing
+            bobbingAmplitude: 5,  // Adjust the amplitude of the bobbing
+            bobbingAngle: Math.random() * Math.PI * 2  // Random starting angle
         });
     }
 
@@ -678,6 +715,16 @@ function initializeGame() {
     boostPowerUpSpawnedThisLevel = false;
     boostPowerUpActive = false;
     boostPowerUpExpirationTime = 0;
+    flamethrowerPowerUp = null;
+    flamethrowerSpawnedThisLevel = false;
+    flamethrowerActive = false;
+    playerLaserPowerUp = null;
+    playerLaserSpawnedThisLevel = false;
+    playerLaserActive = false;
+
+    const bgVol = localStorage.getItem('background_volume') || "0.5";
+    const sfxVol = localStorage.getItem('sfx_volume') || "0.5";
+
     initLevel(level);
     stopBackgroundMusic();
     stopBossMusic();
@@ -726,20 +773,25 @@ function restartGame() {
         deceleration: 0.98,
         maxSpeed: 300,
         lives: 3,
+        lastCollisionTime: 0,
         health: PLAYER_MAX_HEALTH
     };
 
     // Clear coins
     coins = [];
-    for (let i = 0; i < 5; i++) {
-        coins.push({
-            x: Math.random() * (canvas.width - 20),
-            y: Math.random() * (canvas.height - 20),
-            width: 20,
-            height: 20
-        });
-    }
-
+    const topMargin = 120; // Adjust this value if needed
+for (let i = 0; i < 5; i++) {
+    coins.push({
+        x: Math.random() * (canvas.width - 20),
+        y: Math.random() * (canvas.height - 20 - topMargin) + topMargin,
+        width: 20,
+        height: 20,
+        offsetY: 0,
+        bobbingSpeed: 0.5,  // Adjust the speed of the bobbing
+        bobbingAmplitude: 5,  // Adjust the amplitude of the bobbing
+        bobbingAngle: Math.random() * Math.PI * 2  // Random starting angle
+    });
+}
     // Clear existing timeouts
     enemyRespawnTimeouts.forEach(timeout => clearTimeout(timeout));
     enemyRespawnTimeouts = [];
@@ -779,6 +831,12 @@ function restartGame() {
     boostPowerUpSpawnedThisLevel = false;
     boostPowerUpActive = false;
     boostPowerUpExpirationTime = 0;
+    flamethrowerPowerUp = null;
+    flamethrowerSpawnedThisLevel = false;
+    flamethrowerActive = false;
+    playerLaserPowerUp = null;
+    playerLaserSpawnedThisLevel = false;
+    playerLaserActive = false;
 
     // Reset game state
     score = 0;
@@ -799,6 +857,10 @@ function restartGame() {
     biomechLeviathan = null;
     temporalSerpent = null;
 
+    // Clear hazard particles and zones
+    hazardParticles = [];
+    hazardousZones = [];
+
     // Reset ally spawn times
     allySpawnTime = performance.now();
     allyInterval = 60000;
@@ -815,13 +877,12 @@ function restartGame() {
 }
 
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space' && gameOver) {
+    if (event.code === 'KeyB' && gameOver) {
         restartGame();
     }
 });
 
 window.addEventListener("gamepadconnected", function(event) {
-    requestAnimationFrame(gameLoop); // Ensure the game loop continues to check for input
 });
 
 window.addEventListener("gamepaddisconnected", function(event) {
@@ -829,27 +890,51 @@ window.addEventListener("gamepaddisconnected", function(event) {
 });
 
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space' && gameOver) {
+    if (event.code === 'KeyB' && gameOver) {
         restartGame();
     }
 });
 
-window.addEventListener("gamepadconnected", function(event) {
-    requestAnimationFrame(gameLoop); // Ensure the game loop continues to check for input
-});
-
-window.addEventListener("gamepaddisconnected", function(event) {
-    gamepadIndex = null;
-});
-
+const numStars = 50;
+const starLayers = 3; // Number of layers
 let stars = [];
-for (let i = 0; i < 200; i++) {
-    stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        radius: Math.random() * 2
+
+function initializeStars() {
+    for (let i = 0; i < numStars; i++) {
+        const layer = Math.floor(Math.random() * starLayers);
+        const speed = (layer + 1) * 0.5; // Speed based on layer
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            radius: Math.random() * 0.7 + 0.3, // Random radius between 0.5 and 2
+            speed: speed,
+            layer: layer
+        });
+    }
+}
+
+function updateStars(deltaTime) {
+    stars.forEach(star => {
+        star.x -= star.speed; // Move star to the left
+
+        // If star moves off the left edge, reset it to the right edge
+        if (star.x < 0) {
+            star.x = canvas.width;
+            star.y = Math.random() * canvas.height;
+        }
     });
 }
+
+function drawStars() {
+    ctx.fillStyle = 'white';
+    stars.forEach(star => {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
+        ctx.fill();
+    });
+}
+
+
 
 function getRandomPosition(width, height) {
     return {
@@ -1103,6 +1188,7 @@ function updateLaserCharge(deltaTime) {
 }
 
 function drawLaser(laser) {
+    console.log('Drawing laser:', laser); // Debugging statement
     ctx.save();
     ctx.translate(laser.x, laser.y);
     ctx.rotate(Math.atan2(laser.directionY, laser.directionX));
@@ -1110,6 +1196,7 @@ function drawLaser(laser) {
     ctx.fillRect(0, -laser.width / 2, laser.height, laser.width);
     ctx.restore();
 }
+
 
 function drawLaserCharge() {
     if (cyberDragon && cyberDragon.laserCharging) {
@@ -1140,7 +1227,7 @@ function spawnAsteroid() {
     asteroids.push(asteroid);
 
     // Schedule the next asteroid spawn
-    asteroidSpawnTime = Math.random() * 2000 + 1000;
+    asteroidSpawnTime = Math.random() * 2000 + 2000;
     setTimeout(spawnAsteroid, asteroidSpawnTime);
 }
 function clearAsteroids() {
@@ -1598,6 +1685,44 @@ function drawInkClouds() {
 
 let lastEMPTime = 0; // Variable to track the last EMP activation time
 const EMP_COOLDOWN = 5000; // 5 seconds cooldown period
+let empSparkParticles = [];
+let lastBiomechEatSoundTime = 0;
+const BIOMECH_EAT_SOUND_COOLDOWN = 15000; // 15 seconds in milliseconds
+
+
+class EMPSparkParticle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = Math.random() * 5 + 2;
+        this.color = `rgba(0, 255, 255, ${Math.random() * 0.5 + 0.5})`; // Cyan with random transparency
+        this.velocity = {
+            x: (Math.random() - 0.5) * 10,
+            y: (Math.random() - 0.5) * 10,
+        };
+        this.alpha = 1; // transparency
+    }
+
+    update() {
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        this.alpha -= 0.02;
+    }
+
+    draw(ctx) {
+        if (this.alpha > 0) {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+}
+
+let empSoundClone = null;
 
 function biomechLeviathanEMPBlast() {
     const currentTime = performance.now();
@@ -1612,10 +1737,17 @@ function biomechLeviathanEMPBlast() {
         x: biomechLeviathan.x,
         y: biomechLeviathan.y,
         radius: 200,
-        duration: 500
+        duration: 2500
     };
     empBlastEndTime = performance.now() + empBlast.duration;
     empBlastActive = true;
+    empDisableFire = true;
+
+    // Play the EMP sound clone
+    empSoundClone = empSound.cloneNode();
+    empSoundClone.volume = empSound.volume; // Ensure the cloned sound has the same volume
+    empSoundClone.loop = true; // Loop the sound while EMP is active
+    empSoundClone.play();
 
     // Destroy projectiles within the EMP blast radius
     projectiles = projectiles.filter(projectile => {
@@ -1629,15 +1761,41 @@ function biomechLeviathanEMPBlast() {
     setTimeout(() => {
         empBlast.active = false;
         empBlastActive = false;
+        empDisableFire = false;
+        // Stop the EMP sound clone
+        if (empSoundClone) {
+            empSoundClone.pause();
+            empSoundClone.currentTime = 0;
+            empSoundClone = null;
+        }
     }, empBlast.duration);
 }
 
 function drawEMPBlast() {
     if (empBlast && empBlast.active) {
+        empPulseTime += 0.1; // Adjust the speed of the pulsing
+        empPulseScale = 1 + Math.sin(empPulseTime) * 0.1; // Adjust the range of the pulsing
+
+        ctx.save();
         ctx.fillStyle = 'rgba(0, 0, 255, 0.3)';
         ctx.beginPath();
-        ctx.arc(empBlast.x, empBlast.y, empBlast.radius, 0, 2 * Math.PI);
+        ctx.arc(empBlast.x, empBlast.y, empBlast.radius * empPulseScale, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.restore();
+
+        // Generate spark particles
+        if (Math.random() < 0.5) { // Adjust the frequency of spark generation
+            empSparkParticles.push(new EMPSparkParticle(empBlast.x, empBlast.y));
+        }
+
+        // Update and draw spark particles
+        empSparkParticles.forEach((spark, index) => {
+            spark.update();
+            spark.draw(ctx);
+            if (spark.alpha <= 0) {
+                empSparkParticles.splice(index, 1); // Remove the spark when it fades out
+            }
+        });
 
         if (empSound.paused) {
             empSound.currentTime = 0;
@@ -1646,61 +1804,7 @@ function drawEMPBlast() {
     } else {
         empSound.pause();
         empSound.currentTime = 0; // Reset the sound
-    }
-}
-
-function updateBiomechLeviathan(deltaTime, timestamp) {
-    if (!biomechLeviathan) return;
-
-    const angleToPlayer = Math.atan2(player.y - biomechLeviathan.y, player.x - biomechLeviathan.x);
-    biomechLeviathan.x += Math.cos(angleToPlayer) * biomechLeviathan.speed * deltaTime / 1000;
-    biomechLeviathan.y += Math.sin(angleToPlayer) * biomechLeviathan.speed * deltaTime / 1000;
-
-    // Use tractor beam attack
-    biomechLeviathanTractorBeam();
-
-    // Check for other attacks
-    const currentTime = performance.now();
-    if (biomechLeviathan.phase === 1 && biomechLeviathan.health <= biomechLeviathan.maxHealth * 0.6 && !biomechLeviathan.phaseTransitioned[0]) {
-        biomechLeviathan.phaseTransitioned[0] = true;
-        biomechLeviathan.phase = 2;
-    } else if (biomechLeviathan.phase === 2 && biomechLeviathan.health <= biomechLeviathan.maxHealth * 0.3 && !biomechLeviathan.phaseTransitioned[1]) {
-        biomechLeviathan.phaseTransitioned[1] = true;
-        biomechLeviathan.phase = 3;
-    }
-
-    switch (biomechLeviathan.phase) {
-        case 1:
-            // Only tractor beam
-            break;
-        case 2:
-            biomechLeviathanInkCloud(); // Use ink cloud attack
-            break;
-        case 3:
-            biomechLeviathanEMPBlast(); // Use EMP blast attack
-            break;
-    }
-
-    if (biomechLeviathan.health <= 0) {
-        biomechLeviathan.alive = false;
-        score += 2000;
-        biomechLeviathan = null;
-        resetTractorBeam(); // Properly reset tractor beam
-        inkClouds = []; // Clear any remaining ink clouds
-        empBlast = null; // Reset EMP blast
-        level++;
-        initLevel(level);
-        lastTime = performance.now();
-    }
-
-    // Check collision with player
-    const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-    const biomechLeviathanCircle = { x: biomechLeviathan.x, y: biomechLeviathan.y, radius: biomechLeviathan.width / 2 };
-
-    if (checkCollision(playerCircle, biomechLeviathanCircle)) {
-        if (!isInvincible) {
-            player.health -= 20; // Adjust damage as needed
-        }
+        empSparkParticles = []; // Clear sparks when EMP is not active
     }
 }
 
@@ -1828,7 +1932,7 @@ function spawnTemporalSerpent() {
         y: position.y,
         width: 200,
         height: 200,
-        speed: 500,
+        speed: 400,
         health: 2000,
         maxHealth: 2000,
         lastAttackTime: 0,
@@ -1853,78 +1957,98 @@ function spawnTemporalSerpent() {
     lastFollowPlayerTime = performance.now();
 }
 
-function attackPhase1() {
-    if (temporalSerpent.segments.length === 0) return;
-
-    // The Temporal Serpent leaves a hazardous zone at its last segment position
-    const lastSegment = temporalSerpent.segments[temporalSerpent.segments.length - 1];
-    hazardousZones.push({
-        x: lastSegment.x,
-        y: lastSegment.y,
-        radius: HAZARD_RADIUS,
-        spawnTime: performance.now()
-    });
-
-    // Remove old hazardous zones
-    hazardousZones = hazardousZones.filter(zone => performance.now() - zone.spawnTime < HAZARD_DURATION);
-}
-
-
 let hazardousZones = [];
-const HAZARD_DURATION = 1000; // Duration for the hazardous zone to stay active
+const HAZARD_DURATION = 250; // Duration for the hazardous zone to stay active
 const HAZARD_DAMAGE = 1; // Damage to the player if they are in the zone
 const HAZARD_RADIUS = 15; // Radius of the hazardous zone
 const HAZARD_DAMAGE_RATE = 1000; // Time in milliseconds between damage applications
 let hazardCooldownActive = false;
 let hazardCooldownTimer = 0;
 
-const HAZARD_COLORS = [
-    'rgba(255, 0, 0, 0.6)', // Red
-    'rgba(0, 255, 0, 0.6)', // Green
-    'rgba(0, 0, 255, 0.6)', // Blue
-    'rgba(255, 255, 0, 0.6)', // Yellow
-    'rgba(0, 255, 255, 0.6)', // Cyan
-    'rgba(255, 0, 255, 0.6)' // Magenta
-];
 
+function attackPhase1() {
+    if (temporalSerpent.segments.length === 0) return;
+
+    const lastSegment = temporalSerpent.segments[temporalSerpent.segments.length - 1];
+    createHazardParticles(lastSegment.x, lastSegment.y);
+
+    hazardousZones.push({
+        x: lastSegment.x,
+        y: lastSegment.y,
+        radius: HAZARD_RADIUS,
+        spawnTime: performance.now()
+    });
+}
+
+class HazardParticle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.reset();
+    }
+
+    reset() {
+        this.size = Math.random() * 10 + 5; // Random size between 5 and 15
+        this.alpha = 1; // Full opacity
+        this.decay = Math.random() * 0.02 + 0.01; // Increase decay rate for faster fading
+        this.dx = (Math.random() - 0.5) * 1; // Horizontal velocity
+        this.dy = (Math.random() - 0.5) * 1; // Vertical velocity
+    }
+
+    update() {
+        this.x += this.dx;
+        this.y += this.dy;
+        this.alpha -= this.decay;
+        if (this.alpha <= 0) {
+            this.reset();
+        }
+    }
+
+    draw(ctx) {
+        if (this.alpha > 0) {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 255, 0, 1)'; // Green color
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+}
+
+let hazardParticles = [];
+const maxHazardParticles = 1; // Limit the number of particles
+
+function createHazardParticles(x, y) {
+    for (let i = 0; i < maxHazardParticles; i++) {
+        const particle = new HazardParticle(x, y);
+        hazardParticles.push(particle);
+    }
+}
+
+function updateHazardParticles() {
+    hazardParticles.forEach(particle => particle.update());
+}
+
+function drawHazardParticles(ctx) {
+    hazardParticles.forEach(particle => particle.draw(ctx));
+}
+
+function updateHazardousZones(timestamp) {
+    hazardousZones = hazardousZones.filter(zone => timestamp - zone.spawnTime < HAZARD_DURATION);
+}
 
 function drawHazardousZones(ctx, timestamp) {
     ctx.save();
 
     hazardousZones.forEach(zone => {
-        // Pick a random color from the array for the gradient
-        const colorIndex = Math.floor(Math.random() * HAZARD_COLORS.length);
-        const baseColor = HAZARD_COLORS[colorIndex];
-        const glowColor = baseColor.replace('0.6', '0.3');
+        createHazardParticles(zone.x, zone.y); // Create particles for each hazardous zone
 
-        // Create a radial gradient
-        const gradient = ctx.createRadialGradient(zone.x, zone.y, 0, zone.x, zone.y, zone.radius);
-        gradient.addColorStop(0, baseColor);
-        gradient.addColorStop(1, baseColor.replace('0.6', '0'));
-
-        // Set the fill style to the gradient
-        ctx.fillStyle = gradient;
-
-        // Draw the main circle with the gradient
+        // Optionally, draw a faint base circle
+        ctx.fillStyle = 'rgba(255, 69, 0, 0.3)';
         ctx.beginPath();
         ctx.arc(zone.x, zone.y, zone.radius, 0, 2 * Math.PI);
-        ctx.fill();
-
-        // Create a glow effect by drawing a larger, semi-transparent circle around the zone
-        ctx.beginPath();
-        ctx.arc(zone.x, zone.y, zone.radius + 10, 0, 2 * Math.PI);
-        ctx.strokeStyle = glowColor;
-        ctx.lineWidth = 5;
-        ctx.stroke();
-
-        // Animate the zone's opacity for a pulsing effect
-        const pulse = Math.sin(timestamp / 200) * 0.2 + 0.8;
-        ctx.globalAlpha = pulse;
-
-        // Draw the inner circle again with varying opacity for the pulsing effect
-        ctx.beginPath();
-        ctx.arc(zone.x, zone.y, zone.radius - 5, 0, 2 * Math.PI);
-        ctx.fillStyle = baseColor.replace('0.6', '0.8');
         ctx.fill();
     });
 
@@ -1935,23 +2059,22 @@ let isPlayerInHazardZone = false; // Track whether the player is in a hazardous 
 
 function checkPlayerInHazardousZone(player, timestamp) {
     if (hazardCooldownActive && timestamp < hazardCooldownTimer) {
-        return; // Skip the check if the cooldown is active
+        return;
     }
 
     let damageApplied = false;
-    let playerIsInHazard = false; // Track if the player is in any hazard zone
+    let playerIsInHazard = false;
 
-    hazardousZones.forEach(zone => {
-        const dx = player.x - zone.x;
-        const dy = player.y - zone.y;
+    hazardParticles.forEach(particle => {
+        const dx = player.x - particle.x;
+        const dy = player.y - particle.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < zone.radius + player.width / 2) {
+        if (distance < particle.size + player.width / 2) {
             playerIsInHazard = true;
             if (!isInvincible && !shieldActive && !damageApplied) {
-                console.log('Applying damage to player.');
                 player.health -= HAZARD_DAMAGE;
-                damageApplied = true; // Ensure damage is only applied once per check
+                damageApplied = true;
                 if (player.health <= 0) {
                     player.lives--;
                     player.health = PLAYER_MAX_HEALTH;
@@ -1965,14 +2088,12 @@ function checkPlayerInHazardousZone(player, timestamp) {
     });
 
     if (damageApplied) {
-        console.log(`Player is in hazardous zone.`); // Log only when damage is applied
         hazardCooldownActive = true;
-        hazardCooldownTimer = timestamp + HAZARD_DAMAGE_RATE; // Set the cooldown timer
+        hazardCooldownTimer = timestamp + HAZARD_DAMAGE_RATE;
     } else {
         hazardCooldownActive = false;
     }
 
-    // Play the audio only if the player has entered a hazardous zone
     if (playerIsInHazard && !isPlayerInHazardZone) {
         hazardSound.play();
         isPlayerInHazardZone = true;
@@ -1982,9 +2103,62 @@ function checkPlayerInHazardousZone(player, timestamp) {
     }
 }
 
+function updateDetachedSegments(deltaTime) {
+    detachedSegments.forEach((segment, index) => {
+        if (segment.travelDirection) {
+            const travelDistance = segment.speed * (deltaTime / 1000);
+            segment.x += segment.travelDirection.x * travelDistance;
+            segment.y += segment.travelDirection.y * travelDistance;
+            segment.travelDistance -= travelDistance;
+
+            if (segment.travelDistance <= 0) {
+                segment.explode = true;
+                segment.explosionTime = performance.now();
+                delete segment.travelDirection; // Remove travelDirection to stop further movement
+            }
+        }
+    });
+}
 
 function attackPhase2() {
-    // Define phase 2 attack logic here
+    if (temporalSerpent.segments.length < 10) return; // Ensure there are enough segments for the attack
+
+    const segmentsToFire = [];
+    const numSegments = 1; // Number of segments to detach and fire at the player per attack
+
+    // Select a random segment to detach and fire
+    for (let i = 0; i < numSegments; i++) {
+        const randomIndex = Math.floor(Math.random() * temporalSerpent.segments.length);
+        const segment = temporalSerpent.segments[randomIndex];
+        segmentsToFire.push(segment);
+        // Remove the segment from the serpent
+        temporalSerpent.segments.splice(randomIndex, 1);
+    }
+
+    // Detach selected segments and set them up to travel towards the player and explode
+    segmentsToFire.forEach(segment => {
+        const dx = player.x - segment.x;
+        const dy = player.y - segment.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const travelDuration = 3000; // Time in milliseconds for the segment to travel before exploding
+
+        segment.travelDirection = { x: dx / distance, y: dy / distance };
+        segment.travelDistance = 600; // Distance in pixels to travel towards the player
+
+        // Increase the segment speed by reducing the travel duration
+        const increasedSpeedFactor = 4; // Increase speed by this factor
+        const newTravelDuration = travelDuration / increasedSpeedFactor; // Reduce travel duration to increase speed
+
+        segment.speed = segment.travelDistance / (newTravelDuration / 1000); // New speed based on increased factor
+
+        segment.startX = segment.x;
+        segment.startY = segment.y;
+        segment.explode = true;
+        segment.explosionTime = performance.now() + newTravelDuration; // Update explosion time based on new travel duration
+
+        // Add the detached segment to a global array for detached segments
+        detachedSegments.push(segment);
+    });
 }
 
 let energyBarrierActive = false;
@@ -2023,7 +2197,6 @@ function handleProjectileReflection(projectile) {
 
         // Optionally, you can change the color or other properties of the projectile to indicate it has been reflected
         projectile.color = 'red'; // Example: change color to indicate it's an enemy projectile
-
     }
 }
 
@@ -2052,9 +2225,6 @@ function drawEnergyBarrier(ctx) {
         ctx.restore();
     }
 }
-
-
-
 
 function attackPhase4() {
     // Check if there are enough segments to perform the attack
@@ -2246,8 +2416,9 @@ function updateTemporalSerpent(deltaTime, timestamp) {
             break;
     }
 
-    // Leave a hazardous zone behind the last segment
-    if (temporalSerpent.segments.length > 0) {
+    // Leave a hazardous zone behind the last segment at a specified interval
+    const interval = 500; // Change this value to adjust the interval
+    if (temporalSerpent.segments.length > 0 && temporalSerpent.segments.length % interval === 0) {
         const lastSegment = temporalSerpent.segments[temporalSerpent.segments.length - 1];
         hazardousZones.push({
             x: lastSegment.x,
@@ -2308,16 +2479,39 @@ function updateTemporalSerpent(deltaTime, timestamp) {
                 attackPhase1();
                 break;
             case 2:
-                attackPhase2();
+                attackPhase4();
                 break;
             case 3:
                 attackPhase3();
                 break;
             case 4:
-                attackPhase4();
+                attackPhase2();
                 break;
         }
         temporalSerpent.lastAttackTime = timestamp;
+    }
+    handleSerpentBombImpact(temporalSerpent, deltaTime, timestamp);
+}
+
+function handleSerpentBombImpact(enemy, deltaTime, timestamp) {
+    if (bomb.active && timestamp - bombSpawnTime > BOMB_DAMAGE_INTERVAL) {
+        const dx = enemy.x - bomb.x;
+        const dy = enemy.y - bomb.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance <= BOMB_RADIUS) {
+            enemy.health -= BOMB_DAMAGE;
+            enemy.lastBombDamageTime = timestamp;
+
+            if (enemy.health <= 0) {
+                enemy.alive = false;
+            }
+
+            // Trigger Temporal Serpent leave screen function if it's the Temporal Serpent
+            if (enemy === temporalSerpent) {
+                makeTemporalSerpentLeaveScreen(TEMPORAL_SERPENT_LEAVE_DURATION);
+            }
+        }
     }
 }
 
@@ -2377,32 +2571,6 @@ function drawTemporalSerpent() {
     }
 }
 
-// Ensure to call drawTemporalSerpent() in your main game loop or rendering function
-
-function checkCollisionWithTemporalSerpent() {
-    if (!temporalSerpent || !temporalSerpent.alive) return;
-
-    const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-    temporalSerpent.segments.forEach((segment, index) => {
-        const segmentCircle = { x: segment.x, y: segment.y, radius: segment.radius };
-        if (checkCollision(playerCircle, segmentCircle)) {
-            if (!isInvincible && !shieldActive) {
-                player.health -= 10;
-                if (player.health <= 0) {
-                    player.lives--;
-                    player.health = PLAYER_MAX_HEALTH;
-                    lifeLostSound.play();
-                    if (player.lives <= 0) {
-                        handleGameOver();
-                        gameOver = true;
-
-                    }
-                }
-            }
-        }
-    });
-}
-
 function makeTemporalSerpentLeaveScreen(duration) {
     if (temporalSerpent) {
         const offScreenMargin = 100;
@@ -2442,12 +2610,12 @@ function handleSerpentDeath() {
     // Additional logic for handling serpent death, such as playing an animation, updating score, etc.
 }
 
-
-
 // Call spawnTemporalSerpent() at the appropriate place in your game initialization or level setup
+
 
 function updateProjectiles(deltaTime, timestamp) {
     let projectilesToRemove = new Set();
+    handleWormholeTeleportation();
 
     projectiles.forEach((projectile, index) => {
         if (projectile.heatSeeking && projectile.fromBoss) {
@@ -2467,16 +2635,15 @@ function updateProjectiles(deltaTime, timestamp) {
         projectile.y += projectile.speed * projectile.directionY * deltaTime / 1000;
         projectile.traveledDistance += projectile.speed * deltaTime / 1000;
 
-        // Remove projectile if it exceeds max distance or goes off-screen
-        if (projectile.traveledDistance > projectile.maxDistance || projectile.x < 0 || projectile.x > canvas.width || projectile.y < 0 || projectile.y > canvas.height) {
-            projectilesToRemove.add(index);
+        if (projectile.traveledDistance > projectile.maxDistance) {
+            projectiles.splice(index, 1);
             return;
         }
 
         if (projectile.isCharged) {
             if (projectile.traveledDistance >= 300) {
                 splitChargedProjectile(projectile);
-                projectilesToRemove.add(index);
+                projectiles.splice(index, 1);
                 return;
             }
         }
@@ -2486,6 +2653,11 @@ function updateProjectiles(deltaTime, timestamp) {
             if (projectile.x > canvas.width) projectile.x = 0;
             if (projectile.y < 0) projectile.y = canvas.height;
             if (projectile.y > canvas.height) projectile.y = 0;
+        }
+
+        if (projectile.traveledDistance > 800) {
+            projectiles.splice(index, 1);
+            return;
         }
 
         if (projectile.fromPlayer) {
@@ -2526,7 +2698,7 @@ function updateProjectiles(deltaTime, timestamp) {
                             score += 10;
                         }
 
-                        projectilesToRemove.add(index);
+                        projectiles.splice(index, 1);
                     }
                 });
 
@@ -2545,10 +2717,12 @@ function updateProjectiles(deltaTime, timestamp) {
                         const collisionSoundClone = collisionSound.cloneNode();
                         collisionSoundClone.volume = collisionSound.volume;
                         collisionSoundClone.play();
-                        projectilesToRemove.add(index);
+                        projectiles.splice(index, 1);
 
                         if (cyberDragon && cyberDragon.health <= 0) {
                             cyberDragon.alive = false;
+                            createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                            explosionSound.play();
                             score += 3000;
                             cyberDragon = null;
                             clearAsteroids();
@@ -2568,10 +2742,12 @@ function updateProjectiles(deltaTime, timestamp) {
                         const collisionSoundClone = collisionSound.cloneNode();
                         collisionSoundClone.volume = collisionSound.volume;
                         collisionSoundClone.play();
-                        projectilesToRemove.add(index);
+                        projectiles.splice(index, 1);
 
                         if (boss.health <= 0) {
                             boss.alive = false;
+                            createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+                            explosionSound.play();
                             score += 1000;
                             initLevel(level + 1);
                         }
@@ -2589,10 +2765,12 @@ function updateProjectiles(deltaTime, timestamp) {
                         const collisionSoundClone = collisionSound.cloneNode();
                         collisionSoundClone.volume = collisionSound.volume;
                         collisionSoundClone.play();
-                        projectilesToRemove.add(index);
+                        projectiles.splice(index, 1);
 
                         if (biomechLeviathan && biomechLeviathan.health <= 0) {
                             biomechLeviathan.alive = false;
+                            createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                            explosionSound.play();
                             score += 2000;
                             biomechLeviathan = null;
                             level++;
@@ -2611,7 +2789,7 @@ function updateProjectiles(deltaTime, timestamp) {
                         const collisionSoundClone = collisionSound.cloneNode();
                         collisionSoundClone.volume = collisionSound.volume;
                         collisionSoundClone.play();
-                        projectilesToRemove.add(index);
+                        projectiles.splice(index, 1);
 
                         if (temporalSerpent.health <= 0) {
                             temporalSerpent.alive = false;
@@ -2632,7 +2810,7 @@ function updateProjectiles(deltaTime, timestamp) {
                                 const collisionSoundClone = collisionSound.cloneNode();
                                 collisionSoundClone.volume = collisionSound.volume;
                                 collisionSoundClone.play();
-                                projectilesToRemove.add(index);
+                                projectiles.splice(index, 1);
                                 break;
                             }
                         }
@@ -2661,33 +2839,50 @@ function updateProjectiles(deltaTime, timestamp) {
                     }
                 }
 
-                projectilesToRemove.add(index);
+                projectiles.splice(index, 1);
             }
         }
-    });
 
-    // Handle collisions between projectiles
-    projectiles.forEach((projectile, i) => {
-        for (let j = i + 1; j < projectiles.length; j++) {
-            if (projectile.fromPlayer !== projectiles[j].fromPlayer) {
-                const projectile1Circle = { x: projectile.x, y: projectile.y, radius: projectile.width / 2 };
-                const projectile2Circle = { x: projectiles[j].x, y: projectiles[j].y, radius: projectiles[j].width / 2 };
+        projectiles.forEach((projectile, i) => {
+            for (let j = i + 1; j < projectiles.length; j++) {
+                if (projectile.fromPlayer !== projectiles[j].fromPlayer) {
+                    const projectile1Circle = { x: projectile.x, y: projectile.y, radius: projectile.width / 2 };
+                    const projectile2Circle = { x: projectiles[j].x, y: projectiles[j].y, radius: projectiles[j].width / 2 };
 
-                if (checkCollision(projectile1Circle, projectile2Circle)) {
-                    if (!projectile.isLaser && !projectiles[j].isLaser) {
-                        if (projectile.fromPlayer) {
-                            projectilesToRemove.add(j);
-                        } else {
-                            projectilesToRemove.add(i);
+                    if (checkCollision(projectile1Circle, projectile2Circle)) {
+                        if (!projectile.isLaser && !projectiles[j].isLaser) {
+                            if (projectile.fromPlayer) {
+                                projectilesToRemove.add(j);
+                            } else {
+                                projectilesToRemove.add(i);
+                            }
+
+                            const collisionSoundClone = collisionSound.cloneNode();
+                            collisionSoundClone.volume = collisionSound.volume;
+                            collisionSoundClone.play();
                         }
-
-                        const collisionSoundClone = collisionSound.cloneNode();
-                        collisionSoundClone.volume = collisionSound.volume;
-                        collisionSoundClone.play();
                     }
                 }
             }
-        }
+        });
+
+        projectiles = projectiles.filter((_, index) => !projectilesToRemove.has(index));
+    });
+
+    projectiles.forEach((projectile, index) => {
+        asteroids.forEach((asteroid, asteroidIndex) => {
+            const projectileCircle = { x: projectile.x, y: projectile.y, radius: projectile.width / 2 };
+            const asteroidCircle = { x: asteroid.x + asteroid.width / 2, y: asteroid.y + asteroid.height / 2, radius: asteroid.width / 2 };
+
+            if (checkCollision(projectileCircle, asteroidCircle)) {
+                asteroid.alive = false;
+                projectiles.splice(index, 1);
+
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+            }
+        });
     });
 
     // Ensure spiral projectiles are updated correctly
@@ -2697,7 +2892,7 @@ function updateProjectiles(deltaTime, timestamp) {
             projectile.y += projectile.directionY * projectile.speed * deltaTime / 1000;
             projectile.traveledDistance += projectile.speed * deltaTime / 1000;
 
-            if (projectile.traveledDistance > projectile.maxDistance || projectile.x < 0 || projectile.x > canvas.width || projectile.y < 0 || projectile.y > canvas.height) {
+            if (projectile.traveledDistance > projectile.maxDistance) {
                 cyberDragon.spiralProjectiles.splice(index, 1);
                 return;
             }
@@ -2719,8 +2914,17 @@ function updateProjectiles(deltaTime, timestamp) {
         });
     }
 
-    // Remove projectiles marked for removal
-    projectiles = projectiles.filter((_, index) => !projectilesToRemove.has(index));
+    // Update particle bomb particles
+    for (let i = particleBombParticles.length - 1; i >= 0; i--) {
+        const particle = particleBombParticles[i];
+        particle.x += particle.speed * particle.directionX * deltaTime / 1000;
+        particle.y += particle.speed * particle.directionY * deltaTime / 1000;
+        particle.lifetime -= deltaTime;
+
+        if (particle.lifetime <= 0) {
+            particleBombParticles.splice(i, 1);
+        }
+    }
 }
 
 
@@ -2982,23 +3186,37 @@ function handleWormholeTeleportation() {
             });
         }
     });
-}
 
-
-function updatePowerUpPosition(powerUpObj, deltaTime) {
-    if (powerUpObj) {
-        powerUpObj.x += powerUpObj.speed * powerUpObj.directionX * deltaTime / 1000;
-        powerUpObj.y += powerUpObj.speed * powerUpObj.directionY * deltaTime / 1000;
-
-        if (powerUpObj.x < -powerUpObj.width || powerUpObj.x > canvas.width || powerUpObj.y < -powerUpObj.height || powerUpObj.y > canvas.height) {
-            if (powerUpObj === powerUp) powerUp = null;
-            else if (powerUpObj === bombPowerUp) bombPowerUp = null;
-            else if (powerUpObj === homingMissilePowerUp) homingMissilePowerUp = null;
-            else if (powerUpObj === shieldPowerUp) shieldPowerUp = null;
-            else if (powerUpObj === reversePowerUp) reversePowerUp = null;
-            else if (powerUpObj === boostPowerUp) boostPowerUp = null;
+    // Check flamethrower particles entry
+    flameParticles.forEach(particle => {
+        if (!particle.lastTeleportTime) {
+            particle.lastTeleportTime = 0;
         }
-    }
+
+        if (currentTime - particle.lastTeleportTime > PROJECTILE_TELEPORT_COOLDOWN) {
+            wormholes.forEach(wormhole => {
+                const distanceToEntry = Math.sqrt(
+                    (particle.x - wormhole.entry.x) ** 2 +
+                    (particle.y - wormhole.entry.y) ** 2
+                );
+
+                const distanceToExit = Math.sqrt(
+                    (particle.x - wormhole.exit.x) ** 2 +
+                    (particle.y - wormhole.exit.y) ** 2
+                );
+
+                if (distanceToEntry < wormhole.entry.radius) {
+                    particle.x = wormhole.exit.x;
+                    particle.y = wormhole.exit.y;
+                    particle.lastTeleportTime = currentTime; // Update the last teleport time
+                } else if (distanceToExit < wormhole.exit.radius) {
+                    particle.x = wormhole.entry.x;
+                    particle.y = wormhole.entry.y;
+                    particle.lastTeleportTime = currentTime; // Update the last teleport time
+                }
+            });
+        }
+    });
 }
 
 // Update the homing missile logic
@@ -3065,12 +3283,16 @@ function updateHomingMissiles(deltaTime) {
                     boss.health -= missile.damage;
                     if (boss.health <= 0) {
                         boss.alive = false;
+                        createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+                        explosionSound.play();
                         score += 1000;
                     }
                 } else if (missile.target === biomechLeviathan) {
                     biomechLeviathan.health -= missile.damage;
                     if (biomechLeviathan.health <= 0) {
                         biomechLeviathan.alive = false;
+                        createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                        explosionSound.play();
                         score += 2000;
                     }
                     tractorBeam.active = false;
@@ -3082,6 +3304,8 @@ function updateHomingMissiles(deltaTime) {
                     cyberDragon.health -= missile.damage;
                     if (cyberDragon.health <= 0) {
                         cyberDragon.alive = false;
+                        createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                        explosionSound.play();
                         score += 3000;
                     }
                 } else if (missile.target === temporalSerpent) {
@@ -3137,7 +3361,6 @@ function drawHomingMissiles() {
 
 function updateBiomechLeviathan(deltaTime, timestamp) {
     if (!biomechLeviathan) return;
-
     const angleToPlayer = Math.atan2(player.y - biomechLeviathan.y, player.x - biomechLeviathan.x);
     biomechLeviathan.x += Math.cos(angleToPlayer) * biomechLeviathan.speed * deltaTime / 1000;
     biomechLeviathan.y += Math.sin(angleToPlayer) * biomechLeviathan.speed * deltaTime / 1000;
@@ -3169,6 +3392,8 @@ function updateBiomechLeviathan(deltaTime, timestamp) {
 
     if (biomechLeviathan.health <= 0) {
         biomechLeviathan.alive = false;
+        createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+        explosionSound.play();
         score += 2000;
         biomechLeviathan = null;
         level++;
@@ -3303,10 +3528,11 @@ function getValidSpawnPosition(width, height) {
     let position;
     let distance;
     let isOverlapping;
+    const topMargin = 120; // Adjust this value if needed
     do {
         position = {
             x: Math.random() * (canvas.width - width),
-            y: Math.random() * (canvas.height - height)
+            y: Math.random() * (canvas.height - height - topMargin) + topMargin
         };
         distance = Math.sqrt(
             (player.x - position.x) ** 2 +
@@ -3418,6 +3644,61 @@ function spawnBoostPowerUp() {
     boostPowerUpSpawnedThisLevel = true; // Correctly set the flag
 }
 
+function spawnFlamethrowerPowerUp() {
+    if (level <= 5) return;
+    const position = getOffScreenSpawnPosition(30, 30);
+    flamethrowerPowerUp = {
+        x: position.x,
+        y: position.y,
+        width: 30,
+        height: 30,
+        speed: 100,
+        directionX: position.directionX,
+        directionY: position.directionY
+    };
+    flamethrowerSpawnedThisLevel = true;
+}
+
+function updateFlamethrowerPosition(deltaTime) {
+    if (flamethrowerPowerUp) {
+        flamethrowerPowerUp.x += flamethrowerPowerUp.speed * flamethrowerPowerUp.directionX * deltaTime / 1000;
+        flamethrowerPowerUp.y += flamethrowerPowerUp.speed * flamethrowerPowerUp.directionY * deltaTime / 1000;
+
+        if (flamethrowerPowerUp.x < -flamethrowerPowerUp.width || flamethrowerPowerUp.x > canvas.width || flamethrowerPowerUp.y < -flamethrowerPowerUp.height || flamethrowerPowerUp.y > canvas.height) {
+            flamethrowerPowerUp = null;
+        }
+    }
+}
+
+function spawnPlayerLaserPowerUp() {
+if (level <= 10) return;
+    const position = getOffScreenSpawnPosition(30, 30);
+    playerLaserPowerUp = {
+        x: position.x,
+        y: position.y,
+        width: 30,
+        height: 30,
+        speed: 100,
+        directionX: position.directionX,
+        directionY: position.directionY
+    };
+}
+
+
+function updatePlayerLaserPowerUp(deltaTime) {
+    if (laserPowerUp) {
+        laserPowerUp.x += laserPowerUp.speed * laserPowerUp.directionX * deltaTime / 1000;
+        laserPowerUp.y += laserPowerUp.speed * laserPowerUp.directionY * deltaTime / 1000;
+
+        // Remove power-up if it goes off-screen
+        if (laserPowerUp.x < -laserPowerUp.width || laserPowerUp.x > canvas.width || laserPowerUp.y < -laserPowerUp.height || laserPowerUp.y > canvas.height) {
+            laserPowerUp = null;
+        }
+    }
+}
+
+
+
 function getRandomBorderPosition() {
     let side = Math.floor(Math.random() * 4);
     let position = { x: 0, y: 0 };
@@ -3474,7 +3755,23 @@ function resetPowerUpTimers() {
     boostPowerUpSpawned = false;
     boostPowerUpSpawnTime = performance.now() + Math.random() * 5000 + 10000;
     boostPowerUpSpawnedThisLevel = false;
+
+    flamethrowerPowerUp = null;
+    flamethrowerSpawned = false;
+    flamethrowerSpawnTime = performance.now() + Math.random() * 5000 + 15000;
+    flamethrowerSpawnedThisLevel = false;
+
+    playerLaserPowerUp = null;
+    playerLaserSpawned = false;
+    playerLaserPowerUpSpawnTime = performance.now() + Math.random() * 5000 + 5000;
+    playerLaserPowerUpSpawnedThisLevel = false;
+
+    particleBombPowerUp = null;
+    particleBombSpawned = false;
+    particleBombPowerUpSpawnTime = performance.now() + Math.random() * 5000 + 12000; // Adjust spawn time as needed
+    particleBombSpawnedThisLevel = false;
 }
+
 
 function getBossForLevel(level) {
     const bosses = ['boss', 'biomechLeviathan', 'cyberDragon', 'temporalSerpent'];
@@ -3486,6 +3783,8 @@ function initLevel(level) {
     // Clear existing timeouts
     enemyRespawnTimeouts.forEach(timeout => clearTimeout(timeout));
     enemyRespawnTimeouts = [];
+    hazardParticles = [];
+    hazardousZones = [];
 
     enemies = [];
     projectiles = [];
@@ -3553,12 +3852,17 @@ function initLevel(level) {
     }
 
     coins = [];
+    const topMargin = 120
     for (let i = 0; i < 5; i++) {
         coins.push({
             x: Math.random() * (canvas.width - 20),
-            y: Math.random() * (canvas.height - 20),
+            y: Math.random() * (canvas.height - 20 - topMargin) + topMargin,
             width: 20,
-            height: 20
+            height: 20,
+            offsetY: 0,
+            bobbingSpeed: 1.5,  // Adjust the speed of the bobbing
+            bobbingAmplitude: 15,  // Adjust the amplitude of the bobbing
+            bobbingAngle: Math.random() * Math.PI * 2,  // Random starting angle
         });
     }
 
@@ -3762,6 +4066,7 @@ function updateBoss(deltaTime, timestamp) {
 
     if (boss && boss.health <= 0) {
         boss.alive = false;
+        createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
         score += 1000;
         boss = null;
         level++;
@@ -3772,13 +4077,13 @@ function updateBoss(deltaTime, timestamp) {
 
 
 function updatePowerUps(deltaTime, timestamp) {
-    const totalPowerUps = (powerUp ? 1 : 0) + (bombPowerUp ? 1 : 0) + (homingMissilePowerUp ? 1 : 0) + (shieldPowerUp ? 1 : 0) + (reversePowerUp ? 1 : 0) + (boostPowerUp ? 1 : 0);
+    const totalPowerUps = (powerUp ? 1 : 0) + (bombPowerUp ? 1 : 0) + (homingMissilePowerUp ? 1 : 0) + (shieldPowerUp ? 1 : 0) + (reversePowerUp ? 1 : 0) + (boostPowerUp ? 1 : 0) + (playerLaserPowerUp ? 1 : 0) + (flamethrowerPowerUp ? 1 : 0) + (particleBombPowerUp ? 1 : 0);
 
     if (!powerUp && timestamp >= powerUpSpawnTime && !powerUpSpawnedThisLevel && totalPowerUps < MAX_POWER_UPS) {
         spawnPowerUp();
         powerUpSpawnedThisLevel = true;
     }
-    if (!bombPowerUp && timestamp >= bombSpawnTime && !bombPowerUpSpawnedThisLevel && totalPowerUps < MAX_POWER_UPS) {
+    if (!bombPowerUp && timestamp >= bombPowerUpSpawnTime && !bombPowerUpSpawnedThisLevel && totalPowerUps < MAX_POWER_UPS) {
         spawnBombPowerUp();
         bombPowerUpSpawnedThisLevel = true;
     }
@@ -3798,6 +4103,18 @@ function updatePowerUps(deltaTime, timestamp) {
         spawnBoostPowerUp();
         boostPowerUpSpawnedThisLevel = true;
     }
+    if (!flamethrowerPowerUp && timestamp >= flamethrowerSpawnTime && !flamethrowerSpawnedThisLevel && totalPowerUps < MAX_POWER_UPS) {
+        spawnFlamethrowerPowerUp();
+        flamethrowerSpawnedThisLevel = true;
+    }
+    if (!playerLaserPowerUp && timestamp >= playerLaserPowerUpSpawnTime && !playerLaserPowerUpSpawnedThisLevel && totalPowerUps < MAX_POWER_UPS) {
+        spawnPlayerLaserPowerUp();
+        playerLaserPowerUpSpawnedThisLevel = true;
+    }
+    if (!particleBombPowerUp && timestamp >= particleBombSpawnTime && !particleBombSpawnedThisLevel && totalPowerUps < MAX_POWER_UPS) {
+        spawnParticleBombPowerUp();
+        particleBombSpawnedThisLevel = true;
+    }
 
     updateSineWavePowerUp(powerUp, deltaTime, 'powerUp');
     updateSineWavePowerUp(bombPowerUp, deltaTime, 'bombPowerUp');
@@ -3805,6 +4122,9 @@ function updatePowerUps(deltaTime, timestamp) {
     updateSineWavePowerUp(shieldPowerUp, deltaTime, 'shieldPowerUp');
     updateSineWavePowerUp(reversePowerUp, deltaTime, 'reversePowerUp');
     updateSineWavePowerUp(boostPowerUp, deltaTime, 'boostPowerUp');
+    updateSineWavePowerUp(flamethrowerPowerUp, deltaTime, 'flamethrowerPowerUp');
+    updateSineWavePowerUp(playerLaserPowerUp, deltaTime, 'playerLaserPowerUp');
+    updateSineWavePowerUp(particleBombPowerUp, deltaTime, 'particleBombPowerUp');
 }
 
 function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
@@ -3830,6 +4150,15 @@ function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
                 boostPowerUpActive = true;
                 boostPowerUpExpirationTime = performance.now() + 10000; // Set the boost power-up duration to 10 seconds
                 boostCooldownEndTime = performance.now(); // Reset boost cooldown timer
+            } else if (type === 'flamethrowerPowerUp') {
+                flamethrowerActive = true;
+                flamethrowerExpirationTime = performance.now() + 10000; // Set the flamethrower duration to 10 seconds
+            } else if (type === 'playerLaserPowerUp') {
+                playerLaserPowerUpActive = true;
+                playerLaserPowerUpExpirationTime = performance.now() + 10000; // Set the player laser power-up duration to 10 seconds
+            } else if (type === 'particleBombPowerUp') {
+                particleBombActive = true;
+                particleBombExpirationTime = performance.now() + 10000; // Set the particle bomb power-up duration to 10 seconds
             }
             const powerUpSoundClone = powerUpSound.cloneNode();
             powerUpSoundClone.volume = soundEffectsVolumeSlider.value;
@@ -3842,6 +4171,9 @@ function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
             else if (type === 'shieldPowerUp') shieldPowerUp = null;
             else if (type === 'reversePowerUp') reversePowerUp = null;
             else if (type === 'boostPowerUp') boostPowerUp = null;
+            else if (type === 'flamethrowerPowerUp') flamethrowerPowerUp = null;
+            else if (type === 'playerLaserPowerUp') playerLaserPowerUp = null;
+            else if (type === 'particleBombPowerUp') particleBombPowerUp = null;
         } else {
             powerUpObj.x += powerUpObj.speed * powerUpObj.directionX * deltaTime / 1000;
             powerUpObj.y += Math.sin(powerUpObj.x / 50) * 1.5; // Sine wave motion
@@ -3858,10 +4190,14 @@ function updateSineWavePowerUp(powerUpObj, deltaTime, type) {
                 else if (type === 'shieldPowerUp') shieldPowerUp = null;
                 else if (type === 'reversePowerUp') reversePowerUp = null;
                 else if (type === 'boostPowerUp') boostPowerUp = null;
+                else if (type === 'flamethrowerPowerUp') flamethrowerPowerUp = null;
+                else if (type === 'playerLaserPowerUp') playerLaserPowerUp = null;
+                else if (type === 'particleBombPowerUp') particleBombPowerUp = null;
             }
         }
     }
 }
+
 
 
 function spawnEnemy() {
@@ -4087,8 +4423,16 @@ function getOffScreenSpawnPosition(width, height) {
 
 
 function fireProjectile() {
-    if (isMenuOpen) return;
+    if (isMenuOpen || flamethrowerActive || playerLaserPowerUpActive) return; // Prevent firing if the menu is open, flamethrower is active, or player laser is active
 
+    if (empDisableFire) {
+        const nofireSoundClone = nofireSound.cloneNode();
+        nofireSoundClone.volume = nofireSound.volume; // Ensure the cloned sound has the same volume
+        nofireSoundClone.play(); // Play the cloned sound
+        return; // Prevent firing if EMP effect is active
+    }
+
+    // Regular projectile firing code
     const chargeDuration = (performance.now() - spacebarPressedTime) / 1000;
     let projectileSize = 5;
     let projectileSpeed = 500;
@@ -4152,6 +4496,7 @@ function fireProjectile() {
     fireSoundClone.play();
 }
 
+
 function splitChargedProjectile(projectile) {
     const numberOfProjectiles = 8;
     const angleIncrement = (2 * Math.PI) / numberOfProjectiles;
@@ -4175,6 +4520,643 @@ function splitChargedProjectile(projectile) {
         };
         projectiles.push(splitProjectile);
     }
+}
+
+class FlameParticle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = Math.random() * 20 + 10;
+        this.color = `rgba(${255}, ${Math.random() * 150}, 0, 1)`;
+        this.velocity = {
+            x: Math.cos(player.rotation) * 10 + (Math.random() - 0.5) * 2,
+            y: Math.sin(player.rotation) * 10 + (Math.random() - 0.5) * 2,
+        };
+        this.alpha = 1; // transparency
+    }
+
+    update() {
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        this.size *= 0.96;
+        this.alpha -= 0.02;
+
+        // Wrap around the canvas
+        if (this.x < 0) {
+            this.x = canvas.width;
+        } else if (this.x > canvas.width) {
+            this.x = 0;
+        }
+
+        if (this.y < 0) {
+            this.y = canvas.height;
+        } else if (this.y > canvas.height) {
+            this.y = 0;
+        }
+    }
+
+    draw(ctx) {
+        if (this.alpha > 0) {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+}
+
+
+function createFlameParticle() {
+    const flameParticle = new FlameParticle(player.x + Math.cos(player.rotation) * player.width / 2, player.y + Math.sin(player.rotation) * player.height / 2);
+    flameParticles.push(flameParticle);
+}
+
+
+function updateFlameParticles() {
+    for (let i = flameParticles.length - 1; i >= 0; i--) {
+        const particle = flameParticles[i];
+        particle.update();
+        if (particle.size < 0.5 || particle.alpha <= 0) {
+            flameParticles.splice(i, 1); // Remove expired particles
+        }
+    }
+}
+
+function drawFlameParticles(ctx) {
+    flameParticles.forEach(particle => particle.draw(ctx));
+}
+
+function checkFlameDamage() {
+    flameParticles.forEach(particle => {
+        // Check damage to regular enemies
+        enemies.forEach((enemy, enemyIndex) => {
+            const dx = particle.x - (enemy.x + enemy.width / 2);
+            const dy = particle.y - (enemy.y + enemy.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < enemy.width / 2) {
+                enemy.health -= 1; // Adjust the damage value as needed
+
+                // Play torch sound on collision
+                if (torchSound) {
+                    if (torchSound.paused) {
+                        torchSound.play();
+                    } else {
+                        torchSound.currentTime = 0; // Reset sound if it's already playing
+                        torchSound.play();
+                    }
+                }
+
+                if (enemy.health <= 0) {
+                    // Handle enemy death
+                    score += 10; // Increase score or any other logic
+                    createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+
+                    // Call the appropriate respawn function based on enemy type
+                    if (enemy.type === 'enemyTank') {
+                        respawnEnemyTank(5000);
+                    } else if (enemy.type === 'stealthEnemy') {
+                        respawnStealthEnemy(7000);
+                    } else {
+                        const enemySpeed = 50 + level * 10;
+                        respawnEnemyAfterDelay(enemySpeed, 7000);
+                    }
+
+                    enemies.splice(enemyIndex, 1);
+                }
+            }
+        });
+
+        // Check damage to projectiles
+        projectiles.forEach((projectile, index) => {
+            const dx = particle.x - (projectile.x + projectile.width / 2);
+            const dy = particle.y - (projectile.y + projectile.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < projectile.width / 2) {
+                // Remove the projectile
+                projectiles.splice(index, 1);
+            }
+        });
+
+        // Check damage to boss
+        if (boss) {
+            const dx = particle.x - (boss.x + boss.width / 2);
+            const dy = particle.y - (boss.y + boss.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < boss.width / 2) {
+                boss.health -= 0.1; // Slow but constant damage to the boss
+                if (boss.health <= 0) {
+                    // Handle boss death
+                    score += 1000; // Increase score or any other logic
+                    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+                    explosionSound.play();
+
+                    boss = null; // Remove the boss
+                }
+            }
+        }
+
+        // Check damage to Cyber Dragon
+        if (cyberDragon) {
+            const dx = particle.x - (cyberDragon.x + cyberDragon.width / 2);
+            const dy = particle.y - (cyberDragon.y + cyberDragon.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < cyberDragon.width / 2) {
+                cyberDragon.health -= 0.1; // Slow but constant damage to the Cyber Dragon
+                if (cyberDragon.health <= 0) {
+                    // Handle Cyber Dragon death
+                    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                    explosionSound.play();
+                    score += 3000; // Increase score or any other logic
+                    cyberDragon = null; // Remove the Cyber Dragon
+                }
+            }
+        }
+
+        // Check damage to Biomech
+        if (biomechLeviathan) {
+            const dx = particle.x - (biomechLeviathan.x + biomechLeviathan.width / 2);
+            const dy = particle.y - (biomechLeviathan.y + biomechLeviathan.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < biomechLeviathan.width / 2) {
+                biomechLeviathan.health -= 0.1; // Slow but constant damage to the Biomech
+                if (biomechLeviathan.health <= 0) {
+                    // Handle Biomech death
+                    score += 2000; // Increase score or any other logic
+                    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                    explosionSound.play();
+
+                    biomechLeviathan = null; // Remove the Biomech
+                }
+            }
+        }
+
+        // Check damage to Temporal Serpent head only
+        if (temporalSerpent) {
+            const head = temporalSerpent.segments[0];
+            const dx = particle.x - (head.x + head.radius);
+            const dy = particle.y - (head.y + head.radius);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < head.radius) {
+                temporalSerpent.health -= 0.2; // Slow but constant damage to the Temporal Serpent
+                if (temporalSerpent.health <= 0) {
+                    // Handle Temporal Serpent death
+                    score += 3000; // Increase score or any other logic
+                    createExplosion(head.x + head.width / 2, head.y + head.height / 2);
+                    explosionSound.play();
+
+                    temporalSerpent = null; // Remove the Temporal Serpent
+                }
+            }
+        }
+
+        // Check damage to hazardous zones
+        hazardousZones.forEach((zone, zoneIndex) => {
+            const dx = particle.x - zone.x;
+            const dy = particle.y - zone.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < zone.radius) {
+                // Remove the hazardous zone
+                hazardousZones.splice(zoneIndex, 1);
+            }
+        });
+
+        // Check damage to hazard particles
+        hazardParticles.forEach((hazardParticle, hazardIndex) => {
+            const dx = particle.x - hazardParticle.x;
+            const dy = particle.y - hazardParticle.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < hazardParticle.size) {
+                // Remove the hazard particle
+                hazardParticles.splice(hazardIndex, 1);
+            }
+        });
+    });
+}
+
+const particleSpeed = 15;
+const particleLife = 30; // Brief lifespan for particles
+const maxParticles = 50; // Assuming maxParticles is defined globally
+
+class PlayerLaserParticle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * particleSpeed;
+        this.vy = (Math.random() - 0.5) * particleSpeed;
+        this.life = particleLife;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life--;
+
+        // Wrap around the canvas
+        if (this.x < 0) {
+            this.x = canvas.width;
+        } else if (this.x > canvas.width) {
+            this.x = 0;
+        }
+
+        if (this.y < 0) {
+            this.y = canvas.height;
+        } else if (this.y > canvas.height) {
+            this.y = 0;
+        }
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.life / particleLife})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 1, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    isDead() {
+        return this.life <= 0;
+    }
+}
+
+class PlayerLaser {
+    constructor(startX, startY, endX, endY, color) {
+        this.startX = startX;
+        this.startY = startY;
+        this.endX = endX;
+        this.endY = endY;
+        this.color = color;
+        this.alpha = 1;
+        this.fadeRate = 0.05;
+        this.particles = [];
+    }
+
+    update() {
+        this.alpha -= this.fadeRate;
+        if (this.alpha <= 0) {
+            this.alpha = 0;
+        }
+
+        // Generate particles along the laser beam path
+        this.generateParticles();
+
+        // Update particles and remove dead ones
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const particle = this.particles[i];
+            particle.update();
+            if (particle.isDead()) {
+                this.particles.splice(i, 1);
+            }
+        }
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+
+        // Draw particles
+        this.particles.forEach(particle => {
+            particle.draw(ctx);
+        });
+
+        ctx.restore();
+    }
+
+    generateParticles() {
+        const numParticles = 5; // Adjust as needed for desired effect
+        for (let i = 0; i < numParticles; i++) {
+            const t = i / (numParticles - 1); // Interpolation factor
+            const x = this.startX + t * (this.endX - this.startX);
+            const y = this.startY + t * (this.endY - this.startY);
+            this.addParticle(x, y);
+        }
+    }
+
+    addParticle(x, y) {
+        if (this.particles.length < maxParticles) {
+            this.particles.push(new PlayerLaserParticle(x, y));
+        } else {
+            this.particles.shift();
+            this.particles.push(new PlayerLaserParticle(x, y));
+        }
+    }
+
+    // Update the end coordinates of the laser
+    setEndCoordinates(newEndX, newEndY) {
+        this.endX = newEndX;
+        this.endY = newEndY;
+    }
+
+    // Clear particles when the laser is deactivated
+    clearParticles() {
+        this.particles = [];
+    }
+}
+
+function createPlayerLaserBeam(x, y, directionX, directionY, color) {
+    const length = 300; // Length of the laser beam
+    const endX = x + directionX * length;
+    const endY = y + directionY * length;
+    playerLasersArray.push(new PlayerLaser(x, y, endX, endY, color));
+}
+
+
+function updatePlayerLasers(deltaTime) {
+    for (let i = playerLasersArray.length - 1; i >= 0; i--) {
+        const laser = playerLasersArray[i];
+        laser.update();
+
+        if (laser.alpha <= 0 && laser.particles.length === 0) {
+            playerLasersArray.splice(i, 1);
+        }
+    }
+}
+
+function drawPlayerLasers(ctx) {
+    playerLasersArray.forEach(laser => {
+        laser.draw(ctx);
+    });
+}
+
+
+
+function checkPlayerLaserDamage() {
+    playerLasersArray.forEach(laser => {
+        // Check laser beam collision with enemies
+        enemies.forEach((enemy, index) => {
+            const dx = laser.endX - (enemy.x + enemy.width / 2);
+            const dy = laser.endY - (enemy.y + enemy.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < enemy.width / 2) {
+                enemy.health -= PLAYER_LASER_ENEMY_DAMAGE;
+
+                // Play laser hit sound on collision
+                if (laserHitSound) {
+                    if (laserHitSound.paused) {
+                        laserHitSound.play();
+                    } else {
+                        laserHitSound.currentTime = 0; // Reset sound if it's already playing
+                        laserHitSound.play();
+                    }
+                }
+
+                if (enemy.health <= 0) {
+                    // Handle enemy death
+                    score += 10; // Increase score or any other logic
+                    createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                    laserHitSound.play();
+
+                    // Call the appropriate respawn function based on enemy type
+                    if (enemy.type === 'enemyTank') {
+                        respawnEnemyTank(5000);
+                    } else if (enemy.type === 'stealthEnemy') {
+                        respawnStealthEnemy(7000);
+                    } else {
+                        const enemySpeed = 50 + level * 10;
+                        respawnEnemyAfterDelay(enemySpeed, 7000);
+                    }
+
+                    enemies.splice(index, 1);
+                }
+            }
+        });
+
+        // Check laser beam collision with bosses
+        if (boss) {
+            const dx = laser.endX - (boss.x + boss.width / 2);
+            const dy = laser.endY - (boss.y + boss.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < boss.width / 2) {
+                boss.health -= PLAYER_LASER_BOSS_DAMAGE; // Reduced damage to bosses
+                if (boss.health <= 0) {
+                    score += 100; // Increase score or any other logic
+                    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2);
+                    explosionSound.play();
+
+                    boss = null; // Remove the boss
+                }
+            }
+        }
+
+        // Check laser beam collision with Cyber Dragon
+        if (cyberDragon) {
+            const dx = laser.endX - (cyberDragon.x + cyberDragon.width / 2);
+            const dy = laser.endY - (cyberDragon.y + cyberDragon.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < cyberDragon.width / 2) {
+                cyberDragon.health -= PLAYER_LASER_BOSS_DAMAGE; // Reduced damage to bosses
+                if (cyberDragon.health <= 0) {
+                    score += 200; // Increase score or any other logic
+                    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                    explosionSound.play();
+
+                    cyberDragon = null; // Remove the Cyber Dragon
+                }
+            }
+        }
+
+        // Check laser beam collision with Biomech Leviathan
+        if (biomechLeviathan) {
+            const dx = laser.endX - (biomechLeviathan.x + biomechLeviathan.width / 2);
+            const dy = laser.endY - (biomechLeviathan.y + biomechLeviathan.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < biomechLeviathan.width / 2) {
+                biomechLeviathan.health -= PLAYER_LASER_BOSS_DAMAGE; // Reduced damage to bosses
+                if (biomechLeviathan.health <= 0) {
+                    score += 150; // Increase score or any other logic
+                    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                    explosionSound.play();
+
+                    biomechLeviathan = null; // Remove the Biomech Leviathan
+                }
+            }
+        }
+
+        // Check laser beam collision with Temporal Serpent
+        if (temporalSerpent) {
+            const dx = laser.endX - (temporalSerpent.x + temporalSerpent.width / 2);
+            const dy = laser.endY - (temporalSerpent.y + temporalSerpent.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < temporalSerpent.width / 2) {
+                temporalSerpent.health -= PLAYER_LASER_BOSS_DAMAGE; // Reduced damage to bosses
+                if (temporalSerpent.health <= 0) {
+                    score += 300; // Increase score or any other logic
+                    createExplosion(temporalSerpent.x + temporalSerpent.width / 2, temporalSerpent.y + temporalSerpent.height / 2);
+                    explosionSound.play();
+
+                    temporalSerpent = null; // Remove the Temporal Serpent
+                }
+            }
+        }
+
+        // Check laser particles collision with enemies
+        laser.particles.forEach(particle => {
+            enemies.forEach((enemy, index) => {
+                const dx = particle.x - (enemy.x + enemy.width / 2);
+                const dy = particle.y - (enemy.y + enemy.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < enemy.width / 2) {
+                    enemy.health -= PLAYER_LASER_ENEMY_DAMAGE;
+
+                    // Play laser hit sound on collision
+                    if (laserHitSound) {
+                        if (laserHitSound.paused) {
+                            laserHitSound.play();
+                        } else {
+                            laserHitSound.currentTime = 0; // Reset sound if it's already playing
+                            laserHitSound.play();
+                        }
+                    }
+
+                    if (enemy.health <= 0) {
+                        // Handle enemy death
+                        score += 10; // Increase score or any other logic
+                        createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                        laserHitSound.play();
+
+                        // Call the appropriate respawn function based on enemy type
+                        if (enemy.type === 'enemyTank') {
+                            respawnEnemyTank(5000);
+                        } else if (enemy.type === 'stealthEnemy') {
+                            respawnStealthEnemy(7000);
+                        } else {
+                            const enemySpeed = 50 + level * 10;
+                            respawnEnemyAfterDelay(enemySpeed, 7000);
+                        }
+
+                        enemies.splice(index, 1);
+                    }
+                }
+            });
+
+   	     // Check damage to projectiles
+   	     projectiles.forEach((projectile, index) => {
+   	         const dx = particle.x - (projectile.x + projectile.width / 2);
+  	         const dy = particle.y - (projectile.y + projectile.height / 2);
+  	         const distance = Math.sqrt(dx * dx + dy * dy);
+
+   	         if (distance < projectile.width / 2) {
+   	             // Remove the projectile
+   	             projectiles.splice(index, 1);
+ 	         }
+ 	    });
+	
+
+            // Check laser particles collision with bosses
+            if (boss) {
+                const dx = particle.x - (boss.x + boss.width / 2);
+                const dy = particle.y - (boss.y + boss.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < boss.width / 2) {
+                    boss.health -= PLAYER_LASER_BOSS_DAMAGE; // Reduced damage to bosses
+                    if (boss.health <= 0) {
+                        score += 100; // Increase score or any other logic
+                        createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2);
+                        explosionSound.play();
+
+                        boss = null; // Remove the boss
+                    }
+                }
+            }
+
+            // Check laser particles collision with Cyber Dragon
+            if (cyberDragon) {
+                const dx = particle.x - (cyberDragon.x + cyberDragon.width / 2);
+                const dy = particle.y - (cyberDragon.y + cyberDragon.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < cyberDragon.width / 2) {
+                    cyberDragon.health -= PLAYER_LASER_BOSS_DAMAGE; // Reduced damage to bosses
+                    if (cyberDragon.health <= 0) {
+                        score += 200; // Increase score or any other logic
+                        createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                        explosionSound.play();
+
+                        cyberDragon = null; // Remove the Cyber Dragon
+                    }
+                }
+            }
+
+            // Check laser particles collision with Biomech Leviathan
+            if (biomechLeviathan) {
+                const dx = particle.x - (biomechLeviathan.x + biomechLeviathan.width / 2);
+                const dy = particle.y - (biomechLeviathan.y + biomechLeviathan.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < biomechLeviathan.width / 2) {
+                    biomechLeviathan.health -= PLAYER_LASER_BOSS_DAMAGE; // Reduced damage to bosses
+                    if (biomechLeviathan.health <= 0) {
+                        score += 150; // Increase score or any other logic
+                        createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                        explosionSound.play();
+
+                        biomechLeviathan = null; // Remove the Biomech Leviathan
+                    }
+                }
+            }
+
+            // Check laser particles collision with Temporal Serpent
+            if (temporalSerpent) {
+                const dx = particle.x - (temporalSerpent.x + temporalSerpent.width / 2);
+                const dy = particle.y - (temporalSerpent.y + temporalSerpent.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < temporalSerpent.width / 2) {
+                    temporalSerpent.health -= PLAYER_LASER_BOSS_DAMAGE; // Reduced damage to bosses
+                    if (temporalSerpent.health <= 0) {
+                        score += 300; // Increase score or any other logic
+                        createExplosion(temporalSerpent.x + temporalSerpent.width / 2, temporalSerpent.y + temporalSerpent.height / 2);
+                        explosionSound.play();
+
+                        temporalSerpent = null; // Remove the Temporal Serpent
+                    }
+                }
+            }
+        });
+    });
+}
+
+function updateLaserPowerUp(deltaTime) {
+    if (playerLaserPowerUp) {
+        playerLaserPowerUp.x += playerLaserPowerUp.speed * playerLaserPowerUp.directionX * deltaTime / 1000;
+        playerLaserPowerUp.y += playerLaserPowerUp.speed * playerLaserPowerUp.directionY * deltaTime / 1000;
+
+        // Remove power-up if it goes off-screen
+        if (playerLaserPowerUp.x < -playerLaserPowerUp.width || playerLaserPowerUp.x > canvas.width || playerLaserPowerUp.y < -playerLaserPowerUp.height || playerLaserPowerUp.y > canvas.height) {
+            playerLaserPowerUp = null;
+        }
+    }
+}
+
+function updateLaserPosition() {
+    const offsetX = Math.cos(player.rotation) * player.width / 2;
+    const offsetY = Math.sin(player.rotation) * player.width / 2;
+    const startX = player.x + offsetX;
+    const startY = player.y + offsetY;
+
+    const length = 300; // Length of the laser beam
+    const endX = startX + Math.cos(player.rotation) * length;
+    const endY = startY + Math.sin(player.rotation) * length;
+
+    playerLasersArray.forEach(laser => {
+        laser.setEndCoordinates(endX, endY);
+    });
 }
 
 function useBomb() {
@@ -4235,6 +5217,8 @@ function useBomb() {
                 bossHitByBomb = true;
                 if (boss.health <= 0) {
                     boss.alive = false;
+                    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+                    explosionSound.play();
                     score += 1000;
                 }
             }
@@ -4248,6 +5232,8 @@ function useBomb() {
                 biomechHitByBomb = true;
                 if (biomechLeviathan.health <= 0) {
                     biomechLeviathan.alive = false;
+                    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                    explosionSound.play();
                     score += 2000;
                 } else {
                     // Stop the tractor beam and start the cooldown
@@ -4268,6 +5254,8 @@ function useBomb() {
                 cyberDragonHitByBomb = true;
                 if (cyberDragon.health <= 0) {
                     cyberDragon.alive = false;
+                    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                    explosionSound.play();
                     score += 3000;
                     cyberDragon = null;
                     level++;
@@ -4279,11 +5267,12 @@ function useBomb() {
 
         // Handle temporal serpent damage
         if (temporalSerpent && temporalSerpent.alive && !temporalSerpentHitByBomb) {
-            const temporalSerpentCircle = { x: temporalSerpent.x, y: temporalSerpent.y, radius: temporalSerpent.width / 2 };
+            const temporalSerpentCircle = { x: temporalSerpent.segments[0].x, y: temporalSerpent.segments[0].y, radius: temporalSerpent.segments[0].radius };
             if (checkCollision(playerCircle, temporalSerpentCircle)) {
                 temporalSerpent.health -= BOMB_DAMAGE;
+                makeTemporalSerpentLeaveScreen()
                 temporalSerpentHitByBomb = true;
-                temporalSerpentLastBombDamageTime = performance.now(); // Record the bomb damage time
+                temporalSerpent.lastBombDamageTime = performance.now(); // Record the bomb damage time
                 if (temporalSerpent.health <= 0) {
                     temporalSerpent.alive = false;
                     score += 2000;
@@ -4320,6 +5309,7 @@ function useBomb() {
         asteroids = asteroids.filter(asteroid => asteroid.alive);
     }
 }
+
 
 function updateBombs(deltaTime) {
     if (bombActive) {
@@ -4391,9 +5381,245 @@ function updateBombs(deltaTime) {
     }
 }
 
+// particle bomb 
+function spawnParticleBombPowerUp() {
+if (level <= 15) return;
+    const position = getOffScreenSpawnPosition(30, 30);
+    particleBombPowerUp = {
+        x: position.x,
+        y: position.y,
+        width: 30,
+        height: 30,
+        speed: 100,
+        directionX: position.directionX,
+        directionY: position.directionY
+    };
+    particleBombSpawnedThisLevel = true;
+}
+
+function updateParticleBombPosition(deltaTime) {
+    if (particleBombPowerUp) {
+        particleBombPowerUp.x += particleBombPowerUp.speed * particleBombPowerUp.directionX * deltaTime / 1000;
+        particleBombPowerUp.y += particleBombPowerUp.speed * particleBombPowerUp.directionY * deltaTime / 1000;
+
+        if (particleBombPowerUp.x < -particleBombPowerUp.width || particleBombPowerUp.x > canvas.width || particleBombPowerUp.y < -particleBombPowerUp.height || particleBombPowerUp.y > canvas.height) {
+            particleBombPowerUp = null;
+        }
+    }
+}
+
+function createParticleBombParticles() {
+            const particleBombFireSoundClone = particleBombFireSound.cloneNode();
+            particleBombFireSoundClone.volume = particleBombFireSound.volume;
+            particleBombFireSoundClone.play();
+    const numParticles = 20; // Number of particles to generate
+    for (let i = 0; i < numParticles; i++) {
+        const angle = (i / numParticles) * Math.PI * 2;
+        const particle = {
+            x: player.x,
+            y: player.y,
+            size: 5,
+            speed: 300,
+            directionX: Math.cos(angle),
+            directionY: Math.sin(angle),
+            alpha: 1, // Initial opacity
+            fadeRate: 0.03 // Rate at which the particle fades out
+        };
+        particleBombParticles.push(particle);
+    }
+}
+
+function updateParticleBombParticles(deltaTime) {
+    for (let i = particleBombParticles.length - 1; i >= 0; i--) {
+        const particle = particleBombParticles[i];
+        particle.x += particle.speed * particle.directionX * deltaTime / 1000;
+        particle.y += particle.speed * particle.directionY * deltaTime / 1000;
+        particle.alpha -= particle.fadeRate; // Reduce alpha
+
+        if (particle.alpha <= 0) {
+            particleBombParticles.splice(i, 1);
+        }
+    }
+}
+
+function drawParticleBombParticles(ctx) {
+    particleBombParticles.forEach(particle => {
+        ctx.fillStyle = `rgba(255, 165, 0, ${particle.alpha})`; // Use the alpha value
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+}
+
+
+function checkParticleBombDamage() {
+    particleBombParticles.forEach(particle => {
+        // Check damage to regular enemies
+        enemies.forEach((enemy, enemyIndex) => {
+            const dx = particle.x - (enemy.x + enemy.width / 2);
+            const dy = particle.y - (enemy.y + enemy.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < enemy.width / 2) {
+                enemy.health -= 10; // Adjust the damage value as needed
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+
+                if (enemy.health <= 0) {
+                    // Handle enemy death
+                    score += 10; // Increase score or any other logic
+                    createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+
+                    // Call the appropriate respawn function based on enemy type
+                    if (enemy.type === 'enemyTank') {
+                        respawnEnemyTank(5000);
+                    } else if (enemy.type === 'stealthEnemy') {
+                        respawnStealthEnemy(7000);
+                    } else {
+                        const enemySpeed = 50 + level * 10;
+                        respawnEnemyAfterDelay(enemySpeed, 7000);
+                    }
+
+                    enemies.splice(enemyIndex, 1);
+                }
+            }
+        });
+
+        // Check damage to projectiles
+        projectiles.forEach((projectile, index) => {
+            const dx = particle.x - (projectile.x + projectile.width / 2);
+            const dy = particle.y - (projectile.y + projectile.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < projectile.width / 2) {
+                // Remove the projectile
+                projectiles.splice(index, 1);
+            }
+        });
+
+        // Check damage to bosses
+        if (boss) {
+            const dx = particle.x - (boss.x + boss.width / 2);
+            const dy = particle.y - (boss.y + boss.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < boss.width / 2) {
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+                boss.health -= 1; 
+                if (boss.health <= 0) {
+                    // Handle boss death
+                    score += 1000; // Increase score or any other logic
+                    createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2); // Create explosion at boss's position
+                    explosionSound.play();
+
+                    boss = null; // Remove the boss
+                }
+            }
+        }
+
+        // Check damage to Cyber Dragon
+        if (cyberDragon) {
+            const dx = particle.x - (cyberDragon.x + cyberDragon.width / 2);
+            const dy = particle.y - (cyberDragon.y + cyberDragon.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < cyberDragon.width / 2) {
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+                cyberDragon.health -= 3; 
+                if (cyberDragon.health <= 0) {
+                    // Handle Cyber Dragon death
+                    createExplosion(cyberDragon.x + cyberDragon.width / 2, cyberDragon.y + cyberDragon.height / 2);
+                    explosionSound.play();
+                    score += 3000; // Increase score or any other logic
+                    cyberDragon = null; // Remove the Cyber Dragon
+                }
+            }
+        }
+
+        // Check damage to Biomech
+        if (biomechLeviathan) {
+            const dx = particle.x - (biomechLeviathan.x + biomechLeviathan.width / 2);
+            const dy = particle.y - (biomechLeviathan.y + biomechLeviathan.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < biomechLeviathan.width / 2) {
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+                biomechLeviathan.health -= 2; 
+                if (biomechLeviathan.health <= 0) {
+                    // Handle Biomech death
+                    score += 2000; // Increase score or any other logic
+                    createExplosion(biomechLeviathan.x + biomechLeviathan.width / 2, biomechLeviathan.y + biomechLeviathan.height / 2);
+                    explosionSound.play();
+
+                    biomechLeviathan = null; // Remove the Biomech
+                }
+            }
+        }
+
+        // Check damage to Temporal Serpent head only
+        if (temporalSerpent) {
+            const head = temporalSerpent.segments[0];
+            const dx = particle.x - (head.x + head.radius);
+            const dy = particle.y - (head.y + head.radius);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < head.radius) {
+                const collisionSoundClone = collisionSound.cloneNode();
+                collisionSoundClone.volume = collisionSound.volume;
+                collisionSoundClone.play();
+                temporalSerpent.health -= 4; // Slow but constant damage to the Temporal Serpent
+                if (temporalSerpent.health <= 0) {
+                    // Handle Temporal Serpent death
+                    score += 3000; // Increase score or any other logic
+                    createExplosion(head.x + head.width / 2, head.y + head.height / 2);
+                    explosionSound.play();
+
+                    temporalSerpent = null; // Remove the Temporal Serpent
+                }
+            }
+        }
+
+        // Check damage to hazardous zones
+        hazardousZones.forEach((zone, zoneIndex) => {
+            const dx = particle.x - zone.x;
+            const dy = particle.y - zone.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < zone.radius) {
+                // Remove the hazardous zone
+                hazardousZones.splice(zoneIndex, 1);
+            }
+        });
+
+        // Check damage to hazard particles
+        hazardParticles.forEach((hazardParticle, hazardIndex) => {
+            const dx = particle.x - hazardParticle.x;
+            const dy = particle.y - hazardParticle.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < hazardParticle.size) {
+                // Remove the hazard particle
+                hazardParticles.splice(hazardIndex, 1);
+            }
+        });
+    });
+}
 
 
 function useHomingMissile() {
+    if (empDisableFire) {
+        const nofireSoundClone = nofireSound.cloneNode();
+        nofireSoundClone.volume = nofireSound.volume; // Ensure the cloned sound has the same volume
+        nofireSoundClone.play(); // Play the cloned sound
+        return; // Prevent use of homing missile if EMP is active
+    }
     if (homingMissilesInventory > 0) {
         let target = enemies.find(enemy => enemy.alive) ||
             (boss && boss.alive ? boss : null) ||
@@ -4443,6 +5669,9 @@ function checkGamepadMenuButton() {
     }
 }
 
+// Reduce the volume of the flame sound by 50%
+flameSound.volume = 0.5;
+
 function gameLoop(timestamp) {
     checkGamepadMenuButton();
 
@@ -4450,17 +5679,17 @@ function gameLoop(timestamp) {
     handleGamepadInput();
 
     if (gameOver) {
+        player.health = 0.1;
+        player.lives = 0;
         ctx.fillStyle = 'red';
         ctx.font = '40px Arial';
         ctx.fillText('Game Over', canvas.width / 2 - 100, canvas.height / 2);
         ctx.font = '20px Arial';
         ctx.fillText('Score: ' + score, canvas.width / 2 - 30, canvas.height / 2 + 40);
         ctx.fillText('Level: ' + level, canvas.width / 2 - 30, canvas.height / 2 + 70);
+        ctx.fillText('Press B to Restart', canvas.width / 2 - 30, canvas.height / 2 + 100);
         stopBackgroundMusic();
         stopBossMusic();
-
-        // Continue the game loop to ensure inputs are processed
-        requestAnimationFrame(gameLoop);
         return;
     }
 
@@ -4468,6 +5697,7 @@ function gameLoop(timestamp) {
     lastTime = timestamp;
 
     if (!isMenuOpen) {
+        updateStars(deltaTime);
         update(deltaTime, timestamp);
         handleWormholeTeleportation();
         updateWormholes();
@@ -4492,17 +5722,18 @@ function gameLoop(timestamp) {
             drawCyberDragon();
             drawLaserCharge();
             drawAsteroids();
-            drawSpiralProjectiles()
-
+            drawSpiralProjectiles();
         }
 
         if (temporalSerpent) {
             updateTemporalSerpent(deltaTime, timestamp);
             checkPlayerInHazardousZone(player, timestamp);
+            updateDetachedSegments(deltaTime);
+            updateHazardParticles();
+            updateHazardousZones(timestamp);
         }
 
         draw();
-
 
         if (biomechLeviathan) {
             drawBiomechLeviathan();
@@ -4516,11 +5747,12 @@ function gameLoop(timestamp) {
             drawCyberDragon();
             drawLaserCharge();
             drawAsteroids();
-            drawSpiralProjectiles()
+            drawSpiralProjectiles();
         }
 
         if (temporalSerpent) {
-            drawHazardousZones(ctx);
+            drawHazardParticles(ctx);
+            drawHazardousZones(ctx, performance.now());
             drawTemporalSerpent();
             drawTemporalSerpentHealthBar();
             drawEnergyBarrier(ctx);
@@ -4533,6 +5765,99 @@ function gameLoop(timestamp) {
         allySound.play(); // Play warning sound 3 seconds before spawning
         setTimeout(spawnAlly, allyWarningTime);
     }
+
+    if (flamethrowerActive) {
+        if (timestamp > flamethrowerExpirationTime) {
+            flamethrowerActive = false;
+            flameSound.pause();
+            flameSound.currentTime = 0;
+        } else if (keys[' '] && !gameOver) {
+            createFlameParticle();
+
+            if (flameSound.paused) {
+                flameSound.loop = true;
+                flameSound.play();
+            }
+        } else {
+            if (!flameSound.paused) {
+                flameSound.pause();
+                flameSound.currentTime = 0;
+            }
+        }
+    } else {
+        if (!flameSound.paused) {
+            flameSound.pause();
+            flameSound.currentTime = 0;
+        }
+    }
+
+    // Laser management
+    if (playerLaserActive && playerLaserPowerUpActive) {
+        createPlayerLaserBeam(player.x, player.y, Math.cos(player.rotation), Math.sin(player.rotation), 'rgba(0, 255, 255, 1)');
+
+        // Deactivate the laser if the duration has passed
+        if (performance.now() - playerLaserPowerUpExpirationTime > PLAYER_LASER_DURATION) {
+            playerLaserActive = false;
+            playerLaserPowerUpActive = false; // Laser power-up is consumed
+            playerLasersArray.forEach(laser => laser.clearParticles()); // Clear the laser beam and particles
+            playerLasersArray = [];
+            laserFireSound.pause();
+            laserFireSound.currentTime = 0;
+        } else {
+            // Ensure charging sound is stopped when laser is active
+            if (!laserFireSound.playing) {
+                laserFireSound.loop = true;
+                laserFireSound.play();
+            }
+            if (!laserFireSound.paused) {
+                chargingSound.pause();
+                chargingSound.currentTime = 0;
+            }
+        }
+    } else {
+        playerLasersArray.forEach(laser => laser.clearParticles()); // Clear particles when the laser is not active
+        playerLasersArray = [];
+        laserFireSound.pause();
+        laserFireSound.currentTime = 0;
+    }
+
+    if (playerLaserActive) {
+        updateLaserPosition(); // Ensure laser position is updated
+        updatePlayerLasers(deltaTime);
+        checkPlayerLaserDamage();
+    } else {
+        playerLasersArray.forEach(laser => laser.clearParticles()); // Clear particles when the laser is not active
+        playerLasersArray = [];
+    }
+
+    // Update laser position with player
+    const offsetX = Math.cos(player.rotation) * player.width / 2;
+    const offsetY = Math.sin(player.rotation) * player.width / 2;
+    const startX = player.x + offsetX;
+    const startY = player.y + offsetY;
+    const length = 300; // Length of the laser beam
+    const endX = startX + Math.cos(player.rotation) * length;
+    const endY = startY + Math.sin(player.rotation) * length;
+
+    playerLasersArray.forEach(laser => {
+        laser.setEndCoordinates(endX, endY);
+        laser.startX = startX;
+        laser.startY = startY;
+    });
+
+    if (particleBombActive) {
+        if (timestamp > particleBombExpirationTime) {
+            particleBombActive = false;
+        }
+    }
+
+    // Update particle bomb particles
+    updateParticleBombParticles(deltaTime);
+    checkParticleBombDamage();
+
+    // update flame thrower particles
+    updateFlameParticles();
+    checkFlameDamage(); 
 
     requestAnimationFrame(gameLoop);
 }
@@ -4567,39 +5892,10 @@ function isBoostReady() {
     return !isBoosting && (isUnlimitedBoostActivated || performance.now() >= boostCooldownEndTime);
 }
 
-function update(deltaTime, timestamp) {
+function updatePlayerMovement(deltaTime) {
     const rotationSpeed = 4;
     const thrustAcceleration = 300;
 
-    // Update power-up positions
-    updatePowerUpPosition(powerUp, deltaTime);
-    updatePowerUpPosition(bombPowerUp, deltaTime);
-    updatePowerUpPosition(homingMissilePowerUp, deltaTime);
-    updatePowerUpPosition(shieldPowerUp, deltaTime);
-    updatePowerUpPosition(reversePowerUp, deltaTime);
-    updatePowerUpPosition(boostPowerUp, deltaTime);
-    updateInkClouds(deltaTime);  // Update ink cloud here
-    updateLaserCharge(deltaTime);
-
-    // Boost Power-up active check
-    if (boostPowerUpActive && timestamp >= boostPowerUpExpirationTime) {
-        boostPowerUpActive = false;
-    }
-
-    // Tractor beam effect on player
-    if (tractorBeam && tractorBeam.active) {
-        const dx = tractorBeam.startX - player.x;
-        const dy = tractorBeam.startY - player.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance > 0) {
-            const pullStrength = tractorBeam.strength;
-            player.velocity.x += (dx / distance) * pullStrength * deltaTime;
-            player.velocity.y += (dy / distance) * pullStrength * deltaTime;
-        }
-    }
-
-    // Player movement logic
     if (keys['ArrowLeft']) player.rotation -= rotationSpeed * deltaTime / 1000;
     if (keys['ArrowRight']) player.rotation += rotationSpeed * deltaTime / 1000;
 
@@ -4625,17 +5921,10 @@ function update(deltaTime, timestamp) {
         }
     }
 
-    // Reverse Power-up active check
-    if (reversePowerUpActive && timestamp >= reversePowerUpExpirationTime) {
-        reversePowerUpActive = false;
-    }
-
-// Boost handling
     if (isBoosting) {
         player.velocity.x = Math.cos(player.rotation) * player.maxSpeed * 2;
         player.velocity.y = Math.sin(player.rotation) * player.maxSpeed * 2;
 
-        // Check if the boost duration has ended
         if (performance.now() >= boostEndTime) {
             endBoost();
         }
@@ -4672,44 +5961,9 @@ function update(deltaTime, timestamp) {
             player.velocity.y *= player.maxSpeed / speed;
         }
     }
+}
 
-    // Call the updated power-up logic
-    updatePowerUps(deltaTime, timestamp);
-
-    // Check if shield power-up has expired
-    if (shieldActive && timestamp >= shieldPowerUpExpirationTime) {
-        shieldActive = false;
-    }
-
-    // Check if the projectile power-up has expired
-    if (powerUpActive && timestamp >= powerUpExpirationTime) {
-        powerUpActive = false;
-    }
-
-    // Collision detection and handling for coins
-    coins.forEach((coin, coinIndex) => {
-        const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-        const coinCircle = { x: coin.x + coin.width / 2, y: coin.y + coin.height / 2, radius: coin.width / 2 };
-
-        if (checkCollision(playerCircle, coinCircle)) {
-            score += 20;
-            coins.splice(coinIndex, 1);
-
-            // Increase player's health by 2, but do not exceed the maximum health
-            player.health = Math.min(player.health + 2, PLAYER_MAX_HEALTH);
-
-            const coinSoundClone = coinSound.cloneNode();
-            coinSoundClone.volume = coinSound.volume;
-            coinSoundClone.play();
-        }
-    });
-
-    // Update the biomechLeviathan if it exists
-    if (biomechLeviathan) {
-        updateBiomechLeviathan(deltaTime, timestamp);  // Ensure this calls inkCloud initialization
-    }
-
-    // Update enemies and handle their movement, shooting, and collisions
+function updateEnemies(deltaTime, timestamp) {
     enemies.forEach((enemy, enemyIndex) => {
         const enemyMoveDistance = (enemy.speed * deltaTime) / 1000;
         enemy.x += enemyMoveDistance * enemy.directionX;
@@ -4724,31 +5978,29 @@ function update(deltaTime, timestamp) {
             enemy.y = Math.max(0, Math.min(enemy.y, canvas.height - enemy.height));
         }
 
-        // Handle stealth enemy visibility and opacity
         if (enemy.type === 'stealthEnemy') {
             const currentTime = performance.now();
             const elapsedTime = currentTime - enemy.visibleStartTime;
 
             if (enemy.visible) {
                 if (elapsedTime < 1000) {
-                    enemy.opacity = elapsedTime / 1000; // Gradually increase opacity
+                    enemy.opacity = elapsedTime / 1000;
                 } else if (elapsedTime >= enemy.visibleDuration) {
                     enemy.visible = false;
                     enemy.visibleStartTime = currentTime;
-                    enemy.opacity = 1; // Fully opaque
+                    enemy.opacity = 1;
                 }
             } else {
                 if (elapsedTime < 1000) {
-                    enemy.opacity = 1 - (elapsedTime / 1000); // Gradually decrease opacity
+                    enemy.opacity = 1 - (elapsedTime / 1000);
                 } else if (elapsedTime >= enemy.invisibleDuration) {
                     enemy.visible = true;
                     enemy.visibleStartTime = currentTime;
-                    enemy.opacity = 0; // Fully invisible
+                    enemy.opacity = 0;
                 }
             }
         }
 
-        // Add visibility check for stealth enemy before shooting
         if ((enemy.type !== 'stealthEnemy' || enemy.visible) && enemy.canShoot && timestamp - enemy.lastShotTime > enemy.shootInterval) {
             let projectile = {
                 x: enemy.x + enemy.width / 2,
@@ -4784,12 +6036,12 @@ function update(deltaTime, timestamp) {
             }
 
             if (enemy.type === 'enemyTank') {
-                respawnEnemyTank(5000); // Example respawn delay of 5 seconds for tanks
+                respawnEnemyTank(5000);
             } else if (enemy.type === 'stealthEnemy') {
-                respawnStealthEnemy(7000); // Example respawn delay of 7 seconds for stealth enemies
+                respawnStealthEnemy(7000);
             } else {
                 const enemySpeed = 50 + level * 10;
-                respawnEnemyAfterDelay(enemySpeed, 7000); // Respawn regular enemies after 7 seconds
+                respawnEnemyAfterDelay(enemySpeed, 7000);
             }
 
             enemies.splice(enemyIndex, 1);
@@ -4798,155 +6050,198 @@ function update(deltaTime, timestamp) {
 
         if (enemy.health <= 0) {
             if (enemy.type === 'enemyTank') {
-                respawnEnemyTank(5000); // Example respawn delay of 5 seconds for tanks
+                respawnEnemyTank(5000);
             } else if (enemy.type === 'stealthEnemy') {
-                respawnStealthEnemy(7000); // Example respawn delay of 7 seconds for stealth enemies
+                respawnStealthEnemy(7000);
             } else {
                 const enemySpeed = 50 + level * 10;
-                respawnEnemyAfterDelay(enemySpeed, 7000); // Respawn regular enemies after 7 seconds
+                respawnEnemyAfterDelay(enemySpeed, 7000);
             }
 
             enemies.splice(enemyIndex, 1);
             score += 10;
         }
     });
+}
 
-    // Update homing missiles
-    updateHomingMissiles(deltaTime);
-
-    // Update projectiles
-    updateProjectiles(deltaTime, timestamp);
-    // Handle explosions
-    handleSegmentExplosions(timestamp);
-    // Update particles
-    updateParticles();
-    updateEnergyBarrier();
-
-    // Handle biomechLeviathan collision with the player
-    if (biomechLeviathan && biomechLeviathan.alive) {
+function updateCoins(timestamp) {
+    coins.forEach((coin, coinIndex) => {
         const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-        const bossCircle = { x: biomechLeviathan.x, y: biomechLeviathan.y, radius: biomechLeviathan.width / 2 };
+        const coinCircle = { x: coin.x + coin.width / 2, y: coin.y + coin.height / 2, radius: coin.width / 2 };
 
-        if (checkCollision(playerCircle, bossCircle) && !isInvincible && !shieldActive) {
-            player.health -= 10;
+        if (checkCollision(playerCircle, coinCircle)) {
+            score += 20;
+            coins.splice(coinIndex, 1);
 
-            if (player.health <= 0) {
-                player.lives--;
-                player.health = PLAYER_MAX_HEALTH;
-                lifeLostSound.play();
-                if (player.lives <= 0) {
-                    gameOver = true;
-                    handleGameOver();
-                }
-            }
+            player.health = Math.min(player.health + 3, PLAYER_MAX_HEALTH);
 
-            const collisionSoundClone = collisionSound.cloneNode();
-            collisionSoundClone.volume = collisionSound.volume;
-            collisionSoundClone.play();
+            const coinSoundClone = coinSound.cloneNode();
+            coinSoundClone.volume = coinSound.volume;
+            coinSoundClone.play();
+        }
+    });
+}
+
+function updateBoostPowerUp(timestamp) {
+    if (boostPowerUpActive && timestamp >= boostPowerUpExpirationTime) {
+        boostPowerUpActive = false;
+    }
+
+function updateReversePowerUp(timestamp) {
+    if (reversePowerUpActive && timestamp >= reversePowerUpExpirationTime) {
+        reversePowerUpActive = false;
+    }
+}
+
+function updateShieldPowerUp(timestamp) {
+    if (shieldActive && timestamp >= shieldPowerUpExpirationTime) {
+        shieldActive = false;
+    }
+}
+
+function updateProjectilePowerUp(timestamp) {
+    if (powerUpActive && timestamp >= powerUpExpirationTime) {
+        powerUpActive = false;
+    }
+}
+
+function updateTractorBeam(deltaTime) {
+    if (tractorBeam && tractorBeam.active) {
+        const dx = tractorBeam.startX - player.x;
+        const dy = tractorBeam.startY - player.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > 0) {
+            const pullStrength = tractorBeam.strength;
+            player.velocity.x += (dx / distance) * pullStrength * deltaTime;
+            player.velocity.y += (dy / distance) * pullStrength * deltaTime;
         }
     }
 
-    // Collision detection between player and boss
-    if (boss && boss.alive) {
-        const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-        const bossCircle = { x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, radius: Math.max(boss.width, boss.height) / 2 };
-
-        if (checkCollision(playerCircle, bossCircle)) {
-            if (!isInvincible) {
-                player.health -= 20; // Adjust damage as needed
-
-                // Play collision sound
-                const collisionSoundClone = collisionSound.cloneNode();
-                collisionSoundClone.volume = collisionSound.volume;
-                collisionSoundClone.play();
-
-                if (player.health <= 0) {
-                    player.lives--;
-                    player.health = PLAYER_MAX_HEALTH;
-                    if (player.lives <= 0) {
-                        gameOver = true;
-                        handleGameOver();
-                    }
-                }
-            }
-        }
-    }
-
-    // EMP blast effect on player
+function updateEMPBlast() {
     if (empBlast && empBlast.active) {
         const dx = empBlast.x - player.x;
         const dy = empBlast.y - player.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < empBlast.radius) {
-            // Apply EMP effects to the player
             player.velocity.x = 0;
             player.velocity.y = 0;
         }
 
-        // Update the EMP blast's position to follow the biomech Leviathan
-        empBlast.x = biomechLeviathan.x;
-        empBlast.y = biomechLeviathan.y;
+        if (biomechLeviathan) {
+            empBlast.x = biomechLeviathan.x;
+            empBlast.y = biomechLeviathan.y;
+        }
     }
 
-    // Destroy projectiles within the EMP blast radius
     projectiles = projectiles.filter(projectile => {
         const dx = projectile.x - empBlast.x;
         const dy = projectile.y - empBlast.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         return !empBlast.active || distance > empBlast.radius;
     });
+}
 
-    // Collision detection between player and Temporal Serpent
+function updateCollisions(timestamp) {
+    const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
+
+    // Biomech Leviathan collision
+    if (biomechLeviathan && biomechLeviathan.alive) {
+        const biomechCircle = { x: biomechLeviathan.x, y: biomechLeviathan.y, radius: biomechLeviathan.width / 2 };
+        if (checkCollision(playerCircle, biomechCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
+            handlePlayerCollision();
+            biomechEatSound.currentTime = 0; // Reset the sound to the beginning
+            biomechEatSound.play();
+        }
+    }
+
+    if (boss && boss.alive) {
+        const bossCircle = { x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, radius: Math.max(boss.width, boss.height) / 2 };
+        if (checkCollision(playerCircle, bossCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
+            handlePlayerCollision();
+        }
+    }
+
     if (temporalSerpent && temporalSerpent.alive) {
-        const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-
         temporalSerpent.segments.forEach((segment) => {
             const segmentCircle = { x: segment.x, y: segment.y, radius: segment.radius };
-
-            if (checkCollision(playerCircle, segmentCircle) && !isInvincible && !shieldActive) {
-                player.health -= 10;
-
-                if (player.health <= 0) {
-                    player.lives--;
-                    player.health = PLAYER_MAX_HEALTH;
-                    lifeLostSound.play();
-                    if (player.lives <= 0) {
-                        gameOver = true;
-                        handleGameOver();
-                    }
-                }
-
-                const collisionSoundClone = collisionSound.cloneNode();
-                collisionSoundClone.volume = collisionSound.volume;
-                collisionSoundClone.play();
+            if (checkCollision(playerCircle, segmentCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
+                handlePlayerCollision();
             }
         });
     }
 
     if (cyberDragon && cyberDragon.alive) {
-        const playerCircle = { x: player.x, y: player.y, radius: player.width / 2 };
-        const dragonCircle = { x: cyberDragon.x, y: cyberDragon.y, radius: cyberDragon.playerCollisionRadius }; // Use playerCollisionRadius
+        const dragonCircle = { x: cyberDragon.x, y: cyberDragon.y, radius: cyberDragon.playerCollisionRadius };
+        if (checkCollision(playerCircle, dragonCircle) && !isInvincible && !shieldActive && timestamp - player.lastCollisionTime >= 3000) {
+            handlePlayerCollision();
+        }
+    }
+}
 
-        if (checkCollision(playerCircle, dragonCircle) && !isInvincible && !shieldActive) {
-            player.health -= 10;
+function handlePlayerCollision() {
+    player.health -= 10;
+    player.lastCollisionTime = performance.now();
 
-            if (player.health <= 0) {
-                player.lives--;
-                player.health = PLAYER_MAX_HEALTH;
-                lifeLostSound.play();
-                if (player.lives <= 0) {
-                    gameOver = true;
-                    handleGameOver();
-                }
-            }
-
-            const collisionSoundClone = collisionSound.cloneNode();
-            collisionSoundClone.volume = collisionSound.volume;
-            collisionSoundClone.play();
+    if (player.health <= 0) {
+        player.lives--;
+        player.health = PLAYER_MAX_HEALTH;
+        lifeLostSound.play();
+        if (player.lives <= 0) {
+            gameOver = true;
+            handleGameOver();
         }
     }
 
+    const collisionSoundClone = collisionSound.cloneNode();
+    collisionSoundClone.volume = collisionSound.volume;
+    collisionSoundClone.play();
+}
+
+
+function update(deltaTime, timestamp) {
+    updateInkClouds(deltaTime);
+    updateLaserCharge(deltaTime);
+
+    updateBoostPowerUp(timestamp);
+    updateReversePowerUp(timestamp);
+    updateShieldPowerUp(timestamp);
+    updateProjectilePowerUp(timestamp);
+
+    updatePlayerMovement(deltaTime);
+    updateEnemies(deltaTime, timestamp);
+    updateHomingMissiles(deltaTime);
+    updateProjectiles(deltaTime, timestamp);
+    handleSegmentExplosions(timestamp);
+    updateParticles();
+    updateEnergyBarrier();
+    updateCoins(timestamp);
+    updateTractorBeam(deltaTime);
+    updateEMPBlast();
+    updateCollisions(timestamp);
+
+    updatePowerUps(deltaTime, timestamp); // Update power-ups
+
+    // Update and draw the Biomech Leviathan
+    if (biomechLeviathan) {
+        updateBiomechLeviathan(deltaTime, timestamp); // Ensure this calls inkCloud initialization
+        drawBiomechLeviathan();
+    }
+
+    // Update and draw the boss
+    if (boss && boss.alive) {
+        updateBoss(deltaTime, timestamp); // Add the specific update function for the boss
+        drawBoss();
+    }
+
+    // Update and draw the Temporal Serpent
+    if (temporalSerpent && temporalSerpent.alive) {
+        updateTemporalSerpent(deltaTime, timestamp);
+        drawTemporalSerpent();
+    }
+
+    // Update and draw the Cyber Dragon
     if (cyberDragon) {
         updateCyberDragon(deltaTime, timestamp);
         drawCyberDragon();
@@ -4973,7 +6268,7 @@ function update(deltaTime, timestamp) {
     // Extra life logic based on score
     if (score >= nextLifeScore) {
         player.lives++;
-        nextLifeScore += 1500; // Increase next life threshold by 1500 points
+        nextLifeScore += 1500;
     }
 }
 
@@ -5021,7 +6316,7 @@ function drawScoreLevelTime(ctx, score, level, countdown, canvas) {
 
 
 function drawBoostBar(ctx, boostBarX, boostBarY, boostBarWidth, boostBarHeight, boostCooldownEndTime, boostPowerUpActive) {
-    ctx.fillStyle = 'gray';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(boostBarX, boostBarY, boostBarWidth, boostBarHeight);
 
     const currentTime = performance.now();
@@ -5044,7 +6339,7 @@ function drawBoostBar(ctx, boostBarX, boostBarY, boostBarWidth, boostBarHeight, 
 }
 
 function drawHealthBar(ctx, player, boostBarX, boostBarY, boostBarWidth, boostBarHeight) {
-    ctx.fillStyle = 'gray';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(boostBarX, boostBarY + boostBarHeight + 5, boostBarWidth, boostBarHeight);
 
     const healthRatio = player.health / PLAYER_MAX_HEALTH;
@@ -5055,16 +6350,33 @@ function drawHealthBar(ctx, player, boostBarX, boostBarY, boostBarWidth, boostBa
     ctx.strokeRect(boostBarX, boostBarY + boostBarHeight + 5, boostBarWidth, boostBarHeight);
 }
 
-function drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight, isCharging, spacebarPressedTime) {
-    ctx.fillStyle = 'gray';
+function drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight, isCharging, spacebarPressedTime, flamethrowerActive, playerLaserPowerUpActive) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight);
 
-    if (isCharging) {
+    if (playerLaserPowerUpActive) {
+        // If the laser power-up is active, fill the bar fully white
+        const currentTime = performance.now();
+        const laserProgress = Math.max(0, (playerLaserPowerUpExpirationTime - currentTime) / 10000);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(chargeBarX, chargeBarY, chargeBarWidth * laserProgress, chargeBarHeight);
+
+    } else if (flamethrowerActive) {
+        // If the flamethrower is active, use the flamethrower gradient
+        const gradient = ctx.createLinearGradient(chargeBarX, chargeBarY, chargeBarX + chargeBarWidth, chargeBarY);
+        gradient.addColorStop(0, 'orange');
+        gradient.addColorStop(1, 'red');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight);
+    } else if (isCharging) {
+        // If charging, show the charging progress
         const currentTime = performance.now();
         const chargeDuration = (currentTime - spacebarPressedTime) / 1000;
         const chargeProgress = Math.min(chargeDuration / 2, 1);
         ctx.fillStyle = 'blue';
         ctx.fillRect(chargeBarX, chargeBarY, chargeBarWidth * chargeProgress, chargeBarHeight);
+
+        // Draw the halfway marker
         const halfwayMarkerX = chargeBarX + chargeBarWidth / 2;
         ctx.strokeStyle = 'yellow';
         ctx.beginPath();
@@ -5074,8 +6386,9 @@ function drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHei
     }
 }
 
+
 function drawShieldBar(ctx, shieldBarX, shieldBarY, shieldBarWidth, shieldBarHeight, shieldActive, shieldPowerUpExpirationTime) {
-    ctx.fillStyle = 'gray';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(shieldBarX, shieldBarY, shieldBarWidth, shieldBarHeight);
 
     if (shieldActive) {
@@ -5110,6 +6423,7 @@ function draw() {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    drawStars(); // Draw stars
     drawWormholes();
 
     if (isMenuOpen) {
@@ -5131,6 +6445,8 @@ function draw() {
         ctx.fill();
     });
 
+    drawPlayerLasers(ctx); // Add this line to draw player lasers
+
     ctx.save();
     ctx.translate(player.x, player.y);
     ctx.rotate(player.rotation);
@@ -5146,7 +6462,9 @@ function draw() {
     ctx.restore();
 
     coins.forEach(coin => {
-        ctx.drawImage(coinImage, coin.x, coin.y, coin.width, coin.height);
+        coin.bobbingAngle += coin.bobbingSpeed * 0.01; // Update the bobbing angle
+        coin.offsetY = Math.sin(coin.bobbingAngle) * coin.bobbingAmplitude; // Calculate the vertical offset
+        ctx.drawImage(coinImage, coin.x, coin.y + coin.offsetY, coin.width, coin.height); // Apply the offset
     });
 
     enemies.forEach(enemy => {
@@ -5193,7 +6511,27 @@ function draw() {
         ctx.drawImage(boostPowerUpImage, boostPowerUp.x, boostPowerUp.y, boostPowerUp.width, boostPowerUp.height);
     }
 
-    projectiles.forEach(drawProjectile);
+    if (flamethrowerPowerUp) {
+        ctx.drawImage(flamethrowerPowerUpImage, flamethrowerPowerUp.x, flamethrowerPowerUp.y, flamethrowerPowerUp.width, flamethrowerPowerUp.height);
+    }
+
+    if (playerLaserPowerUp) {
+        ctx.drawImage(playerLaserPowerUpImage, playerLaserPowerUp.x, playerLaserPowerUp.y, playerLaserPowerUp.width, playerLaserPowerUp.height);
+    }
+
+    if (particleBombPowerUp) {
+        ctx.drawImage(particleBombPowerUpImage, particleBombPowerUp.x, particleBombPowerUp.y, particleBombPowerUp.width, particleBombPowerUp.height);
+    }
+
+
+    // Draw projectiles
+    projectiles.forEach(projectile => {
+        if (projectile.isLaser) {
+            drawLaser(projectile);
+        } else {
+            drawProjectile(projectile);
+        }
+    });
 
     homingMissiles.forEach(missile => {
         ctx.save();
@@ -5224,10 +6562,9 @@ function draw() {
     drawScoreLevelTime(ctx, score, level, countdown, canvas);
     drawBoostBar(ctx, boostBarX, boostBarY, boostBarWidth, boostBarHeight, boostCooldownEndTime, boostPowerUpActive);
     drawHealthBar(ctx, player, boostBarX, boostBarY, boostBarWidth, boostBarHeight);
-    drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight, isCharging, spacebarPressedTime);
+    drawChargeBar(ctx, chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight, isCharging, spacebarPressedTime, flamethrowerActive, playerLaserActive);
     drawShieldBar(ctx, shieldBarX, shieldBarY, shieldBarWidth, shieldBarHeight, shieldActive, shieldPowerUpExpirationTime);
     drawInventories(ctx, player, bombs, homingMissilesInventory, boostBarX, boostBarY, boostBarWidth, boostBarHeight, chargeBarX, chargeBarWidth, chargeBarY, shieldBarX, shieldBarWidth, shieldBarY);
-
 
     // Draw detached segments
     drawDetachedSegments(ctx);
@@ -5235,14 +6572,8 @@ function draw() {
     // Draw particles
     drawParticles(ctx);
 
-    // Draw projectiles
-    projectiles.forEach(projectile => {
-        if (projectile.isLaser) {
-            drawLaser(projectile);
-        } else {
-            drawProjectile(projectile);
-        }
-    });
+    // Draw particle bomb particles
+    drawParticleBombParticles(ctx);
 
     if (reversePowerUpActive) {
         ctx.strokeStyle = 'yellow';
@@ -5320,6 +6651,8 @@ function draw() {
     ctx.fillText('Health', boostBarX - ctx.measureText('Health').width - 10, boostBarY + boostBarHeight + 20);
     ctx.fillText('Blaster', chargeBarX - ctx.measureText('Blaster').width - 10, chargeBarY + 15);
     ctx.fillText('Shield', shieldBarX - ctx.measureText('Shield').width - 10, shieldBarY + 15);
+
+    drawFlameParticles(ctx);
 }
 
 
@@ -5348,11 +6681,13 @@ function toggleMenu() {
 backgroundMusicVolumeSlider.addEventListener('input', () => {
     backgroundMusic.volume = backgroundMusicVolumeSlider.value;
     bossMusic.volume = backgroundMusicVolumeSlider.value;
+localStorage.setItem('background_volume', backgroundMusicVolumeSlider.value)
 });
 
 soundEffectsVolumeSlider.addEventListener('input', () => {
     const volume = soundEffectsVolumeSlider.value;
     soundEffects.forEach(sound => sound.volume = volume);
+    localStorage.setItem('sfx_volume', soundEffectsVolumeSlider.value)
 });
 
 menu.style .display = 'block';

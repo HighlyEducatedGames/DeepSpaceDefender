@@ -1,0 +1,68 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #323232;
+  font-family: 'Press Start 2P', cursive;
+}
+
+canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: black;
+}
+
+#menu-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 20px;
+  z-index: 10;
+  max-width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
+  border-radius: 15px;
+}
+
+#credits,
+#howToPlay,
+#soundOptions,
+#controls {
+  display: none;
+}
+
+.back-button {
+  cursor: pointer;
+  color: yellow;
+  display: inline-block;
+}
+
+#howToPlayTable img,
+#controlsTable img {
+  width: 25px;
+  height: 25px;
+}
+
+#howToPlayTable,
+#controlsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#howToPlayTable,
+#howToPlayTable th,
+#howToPlayTable td,
+#controlsTable,
+#controlsTable th,
+#controlsTable td {
+  border: 1px solid white;
+  padding: 5px;
+}
+
+.action {
+  color: #2eb91e;
+}
