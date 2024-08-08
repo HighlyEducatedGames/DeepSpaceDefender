@@ -46,32 +46,40 @@
     </style>
 </head>
 <body>
-<canvas id="gameCanvas" width="1200" height="700"></canvas>
-<audio id="backgroundMusic" src="assets/audio/background-music.mp3" loop></audio>
-<audio id="coinSound" src="assets/audio/coin.mp3"></audio>
-<audio id="fireSound" src="assets/audio/fire.mp3"></audio>
-<audio id="powerUpSound" src="assets/audio/powerup.mp3"></audio>
-<audio id="collisionSound" src="assets/audio/collision.mp3"></audio>
-<audio id="chargingSound" src="assets/audio/charging.mp3"></audio>
-<audio id="accelerationSound" src="assets/audio/acceleration.mp3"></audio>
-<audio id="bombSound" src="assets/audio/bombSound.mp3"></audio>
-<audio id="boostSound" src="assets/audio/boost.mp3"></audio>
-<audio id="reverseSound" src="assets/audio/reverse.mp3"></audio>
-<audio id="homingMissileSound" src="assets/audio/homing_missile_sound.mp3"></audio>
-<audio id="allySound" src="assets/audio/allySound.mp3"></audio>
-<audio id="allyOver" src="assets/audio/allyOver.mp3"></audio>
-<audio id="bossMusic" src="assets/audio/boss_music.mp3" loop></audio>
-<audio id="circularOrbitSound" src="assets/audio/circularOrbitSound.mp3"></audio>
-<audio id="followPlayerSound" src="assets/audio/followPlayerSound1.mp3"></audio>
-<audio id="lifeLostSound" src="assets/audio/lifelost.mp3"></audio>
-<audio id="tractorBeamSound" src="assets/audio/tractorBeamSound.mp3"></audio>
-<audio id="splatSound" src="assets/audio/splatSound.mp3"></audio>
-<audio id="empSound" src="assets/audio/empSound.mp3"></audio>
-<audio id="laserChargingSound" src="assets/audio/laser_charging.mp3"></audio>
-<audio id="spiralShotSound" src="assets/audio/spiralshot.mp3"></audio>
-<audio id="gameOverMusic" src="assets/audio/gameOverMusic.mp3"></audio>
-<audio id="teleportSound" src="assets/audio/teleport.mp3"></audio>
-<audio id="explosionSound" src="assets/audio/explosion.mp3"></audio>
+    <canvas id="gameCanvas" width="1200" height="700"></canvas>
+    <audio id="backgroundMusic" src="assets/audio/background-music.mp3" loop></audio>
+    <audio id="coinSound" src="assets/audio/coin.mp3"></audio>
+    <audio id="fireSound" src="assets/audio/fire.mp3"></audio>
+    <audio id="powerUpSound" src="assets/audio/powerup.mp3"></audio>
+    <audio id="collisionSound" src="assets/audio/collision.mp3"></audio>
+    <audio id="chargingSound" src="assets/audio/charging.mp3"></audio>
+    <audio id="accelerationSound" src="assets/audio/acceleration.mp3"></audio>
+    <audio id="bombSound" src="assets/audio/bombSound.mp3"></audio>
+    <audio id="boostSound" src="assets/audio/boost.mp3"></audio>
+    <audio id="reverseSound" src="assets/audio/reverse.mp3"></audio>
+    <audio id="homingMissileSound" src="assets/audio/homing_missile_sound.mp3"></audio>
+    <audio id="allySound" src="assets/audio/allySound.mp3"></audio>
+    <audio id="allyOver" src="assets/audio/allyOver.mp3"></audio>
+    <audio id="bossMusic" src="assets/audio/boss_music.mp3" loop></audio>
+    <audio id="circularOrbitSound" src="assets/audio/circularOrbitSound.mp3"></audio>
+    <audio id="followPlayerSound" src="assets/audio/followPlayerSound1.mp3"></audio>
+    <audio id="lifeLostSound" src="assets/audio/lifelost.mp3"></audio>
+    <audio id="tractorBeamSound" src="assets/audio/tractorBeamSound.mp3"></audio>
+    <audio id="splatSound" src="assets/audio/splatSound.mp3"></audio>
+    <audio id="laserChargingSound" src="assets/audio/laser_charging.mp3"></audio>
+    <audio id="spiralShotSound" src="assets/audio/spiralshot.mp3"></audio>
+    <audio id="gameOverMusic" src="assets/audio/gameOverMusic.mp3"></audio>
+    <audio id="teleportSound" src="assets/audio/teleport.mp3"></audio>
+    <audio id="explosionSound" src="assets/audio/explosion.mp3"></audio>
+    <audio id="hazardSound" src="assets/audio/hazardZone.mp3"></audio>
+    <audio id="flameSound" src="assets/audio/flame.mp3"></audio>
+    <audio id="torchSound" src="assets/audio/torch.mp3"></audio>
+    <audio id="biomechEatSound" src="assets/audio/biomechEat.mp3"></audio>
+    <audio id="nofireSound" src="assets/audio/nofire.mp3"></audio>
+    <audio id="empSound" src="assets/audio/emp.mp3"></audio>
+    <audio id="laserHitSound" src="assets/audio/laserHit.mp3"></audio>
+    <audio id="laserFireSound" src="assets/audio/laserFire.mp3"></audio>
+    <audio id="particleBombFireSound" src="assets/audio/particleBomb.wav"></audio>
 
 <div id="menu">
     <h2>MENU</h2>
@@ -82,11 +90,17 @@
     <p>Press Fire to Restart, M to Unpause.</p>
 </div>
 
-<div id="soundOptions">
-    <h2>Sound Options</h2>
-    <div class="slider-container">
-        <label for="backgroundMusicVolume">Background Music Volume</label>
-        <input type="range" id="backgroundMusicVolume" min="0" max="1" step="0.01" value="0.5">
+
+
+
+
+    <div id="menu">
+        <h2>MENU</h2>
+        <button onclick="showSoundOptions()">Sound Options</button>
+        <button onclick="showHowToPlay()">How to Play</button>
+        <button onclick="showControls()">Controls</button>
+        <button onclick="showCredits()">Credits</button>
+        <p>Press Fire to Restart, M to Unpause.</p>
     </div>
     <div class="slider-container">
         <label for="soundEffectsVolume">Sound Effects Volume</label>
