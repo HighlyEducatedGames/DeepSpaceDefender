@@ -192,15 +192,25 @@ export default class GUI {
     ctx.font = '10px "Press Start 2P", cursive';
     const ms = Math.floor(this.game.tickMs * 10) / 10;
     const percent = Math.floor(this.game.tickMs / this.game.targetFrameDuration);
+    const counts = this.getCounts();
 
     const line4 = `Boss Phase: ${this.game.boss ? this.game.boss.phase : 0}`;
     const line3 = `Effects: ${this.game.effects.length}`;
-    // const line2 = `Projectiles: ${this.game.projectiles.flat().length}`;
+    const line2 = `E: ${counts.entities} P: ${counts.projectiles} T: ${counts.particles}`;
     const line1 = `Tick: ${ms}ms - ${percent}%`;
 
     ctx.fillText(line4, 10, this.game.canvas.height - 55);
     ctx.fillText(line3, 10, this.game.canvas.height - 40);
-    // ctx.fillText(line2, 10, this.game.canvas.height - 25);
+    ctx.fillText(line2, 10, this.game.canvas.height - 25);
     ctx.fillText(line1, 10, this.game.canvas.height - 10);
+  }
+
+  getCounts() {
+    const enemyController = this.game.enemies;
+    const enemyCount = enemyController.getLength();
+    const entityCount = enemyCount;
+
+    // const enemyProjectiles = enemyController.enemies.reduce(() => {}, 0)
+    return { entities: entityCount, projectiles: 0, particles: 0 };
   }
 }

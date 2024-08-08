@@ -1,24 +1,25 @@
-import { getRandomYwithMargin } from '../utilities.js';
+import { getRandomYwithMargin, getRandomInterval } from '../utilities.js';
 
 class Enemy {
   constructor(game) {
     this.game = game;
-    this.margin = 50;
-    this.side = Math.random() < 0.5 ? 'left' : 'right';
+    this.x = null;
+    this.y = null;
     this.width = 50;
     this.height = 50;
-    this.x = this.side === 'left' ? -this.width * 0.5 : this.game.canvas.width + this.width * 0.5;
-    this.y = getRandomYwithMargin(this.game, this.margin);
+    this.side = Math.random() < 0.5 ? 'left' : 'right';
     this.speedMultiplier = this.game.level - 1 * 0.05;
     this.speed = 1.5 * this.speedMultiplier;
     this.vx = this.side === 'left' ? 1 : -1;
     this.canShoot = false;
+    this.attackInterval = null;
     this.lastAttackTime = 0;
     this.maxHealth = 10;
     this.health = this.maxHealth;
     this.damage = 10;
     this.score = 10;
     this.projectiles = [];
+    this.verticalMargin = 50;
     this.markedForDeletion = false;
 
     this.image = new Image();
@@ -59,14 +60,18 @@ class Enemy {
     this.projectiles.forEach((projectile) => projectile.update(deltaTime));
     this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
 
-    // TODO - Fire so
+    // Attack Logic
+    console.log(this.game.timestamp - this.lastAttackTime)
+    if (this.canShoot && this.game.timestamp - this.lastAttackTime >= this.attackInterval) {
+      this.fireProjectile()
+    }
 
     this.checkCollisions();
   }
 
   getSpawnPosition() {
     this.x = this.side === 'left' ? -this.width * 0.5 : this.game.canvas.width + this.width * 0.5;
-    this.y = getRandomYwithMargin(this.game, this.margin);
+    this.y = getRandomYwithMargin(this.game, this.verticalMargin);
   }
 
   checkCollisions() {
@@ -89,7 +94,8 @@ class Enemy {
     }
   }
 
-  fire() {
+  fireProjectile() {
+    console.log('ENEMY FIRING')
     this.projectiles.push(new EnemyProjectile(this.game, this.x, this.y));
     this.lastAttackTime = this.game.timestamp;
   }
@@ -98,7 +104,7 @@ class Enemy {
 export class RegularEnemy extends Enemy {
   constructor(game) {
     super(game);
-    this.shootInterval = Math.random() * 2000 + 3000;
+    this.attackInterval = getRandomInterval(3000, 5000);
     this.respawnTime = 7000;
   }
 }
@@ -110,11 +116,13 @@ export class TankEnemy extends Enemy {
     this.speed = 0.6;
     this.width = 60;
     this.height = 60;
-    this.shootInterval = Math.random() * 1000 + 2000;
+    this.attackInterval = getRandomInterval(2000, 3000);
     this.respawnTime = 5000;
 
     this.image = new Image();
     this.image.src = 'assets/images/enemy_tank.png';
+
+    super.getSpawnPosition();
   }
 }
 
@@ -127,11 +135,13 @@ export class StealthEnemy extends Enemy {
     this.opacity = 0;
     this.visibleDuration = 3000;
     this.invisibleDuration = 3000;
-    this.shootInterval = Math.random() * 1000 + 1000;
+    this.attackInterval = getRandomInterval(1000, 2000);
     this.respawnTime = 7000;
 
     this.image = new Image();
     this.image.src = 'assets/images/stealth_enemy.png';
+    
+    super.getSpawnPosition();
   }
 
   draw(ctx) {
