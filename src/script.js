@@ -7,24 +7,22 @@ window.addEventListener('load', () => {
   canvas.height = 700;
 
   const game = new Game(canvas);
-  let now = 0;
 
-  function loop(timestamp = 0) {
-    now = performance.now(); // First to accurately calculate tick time
-    let deltaTime = timestamp - game.timestamp;
+  function animate(timestamp = 0) {
+    const deltaTime = timestamp - game.timestamp;
     game.timestamp = timestamp;
 
+    // Clear the entire canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    game.controls.update(); // Update all player inputs
+    // Update player inputs
+    game.controls.update();
     game.handleMainGameControls();
 
     if (!game.menu.isOpen) {
-      // Main game play render
+      // Playing the game
       game.render(ctx, deltaTime);
     } else {
-      // TODO: Loop through all sounds and pause, but background is already getting paused in the menu class
-
       // Draw title screen
       ctx.drawImage(game.images.title, 0, 0, canvas.width, canvas.height);
 
@@ -38,13 +36,15 @@ window.addEventListener('load', () => {
       ctx.fillText(text, x, y);
     }
 
-    const delay = Math.max(0, game.targetFrameDuration - (now - game.timestamp));
+    // Throttle the animation loop to the target fps (60)
+    const delay = Math.max(0, game.targetFrameDuration - (performance.now() - game.timestamp));
     setTimeout(() => {
-      requestAnimationFrame(loop);
+      requestAnimationFrame(animate);
     }, delay);
 
-    game.tickMs = performance.now() - now; // Last to accurately calculate tick time
+    // Store the tick time for debug text
+    game.tickMs = performance.now() - game.timestamp;
   }
 
-  loop();
+  animate();
 });
