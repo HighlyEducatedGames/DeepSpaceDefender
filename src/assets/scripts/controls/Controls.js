@@ -3,7 +3,7 @@
 import mappings from './mappings.js';
 import Key from './Key.js';
 
-class Controls {
+export default class Controls {
   constructor(game) {
     this.game = game;
     this.keys = {};
@@ -229,5 +229,3 @@ class Controls {
     }
   }
 }
-
-export default Controls;

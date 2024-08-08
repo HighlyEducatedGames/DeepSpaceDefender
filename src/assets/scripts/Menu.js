@@ -1,4 +1,4 @@
-class Menu {
+export default class Menu {
   constructor(game) {
     this.game = game;
     this.menu = document.getElementById('menu-container');
@@ -56,5 +56,3 @@ class Menu {
     }
   }
 }
-
-export default Menu;

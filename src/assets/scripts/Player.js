@@ -1,7 +1,9 @@
 import RegularProjectile from './projectiles/RegularProjectile.js';
 import Bomb from './projectiles/Bomb.js';
+import HomingMissile from './projectiles/HomingMissile.js';
+import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 
-class Player {
+export default class Player {
   constructor(game) {
     this.game = game;
     this.width = 50;
@@ -32,7 +34,7 @@ class Player {
     this.projectiles = [];
     this.bombs = 20;
     this.shieldActive = false;
-    this.missiles = [];
+    this.missiles = 20;
     // this.bombSpawnTime = 0;
     // this.bombFlashTime = 0;
     // this.bombSpawned = false;
@@ -223,6 +225,22 @@ class Player {
       this.velocity.y *= this.maxSpeed / speed;
     }
 
+    // Tractor beam effect on player
+    if (this.game.boss && this.game.boss instanceof BiomechLeviathan && this.game.boss.tractorBeamActive) {
+      const tractorBeam = this.game.boss.tractorBeam;
+      if (tractorBeam) {
+        const dx = tractorBeam.startX - this.x;
+        const dy = tractorBeam.startY - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > 0) {
+          const pullStrength = tractorBeam.strength;
+          this.velocity.x += (dx / distance) * pullStrength * deltaTime;
+          this.velocity.y += (dy / distance) * pullStrength * deltaTime;
+        }
+      }
+    }
+
     // Move player
     this.x += (this.velocity.x * deltaTime) / 1000;
     this.y += (this.velocity.y * deltaTime) / 1000;
@@ -286,7 +304,20 @@ class Player {
     );
   }
 
-  useMissile() {}
+  useMissile() {
+    if (this.missiles <= 0) return;
+    const enemies = this.game.enemies;
+    const randomEnemy = Math.floor(Math.random() * enemies.length); // TODO: // Find nearest target ??//
+    const target = this.boss ? this.boss : enemies[randomEnemy];
+    if (!target) return;
+    this.missiles--;
+    for (let i = 0; i < 3; i++) {
+      const missile = new HomingMissile(this.game, target);
+      // Only play the missile sound on the first spawned missile
+      if (i === 0) missile.sound.cloneNode().play();
+      this.projectiles.push(missile);
+    }
+  }
 
   takeDamage(amount) {
     this.game.controls.playHaptic(100, 0.25);
@@ -327,5 +358,3 @@ class Player {
     this.thrust = 0;
   }
 }
-
-export default Player;

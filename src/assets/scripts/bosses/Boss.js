@@ -1,7 +1,7 @@
 import { spawnOffScreenRandomSide } from '../utilities.js';
 import Explosion from '../effects/Explosion.js';
 
-class Boss {
+export default class Boss {
   constructor(game) {
     this.game = game;
     this.x = null;
@@ -216,4 +216,3 @@ class BossProjectile {
     }
   }
 }
-export default Boss;

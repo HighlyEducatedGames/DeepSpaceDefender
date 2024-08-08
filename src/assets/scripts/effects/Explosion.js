@@ -20,6 +20,9 @@ export default class Explosion {
   }
 
   update() {
+    this.particles.forEach((particle, index) => {
+      if (particle.markedForDeletion) this.particles.splice(index, 1);
+    });
     if (this.particles.length <= 0) this.markedForDeletion = true;
   }
 }

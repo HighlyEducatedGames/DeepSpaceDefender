@@ -1,4 +1,4 @@
-class RegularProjectile {
+export default class RegularProjectile {
   constructor(game, angleOffset) {
     this.game = game;
     this.angleOffset = angleOffset;
@@ -85,5 +85,3 @@ class RegularProjectile {
     }*/
   }
 }
-
-export default RegularProjectile;

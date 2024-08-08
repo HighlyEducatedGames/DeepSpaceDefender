@@ -3,6 +3,7 @@ import Controls from './controls/Controls.js';
 import GUI from './GUI.js';
 import Menu from './Menu.js';
 import MusicController from './MusicController.js';
+import PowerUpManager from './powerUps/PowerUpManager.js';
 import Player from './Player.js';
 import Coin from './Coin.js';
 import Star from './Star.js';
@@ -10,6 +11,7 @@ import Boss from './bosses/Boss.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import TemporalSerpent from './bosses/TemporalSerpent.js';
 import CyberDragon from './bosses/CyberDragon.js';
+import Ally from './Ally.js';
 
 export default class Game {
   constructor(canvas) {
@@ -21,6 +23,7 @@ export default class Game {
     this.GUI = new GUI(this);
     this.menu = new Menu(this);
     this.music = new MusicController(this);
+    this.powerUps = new PowerUpManager(this);
     this.topMargin = 120;
     this.boss = null;
     this.tickMs = null;
@@ -57,6 +60,12 @@ export default class Game {
     this.enemies = []; // TODO: enemy manager and limiting enemies as a conditional to not have too many on screen
     this.projectiles = [];
     this.player.stopPlayerMovement();
+
+    // Reset Ally
+    this.ally = null;
+    this.allySpawnTime = 0;
+    this.allyInterval = 60000;
+    this.allyWarningTime = 3000;
 
     // Add new coins to this level
     this.coins = [];
@@ -174,6 +183,7 @@ export default class Game {
     });
     this.enemies.forEach((enemy) => enemy.draw(ctx));
     if (this.boss) this.boss.draw(ctx);
+    this.powerUps.draw(ctx);
     this.player.draw(ctx);
     this.GUI.draw(ctx);
 
@@ -203,6 +213,7 @@ export default class Game {
       });
       this.enemies.forEach((enemy) => enemy.update(deltaTime));
       if (this.boss) this.boss.update(deltaTime);
+      this.powerUps.update(deltaTime);
       this.player.update(deltaTime);
       this.effects.forEach((effect) => effect.update(deltaTime));
 
@@ -258,6 +269,16 @@ export default class Game {
         }
         this.nextLevel();
       }
+    }
+
+    // Check if it's time to spawn the ally
+    if (this.timestamp > this.allySpawnTime + this.allyInterval) {
+      this.allySpawnTime = this.timestamp;
+      const ally = new Ally(this);
+      ally.sounds.warning.cloneNode().play();
+      setTimeout(() => {
+        this.ally = ally;
+      }, this.allyWarningTime);
     }
   }
 

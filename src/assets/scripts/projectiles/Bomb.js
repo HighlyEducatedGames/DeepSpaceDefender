@@ -1,4 +1,4 @@
-class Bomb {
+export default class Bomb {
   constructor(game) {
     this.game = game;
     this.x = this.game.player.x;
@@ -56,5 +56,3 @@ class Bomb {
     // Check bosses
   }
 }
-
-export default Bomb;

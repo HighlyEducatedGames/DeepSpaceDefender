@@ -1,4 +1,4 @@
-class Coin {
+export default class Coin {
   constructor(game) {
     this.game = game;
     this.x = Math.random() * (this.game.canvas.width - 20) + 40;
@@ -44,5 +44,3 @@ class Coin {
     this.y += Math.sin(this.bobbingAngle) * this.bobbingAmplitude;
   }
 }
-
-export default Coin;

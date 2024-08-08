@@ -1,4 +1,4 @@
-class Star {
+export default class Star {
   constructor(game, starLayers) {
     this.game = game;
     this.x = Math.random() * this.game.canvas.width;
@@ -26,5 +26,3 @@ class Star {
     }
   }
 }
-
-export default Star;

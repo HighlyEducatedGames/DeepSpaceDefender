@@ -343,3 +343,37 @@ class SpiralProjectile {
     if (this.traveledDistance > this.maxDistance) this.markedForDeletion = true;
   }
 }
+
+// function updateProjectiles(deltaTime, timestamp) {
+//   let projectilesToRemove = new Set();
+//   handleWormholeTeleportation();
+
+//   // Ensure spiral projectiles are updated correctly
+//   if (cyberDragon && cyberDragon.spiralProjectiles) {
+//     cyberDragon.spiralProjectiles.forEach((projectile, index) => {
+//       projectile.x += (projectile.directionX * projectile.speed * deltaTime) / 1000;
+//       projectile.y += (projectile.directionY * projectile.speed * deltaTime) / 1000;
+//       projectile.traveledDistance += (projectile.speed * deltaTime) / 1000;
+
+//       if (projectile.traveledDistance > projectile.maxDistance) {
+//         cyberDragon.spiralProjectiles.splice(index, 1);
+//         return;
+//       }
+
+//       // Check collision with player
+//       const dx = projectile.x - player.x;
+//       const dy = projectile.y - player.y;
+//       const distance = Math.sqrt(dx * dx + dy * dy);
+//       if (distance < projectile.radius + player.radius) {
+//         // Collision detected, reduce player health
+//         player.health -= projectile.damage;
+//         if (player.health <= 0) {
+//           // Handle player death
+//         }
+//         // Remove the projectile
+//         cyberDragon.spiralProjectiles.splice(index, 1);
+//         return;
+//       }
+//     });
+//   }
+// }

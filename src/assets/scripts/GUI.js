@@ -1,4 +1,4 @@
-class GUI {
+export default class GUI {
   constructor(game) {
     this.game = game;
 
@@ -134,6 +134,19 @@ class GUI {
       ctx.moveTo(halfwayMarkerX, this.chargeBarY);
       ctx.lineTo(halfwayMarkerX, this.chargeBarY + this.chargeBarHeight);
       ctx.stroke();
+
+      // TODO
+      // if (reversePowerUpActive) {
+      //   ctx.strokeStyle = 'yellow';
+      //   ctx.lineWidth = 5;
+      //   ctx.strokeRect(chargeBarX - 2.5, chargeBarY - 2.5, chargeBarWidth + 5, chargeBarHeight + 5);
+      // }
+
+      // if (powerUpActive) {
+      //   ctx.strokeStyle = 'blue';
+      //   ctx.lineWidth = 3;
+      //   ctx.strokeRect(chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight);
+      // }
     }
   }
 
@@ -188,5 +201,3 @@ class GUI {
     ctx.fillText(line1, 10, this.game.canvas.height - 10);
   }
 }
-
-export default GUI;

@@ -1,4 +1,4 @@
-class Key {
+export default class Key {
   constructor(name) {
     this.name = name;
     this.isPressed = false;
@@ -11,5 +11,3 @@ class Key {
     return this.isPressed && this.frame === 1;
   }
 }
-
-export default Key;

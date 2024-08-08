@@ -1,6 +1,6 @@
 import { spawnOffScreenRandomSide } from './utilities.js';
 
-class Ally {
+export default class Ally {
   constructor(game) {
     this.game = game;
     this.x = null;
@@ -9,10 +9,10 @@ class Ally {
     this.height = 50;
     this.speed = 1200;
     this.rotation = 0;
+    this.projectiles = [];
 
     this.spawnTime = performance.now();
     this.duration = 15000; // 15 seconds
-    this.interval = 60000; // 60 seconds
     this.warningTime = 3000; // 3 seconds before arrival
     this.rotationAngle = 0; // Initial angle for circular pattern
     this.orbitRadius = 100; // Radius of the circular orbit
@@ -104,7 +104,14 @@ class Ally {
             break;
         }
       }
-      // TODO: projectiles
+
+      // Fire projectiles in the opposite direction of the player
+      if (this.game.timestamp % 200 < deltaTime) {
+        const angleToPlayer = this.game.player.angleToPlayer(this);
+        const fireDirection = angleToPlayer + Math.PI;
+        this.rotation = fireDirection;
+        this.projectiles.push(new AllyProjectile(this.game, this, angleToPlayer));
+      }
 
       // Check if the ally's duration has ended
       if (timestamp > this.spawnTime + this.duration) {
@@ -144,6 +151,21 @@ class Ally {
   }
 }
 
-export default Ally;
+class AllyProjectile {
+  constructor(game, ally, angle) {
+    this.game = game;
+    this.ally = ally;
+    this.x = this.ally.x;
+    this.y = this.ally.y;
+    this.width = 5;
+    this.height = 5;
+    this.directionX = -Math.cos(angle);
+    this.directionY = -Math.sin(angle);
+    this.traveledDistance = 0;
+    this.maxDistance = 1000;
+    this.damage = 25;
+  }
 
-// TODO: delete allys that are not active
+  draw(ctx) {}
+  update() {}
+}
