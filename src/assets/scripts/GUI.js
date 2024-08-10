@@ -194,14 +194,12 @@ export default class GUI {
     const percent = Math.floor((this.game.tickMs / this.game.targetFrameDuration) * 100);
     const counts = this.getCounts();
 
-    const line4 = `Boss Phase: ${this.game.boss ? this.game.boss.phase : 0}`;
-    const line3 = `Effects: ${this.game.effects.length}`;
+    const line3 = `Boss Phase: ${this.game.boss ? this.game.boss.phase : 0}`;
     const line2 = `E: ${counts.entities} P: ${counts.projectiles} T: ${counts.particles}`;
     const line1Part1 = `Tick: ${ms.toFixed(1)}ms - `;
     const line1Part2 = `${percent}%`;
     const line1Part1Width = ctx.measureText(line1Part1).width;
 
-    ctx.fillText(line4, 10, this.game.canvas.height - 55);
     ctx.fillText(line3, 10, this.game.canvas.height - 40);
     ctx.fillText(line2, 10, this.game.canvas.height - 25);
     ctx.fillText(line1Part1, 10, this.game.canvas.height - 10);

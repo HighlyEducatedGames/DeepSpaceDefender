@@ -34,6 +34,8 @@ window.addEventListener('load', () => {
       const x = (canvas.width - textWidth) * 0.5;
       const y = canvas.height / 3;
       ctx.fillText(text, x, y);
+
+      if (game.debug) game.GUI.drawDebug(ctx);
     }
 
     // Throttle the animation loop to the target fps (60) // TODO
