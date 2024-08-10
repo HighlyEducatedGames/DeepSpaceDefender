@@ -45,7 +45,7 @@ export default class Game {
     this.maxCoins = 5;
     this.ally = null;
     this.allyNextSpawnTime = 0;
-    this.allyInterval = 5000; // TODO
+    this.allyInterval = 60000;
 
     this.images = {
       title: new Image(),
@@ -65,6 +65,8 @@ export default class Game {
     this.isGameOver = false;
     this.score = 0;
     this.player = new Player(this);
+    this.ally = null;
+    this.allyNextSpawnTime = 0;
     this.powerUps.removeAll(); // TODO: Do we want to clear only on restart or also on next level??
     this.startLevel(1);
   }

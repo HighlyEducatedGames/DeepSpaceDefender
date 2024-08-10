@@ -19,8 +19,6 @@ export function spawnOffScreenRandomSide(object, extraMargin = 0) {
       object.y = object.game.canvas.height + object.height * 0.5 + extraMargin;
       break;
   }
-
-  return side;
 }
 
 export function getRandomDirection() {

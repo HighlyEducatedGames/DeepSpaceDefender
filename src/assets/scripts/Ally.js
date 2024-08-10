@@ -7,26 +7,32 @@ export default class Ally {
     this.y = null;
     this.width = 50;
     this.height = 50;
+    this.exitingSide = Math.floor(Math.random() * 4);
+    this.enteringSide = Math.floor(Math.random() * 4);
     this.offset = 4;
     this.speed = 150;
     this.rotation = 0;
     this.projectiles = [];
-    this.spawnTime = this.game.timestamp;
-    this.duration = 15000;
     this.warning = true;
     this.warningDuration = 3000;
-    this.fullRotationDuration = 5000;
-    this.orbitRadius = 100;
-    this.exitingSide = spawnOffScreenRandomSide(this);
-    this.enteringSide = spawnOffScreenRandomSide(this);
-    this.pattern = this.selectedPattern();
     this.entryDistance = 50;
+    this.pattern = this.selectedPattern();
+    this.orbitRadius = 100;
+    this.orbitFullRotationDuration = 5000;
+    this.orbitRotationDirecton = Math.random() < 0.5 ? -1 : 1;
     this.entering = true;
     this.movedToPlayer = false;
+    this.arrivedAtTarget = false;
     this.exiting = false;
     this.exitTime = 0;
+    this.exitDuration = 15000;
     this.nextAttackTime = 0;
     this.attackInterval = 200;
+    this.targetX = null;
+    this.targetY = null;
+    this.followMargin = 5;
+    this.targetSpeedMultiplier = 1;
+    this.targetSnapDistance = 10;
     this.markedForDeletion = false;
 
     this.image = new Image();
@@ -38,19 +44,20 @@ export default class Ally {
       followPlayer: new Audio('assets/audio/followPlayerSound.mp3'),
     };
 
+    spawnOffScreenRandomSide(this);
+
     // Play warning sound immediatlly
     this.sounds.warning.play();
     setTimeout(() => {
-      this.afterWarning();
+      this.warned();
     }, this.warningDuration);
   }
 
   draw(ctx) {
     if (!this.warning) {
+      // Ally
       const xAdjustPos = Math.cos(this.rotation) * this.offset;
       const yAdjustPos = Math.sin(this.rotation) * this.offset;
-
-      // Ally
       ctx.save();
       ctx.translate(this.x - xAdjustPos, this.y - yAdjustPos);
       ctx.rotate(this.rotation);
@@ -71,6 +78,14 @@ export default class Ally {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.orbitRadius, 0, Math.PI * 2);
         ctx.stroke();
+
+        // Target follow position
+        if (!this.exiting && this.targetX && this.targetY) {
+          ctx.fillStyle = 'yellow';
+          ctx.beginPath();
+          ctx.arc(this.targetX, this.targetY, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
     }
   }
@@ -109,7 +124,7 @@ export default class Ally {
           break;
       }
     } else if (!this.movedToPlayer) {
-      // After we enter, move towards the player
+      // After we enter, move and point nose towards the player
       if (distanceToPlayer > this.orbitRadius) {
         this.x += (Math.cos(angleToPlayer) * this.speed * deltaTime) / 1000;
         this.y += (Math.sin(angleToPlayer) * this.speed * deltaTime) / 1000;
@@ -120,6 +135,7 @@ export default class Ally {
       }
     } else if (this.exiting) {
       // Handle exit motion
+      // Rotate to point orthagonal toward exit side
       let exitSpeed = (this.speed * deltaTime) / 1000;
       switch (this.exitingSide) {
         case 0: // Exit left
@@ -139,26 +155,54 @@ export default class Ally {
           this.rotation = Math.PI * 0.5;
           break;
       }
+
+      // Delete ally if exiting and out of bounds
       if (this.game.outOfBounds(this)) this.markedForDeletion = true;
     } else {
-      // Employ patten if next to player
+      // Employ movement patten once ally has made it to the player
       switch (this.pattern) {
         case 'circularOrbit':
-          this.rotation += (Math.PI * 2 * deltaTime) / this.fullRotationDuration;
+          this.rotation += ((Math.PI * 2 * deltaTime) / this.orbitFullRotationDuration) * this.orbitRotationDirecton;
           this.x = this.game.player.x + Math.cos(this.rotation) * this.orbitRadius;
           this.y = this.game.player.y + Math.sin(this.rotation) * this.orbitRadius;
           break;
         case 'followPlayer':
-          if (distanceToPlayer > this.orbitRadius - this.width * 0.5 - this.game.player.width * 0.5) {
-            this.x += (Math.cos(angleToPlayer) * this.speed * deltaTime) / 1000;
-            this.y += (Math.sin(angleToPlayer) * this.speed * deltaTime) / 1000;
+          {
+            const player = this.game.player;
+
+            // Determine the target position for the ally based on player position and rotation
+            const distanceX = this.width * 0.5 + this.width * 0.5 + this.followMargin;
+            const distanceY = this.height * 0.5 + this.height * 0.5 + this.followMargin;
+            this.targetX = player.x + Math.cos(player.rotation + Math.PI) * distanceX;
+            this.targetY = player.y + Math.sin(player.rotation + Math.PI) * distanceY;
+            // Get distance and angle to target position
+            const distanceToTarget = Math.hypot(this.x - this.targetX, this.y - this.targetY);
+            const angleToTarget = Math.atan2(this.targetY - this.y, this.targetX - this.x);
+
+            // Snap to target once close enough
+            if (!this.arrivedAtTarget && distanceToTarget < this.targetSnapDistance) {
+              this.arrivedAtTarget = true;
+            }
+
+            if (!this.arrivedAtTarget) {
+              // Move ever quicker toward the target position
+              this.x += (Math.cos(angleToTarget) * this.speed * deltaTime * this.targetSpeedMultiplier) / 1000;
+              this.y += (Math.sin(angleToTarget) * this.speed * deltaTime * this.targetSpeedMultiplier) / 1000;
+              this.targetSpeedMultiplier += 0.02;
+            } else {
+              // Snap to target location
+              this.x = this.targetX;
+              this.y = this.targetY;
+            }
+            // Always stay 180deg from player rotation
+            this.rotation = player.rotation + Math.PI;
           }
           break;
       }
     }
 
-    // Check if the ally's duration has ended
-    if (this.exitTime > this.duration) {
+    // Check if it's time for the ally to exit
+    if (this.exitTime > this.exitDuration) {
       this.exitTime = 0;
       this.exiting = true;
       this.sounds.overAndOut.play();
@@ -180,7 +224,7 @@ export default class Ally {
     }
   }
 
-  afterWarning() {
+  warned() {
     this.warning = false;
     // Play pattern sound once the warning time is over
     if (this.pattern === 'circularOrbit') this.sounds.circularOrbit.play();
@@ -188,7 +232,7 @@ export default class Ally {
   }
 
   selectedPattern() {
-    const patterns = ['circularOrbit'];
+    const patterns = ['circularOrbit', 'followPlayer'];
     return patterns[Math.floor(Math.random() * patterns.length)];
   }
 }
