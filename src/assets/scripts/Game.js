@@ -89,10 +89,6 @@ export default class Game {
     // Reset and spawn non-boss enemies
     // this.enemies.init();
 
-    // Reset Ally
-    this.ally = null;
-    this.allyNextSpawnTime = 0;
-
     // Initialize boss if boss level
     if (this.level % 5 === 0) {
       const bosses = [Boss, BiomechLeviathan, CyberDragon, TemporalSerpent];
@@ -240,11 +236,10 @@ export default class Game {
     }
 
     // Check if it's time to spawn the ally
+    this.allyNextSpawnTime += deltaTime;
     if (this.allyNextSpawnTime > this.allyInterval) {
       this.allyNextSpawnTime = 0;
       if (!this.ally) this.ally = new Ally(this);
-    } else {
-      this.allyNextSpawnTime += deltaTime;
     }
   }
 

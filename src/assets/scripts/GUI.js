@@ -191,18 +191,32 @@ export default class GUI {
     ctx.fillStyle = 'white';
     ctx.font = '10px "Press Start 2P", cursive';
     const ms = Math.floor(this.game.tickMs * 10) / 10;
-    const percent = Math.floor(this.game.tickMs / this.game.targetFrameDuration);
+    const percent = Math.floor((this.game.tickMs / this.game.targetFrameDuration) * 100);
     const counts = this.getCounts();
 
     const line4 = `Boss Phase: ${this.game.boss ? this.game.boss.phase : 0}`;
     const line3 = `Effects: ${this.game.effects.length}`;
     const line2 = `E: ${counts.entities} P: ${counts.projectiles} T: ${counts.particles}`;
-    const line1 = `Tick: ${ms}ms - ${percent}%`;
+    const line1Part1 = `Tick: ${ms.toFixed(1)}ms - `;
+    const line1Part2 = `${percent}%`;
+    const line1Part1Width = ctx.measureText(line1Part1).width;
 
     ctx.fillText(line4, 10, this.game.canvas.height - 55);
     ctx.fillText(line3, 10, this.game.canvas.height - 40);
     ctx.fillText(line2, 10, this.game.canvas.height - 25);
-    ctx.fillText(line1, 10, this.game.canvas.height - 10);
+    ctx.fillText(line1Part1, 10, this.game.canvas.height - 10);
+
+    let color;
+    if (percent < 50) {
+      color = 'white';
+    } else if (percent < 80) {
+      color = 'yellow';
+    } else {
+      color = 'red';
+    }
+
+    ctx.fillStyle = color;
+    ctx.fillText(line1Part2, 10 + line1Part1Width, this.game.canvas.height - 10);
   }
 
   getCounts() {

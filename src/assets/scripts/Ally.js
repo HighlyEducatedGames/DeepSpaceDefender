@@ -202,12 +202,11 @@ export default class Ally {
     }
 
     // Check if it's time for the ally to exit
+    this.exitTime += deltaTime;
     if (this.exitTime > this.exitDuration) {
       this.exitTime = 0;
       this.exiting = true;
       this.sounds.overAndOut.play();
-    } else {
-      this.exitTime += deltaTime;
     }
 
     // Projectiles
@@ -215,12 +214,10 @@ export default class Ally {
     this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
 
     // Fire projectiles in the opposite direction of the player
+    this.nextAttackTime += deltaTime;
     if (!this.markedForDeletion && this.movedToPlayer && !this.exiting && this.nextAttackTime > this.attackInterval) {
       this.nextAttackTime = 0;
-      // const fireAngle = angleToPlayer + Math.PI;
       this.projectiles.push(new AllyProjectile(this));
-    } else {
-      this.nextAttackTime += deltaTime;
     }
   }
 
@@ -250,8 +247,6 @@ class AllyProjectile {
     this.height = 5;
     this.directionX = Math.cos(this.angle);
     this.directionY = Math.sin(this.angle);
-    this.traveledDistance = 0;
-    this.maxDistance = 1000;
     this.damage = 25;
     this.markedForDeletion = false;
   }
