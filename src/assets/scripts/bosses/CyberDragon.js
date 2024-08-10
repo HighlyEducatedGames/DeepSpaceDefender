@@ -1,4 +1,4 @@
-import { spawnOffScreenRandomSide } from '../utilities.js';
+import { getOffScreenRandomSide } from '../utilities.js';
 import Asteroid from '../projectiles/Asteroid.js';
 import Explosion from '../effects/Explosion.js';
 
@@ -52,7 +52,7 @@ export default class CyberDragon {
       spiralShot: new Audio('assets/audio/spiralShot.mp3'),
     };
 
-    spawnOffScreenRandomSide(this, 20);
+    getOffScreenRandomSide(this, 20);
   }
 
   draw(ctx) {

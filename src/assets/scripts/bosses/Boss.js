@@ -1,4 +1,4 @@
-import { spawnOffScreenRandomSide } from '../utilities.js';
+import { getOffScreenRandomSide } from '../utilities.js';
 import Explosion from '../effects/Explosion.js';
 
 export default class Boss {
@@ -30,7 +30,7 @@ export default class Boss {
     this.image.src = 'assets/images/boss.png';
     this.music = new Audio('assets/audio/boss_music.mp3');
 
-    spawnOffScreenRandomSide(this, 20);
+    getOffScreenRandomSide(this, 20);
 
     setTimeout(() => {
       this.canShoot = true;

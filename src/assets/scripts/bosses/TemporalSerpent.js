@@ -1,4 +1,4 @@
-import { getRandomDirection, spawnOffScreenRandomSide } from '../utilities.js';
+import { getRandomDirection, getOffScreenRandomSide } from '../utilities.js';
 
 export default class TemporalSerpent {
   constructor(game) {
@@ -47,7 +47,7 @@ export default class TemporalSerpent {
       hazard: new Audio('assets/audio/hazardZone.mp3'),
     };
 
-    spawnOffScreenRandomSide(this, 100);
+    getOffScreenRandomSide(this, 100);
   }
 
   draw(ctx) {

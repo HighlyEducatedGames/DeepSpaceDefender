@@ -36,11 +36,8 @@ window.addEventListener('load', () => {
       ctx.fillText(text, x, y);
     }
 
-    // Throttle the animation loop to the target fps (60)
-    const delay = Math.max(0, game.targetFrameDuration - (performance.now() - game.timestamp));
-    setTimeout(() => {
-      requestAnimationFrame(animate);
-    }, delay);
+    // Throttle the animation loop to the target fps (60) // TODO
+    requestAnimationFrame(animate);
 
     // Store the tick time for debug text
     game.tickMs = performance.now() - game.timestamp;

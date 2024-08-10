@@ -1,4 +1,4 @@
-import { spawnOffScreenRandomSide } from '../utilities.js';
+import { getOffScreenRandomSide } from '../utilities.js';
 
 export default class BiomechLeviathan {
   constructor(game) {
@@ -44,7 +44,7 @@ export default class BiomechLeviathan {
 
     this.music = new Audio('assets/audio/boss_music.mp3');
 
-    spawnOffScreenRandomSide(this, 100);
+    getOffScreenRandomSide(this, 100);
   }
 
   draw(ctx) {

@@ -1,4 +1,4 @@
-import { spawnOffScreenRandomSide } from './utilities.js';
+import { getOffScreenRandomSide } from './utilities.js';
 
 export default class Ally {
   constructor(game) {
@@ -7,8 +7,8 @@ export default class Ally {
     this.y = null;
     this.width = 50;
     this.height = 50;
+    this.enteringSide = null;
     this.exitingSide = Math.floor(Math.random() * 4);
-    this.enteringSide = Math.floor(Math.random() * 4);
     this.offset = 4;
     this.speed = 150;
     this.rotation = 0;
@@ -30,7 +30,7 @@ export default class Ally {
     this.attackInterval = 200;
     this.targetX = null;
     this.targetY = null;
-    this.followMargin = 5;
+    this.followMargin = 15;
     this.targetSpeedMultiplier = 1;
     this.targetSnapDistance = 10;
     this.markedForDeletion = false;
@@ -44,7 +44,11 @@ export default class Ally {
       followPlayer: new Audio('assets/audio/followPlayerSound.mp3'),
     };
 
-    spawnOffScreenRandomSide(this);
+    // Get spawning location and side
+    const { x, y, side } = getOffScreenRandomSide(this);
+    this.x = x;
+    this.y = y;
+    this.enteringSide = side;
 
     // Play warning sound immediatlly
     this.sounds.warning.play();
@@ -135,7 +139,7 @@ export default class Ally {
       }
     } else if (this.exiting) {
       // Handle exit motion
-      // Rotate to point orthagonal toward exit side
+      // Rotate to point orthagonaly toward exit side
       let exitSpeed = (this.speed * deltaTime) / 1000;
       switch (this.exitingSide) {
         case 0: // Exit left
@@ -175,6 +179,7 @@ export default class Ally {
             const distanceY = this.height * 0.5 + this.height * 0.5 + this.followMargin;
             this.targetX = player.x + Math.cos(player.rotation + Math.PI) * distanceX;
             this.targetY = player.y + Math.sin(player.rotation + Math.PI) * distanceY;
+
             // Get distance and angle to target position
             const distanceToTarget = Math.hypot(this.x - this.targetX, this.y - this.targetY);
             const angleToTarget = Math.atan2(this.targetY - this.y, this.targetX - this.x);
@@ -186,8 +191,8 @@ export default class Ally {
 
             if (!this.arrivedAtTarget) {
               // Move ever quicker toward the target position
-              this.x += (Math.cos(angleToTarget) * this.speed * deltaTime * this.targetSpeedMultiplier) / 1000;
-              this.y += (Math.sin(angleToTarget) * this.speed * deltaTime * this.targetSpeedMultiplier) / 1000;
+              this.x += (Math.cos(angleToTarget) * this.speed * this.targetSpeedMultiplier * deltaTime) / 1000;
+              this.y += (Math.sin(angleToTarget) * this.speed * this.targetSpeedMultiplier * deltaTime) / 1000;
               this.targetSpeedMultiplier += 0.02;
             } else {
               // Snap to target location
@@ -242,7 +247,7 @@ class AllyProjectile {
     this.angle = this.ally.rotation;
     this.x = this.ally.x + Math.cos(this.angle) * this.offset;
     this.y = this.ally.y + Math.sin(this.angle) * this.offset;
-    this.speed = 10;
+    this.speed = 250;
     this.width = 5;
     this.height = 5;
     this.directionX = Math.cos(this.angle);
@@ -258,10 +263,10 @@ class AllyProjectile {
     ctx.fill();
   }
 
-  update() {
+  update(deltaTime) {
     // Movement
-    this.x += this.directionX * this.speed;
-    this.y += this.directionY * this.speed;
+    this.x += (this.directionX * this.speed * deltaTime) / 1000;
+    this.y += (this.directionY * this.speed * deltaTime) / 1000;
 
     // Delete if out of bounds
     if (this.game.outOfBounds(this)) this.markedForDeletion = true;
