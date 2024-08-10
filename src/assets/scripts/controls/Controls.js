@@ -146,15 +146,15 @@ export default class Controls {
       const keyName = this.controllerButtonMap[index];
       if (!keyName) return;
       const key = this.keys[keyName];
-      const prevPressed = this.prevGamepadState.buttons[index].pressed;
 
-      if (button.pressed && button.value > this.triggerThreshold) {
+      // button.value is a binary 0|1 for buttons or a range 0-1 for triggers
+      if (button.value > this.triggerThreshold) {
         if (!key.isPressed) {
           this.pressKey(key);
         } else {
           this.holdKey(key);
         }
-      } else if (prevPressed) {
+      } else if (key.isPressed) {
         this.releaseKey(key);
       }
     });
@@ -173,8 +173,8 @@ export default class Controls {
       }
     } else {
       // TODO make this not override dpad inputs
-      this.releaseKey(leftKey);
-      this.releaseKey(rightKey);
+      if (leftKey.isPressed) this.releaseKey(leftKey);
+      if (rightKey.isPressed) this.releaseKey(rightKey);
     }
 
     // Determine if the gamepad is being used by comparing
@@ -200,6 +200,7 @@ export default class Controls {
     return true;
   }
 
+  // Controller rumble if available
   playHaptic(duration, magnitude = 1) {
     const gamePad = navigator.getGamepads()[this.gamepadIndex];
     if (!gamePad) return;
