@@ -20,18 +20,32 @@ export default class Game {
     this.canvas = canvas;
     this.width = this.canvas.width;
     this.height = this.canvas.height;
+    this.topMargin = 120;
     this.controls = new Controls(this);
-    this.GUI = new GUI(this);
+    this.player = new Player(this);
     this.menu = new Menu(this);
+    this.GUI = new GUI(this);
     this.music = new MusicController(this);
     this.powerUps = new PowerUpManager(this);
     this.enemies = new EnemyController(this);
-    this.topMargin = 120;
-    this.boss = null;
     this.targetFPS = 60;
     this.targetFrameDuration = 1000 / this.targetFPS;
     this.timestamp = 0;
     this.tickMs = null;
+    this.numStars = 50;
+    this.parallaxLayers = 3;
+    this.stars = [];
+    this.effects = [];
+    this.boss = null;
+    this.level = 0;
+    this.score = 0;
+    this.isGameOver = false;
+    this.levelStartTime = 0;
+    this.levelDuration = 30000;
+    this.maxCoins = 5;
+    this.ally = null;
+    this.allyNextSpawnTime = 0;
+    this.allyInterval = 5000; // TODO
 
     this.images = {
       title: new Image(),
@@ -59,7 +73,7 @@ export default class Game {
   startLevel(level) {
     this.level = level;
     this.levelStartTime = this.timestamp;
-    this.levelDuration = 30000;
+    this.levelDuration = Infinity;
     this.effects = [];
     this.maxCoins = 5;
     this.player.stopPlayerMovement();
@@ -71,13 +85,11 @@ export default class Game {
     }
 
     // Reset and spawn non-boss enemies
-    this.enemies.init();
+    // this.enemies.init();
 
     // Reset Ally
     this.ally = null;
-    this.allySpawnTime = 0;
-    this.allyInterval = 60000;
-    this.allyWarningTime = 3000;
+    this.allyNextSpawnTime = 0;
 
     // Initialize boss if boss level
     if (this.level % 5 === 0) {
@@ -122,11 +134,9 @@ export default class Game {
   }
 
   crateStars() {
-    const numStars = 50;
-    const parallaxLayers = 3;
     this.stars = [];
-    for (let i = 0; i < numStars; i++) {
-      this.stars.push(new Star(this, parallaxLayers));
+    for (let i = 0; i < this.numStars; i++) {
+      this.stars.push(new Star(this));
     }
   }
 
@@ -145,6 +155,7 @@ export default class Game {
     this.enemies.draw(ctx);
     this.effects.forEach((effect) => effect.draw(ctx));
     this.powerUps.draw(ctx);
+    if (this.ally) this.ally.draw(ctx);
     this.player.draw(ctx);
     this.GUI.draw(ctx);
 
@@ -173,6 +184,7 @@ export default class Game {
       this.enemies.update(deltaTime);
       this.effects.forEach((effect) => effect.update(deltaTime));
       this.powerUps.update(deltaTime);
+      if (this.ally) this.ally.update(deltaTime);
       this.player.update(deltaTime);
       this.levelUpdate(deltaTime);
     }
@@ -181,6 +193,10 @@ export default class Game {
   deleteOldObjects() {
     this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
     if (this.boss && this.boss.markedForDeletion) this.boss = null;
+    if (this.ally && this.ally.markedForDeletion && this.ally.projectiles.length === 0) {
+      this.ally = null;
+      this.allyNextSpawnTime = 0;
+    }
     this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
   }
 
@@ -200,7 +216,7 @@ export default class Game {
     this.startLevel(this.level + 1);
   }
 
-  levelUpdate() {
+  levelUpdate(deltaTime) {
     if (!this.boss) {
       // Countdown if not a boss level
       const elapsedTime = this.timestamp - this.levelStartTime;
@@ -222,14 +238,12 @@ export default class Game {
     }
 
     // Check if it's time to spawn the ally
-    // if (this.timestamp > this.allySpawnTime + this.allyInterval) {
-    //   this.allySpawnTime = this.timestamp;
-    //   const ally = new Ally(this);
-    //   ally.sounds.warning.cloneNode().play();
-    //   setTimeout(() => {
-    //     this.ally = ally;
-    //   }, this.allyWarningTime);
-    // }
+    if (this.allyNextSpawnTime > this.allyInterval) {
+      this.allyNextSpawnTime = 0;
+      if (!this.ally) this.ally = new Ally(this);
+    } else {
+      this.allyNextSpawnTime += deltaTime;
+    }
   }
 
   outOfBounds(object, extraMargin = 0) {

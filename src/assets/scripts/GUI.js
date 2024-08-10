@@ -206,11 +206,17 @@ export default class GUI {
   }
 
   getCounts() {
-    const enemyController = this.game.enemies;
-    const enemyCount = enemyController.getLength();
-    const entityCount = enemyCount;
+    let entities = 0;
+    let projectiles = 0;
+    let particles = 0;
 
-    // const enemyProjectiles = enemyController.enemies.reduce(() => {}, 0)
-    return { entities: entityCount, projectiles: 0, particles: 0 };
+    entities += this.game.coins.length;
+
+    if (this.game.ally) {
+      entities++;
+      projectiles += this.game.ally.projectiles.length;
+    }
+
+    return { entities, projectiles, particles };
   }
 }

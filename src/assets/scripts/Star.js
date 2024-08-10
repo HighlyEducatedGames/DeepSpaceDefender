@@ -1,10 +1,10 @@
 export default class Star {
-  constructor(game, layers) {
+  constructor(game) {
     this.game = game;
     this.x = Math.random() * this.game.canvas.width;
     this.y = Math.random() * this.game.canvas.height;
     this.radius = Math.random() * 0.7 + 0.3;
-    this.layer = Math.floor(Math.random() * layers);
+    this.layer = Math.floor(Math.random() * this.game.parallaxLayers);
     this.speed = (this.layer + 1) * 2;
   }
 
