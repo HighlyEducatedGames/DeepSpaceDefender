@@ -14,7 +14,6 @@ export default class Coin {
     this.bobbingAmplitude = 0.9;
     this.bobbingAngle = Math.random() * Math.PI * 2;
     this.markedForDeletion = false;
-
     this.image = new Image();
     this.image.src = 'assets/images/coin.png';
     this.sound = new Audio('assets/audio/coin.mp3');

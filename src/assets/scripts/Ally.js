@@ -34,7 +34,6 @@ export default class Ally {
     this.targetSpeedMultiplier = 1;
     this.targetSnapDistance = 10;
     this.markedForDeletion = false;
-
     this.image = new Image();
     this.image.src = 'assets/images/ally.png';
     this.sounds = {
