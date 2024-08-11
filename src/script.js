@@ -3,8 +3,8 @@ import Game from './assets/scripts/Game.js';
 window.addEventListener('load', () => {
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = 1200;
-  canvas.height = 700;
+  canvas.width = 1280;
+  canvas.height = 720;
 
   const game = new Game(canvas);
 

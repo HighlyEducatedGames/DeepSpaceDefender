@@ -4,20 +4,49 @@ export default class EnemyController {
   constructor(game) {
     this.game = game;
     this.enemies = [];
-    this.enemyRespawnTimeouts = [];
-    this.maxRegularEnemies = 6;
-    this.maxTankEnemies = 3;
-    this.maxStealthEnemies = 4;
+    this.types = {
+      regular: {
+        max: 6,
+        numToSpawn: 0,
+        spawnTime: 0,
+        interval: 7000,
+        obj: RegularEnemy,
+      },
+      tank: {
+        max: 3,
+        numToSpawn: 0,
+        spawnTime: 0,
+        interval: 5000,
+        obj: TankEnemy,
+      },
+      stealth: {
+        max: 4,
+        numToSpawn: 0,
+        spawnTime: 0,
+        interval: 7000,
+        obj: StealthEnemy,
+      },
+    };
   }
 
   draw(ctx) {
     this.enemies.forEach((enemy) => enemy.draw(ctx));
   }
 
-  update() {
-    this.enemies.forEach((enemy) => enemy.update());
-    this.respawnEnemies();
+  update(deltaTime) {
+    // Update existing enemies
+    this.enemies.forEach((enemy) => enemy.update(deltaTime));
     this.enemies = this.enemies.filter((enemy) => !enemy.markedForDeletion);
+
+    // Spawn any new enemies on an interval
+    for (const key in this.types) {
+      const type = this.types[key];
+      type.spawnTime += deltaTime;
+      if (type.spawnTime > type.interval) {
+        type.spawnTime = 0;
+        this.spawnEnemy(type);
+      }
+    }
   }
 
   reset() {
@@ -25,48 +54,24 @@ export default class EnemyController {
   }
 
   init() {
+    // Clear all old enemies
     this.reset();
 
-    let numRegularEnemies = Math.min(this.game.level, this.maxRegularEnemies);
-    let numEnemyTanks = this.game.level >= 3 ? Math.min(Math.ceil(this.game.level * 0.3), this.maxTankEnemies) : 0;
-    let numStealthEnemies =
-      this.game.level >= 6 ? Math.min(Math.ceil(this.game.level * 0.2), this.maxStealthEnemies) : 0;
+    // Dynamically set number of enemies that can spawn this level
+    this.types.regular.numToSpawn = Math.min(this.game.level, this.types.regular.max);
+    this.types.tank.numToSpawn =
+      this.game.level >= 3 ? Math.min(Math.ceil(this.game.level * 0.3), this.types.tank.max) : 0;
+    this.types.stealth.numToSpawn =
+      this.game.level >= 6 ? Math.min(Math.ceil(this.game.level * 0.2), this.types.stealth.max) : 0;
 
-    for (let i = 0; i < numRegularEnemies; i++) {
-      this.spawnEnemy(RegularEnemy, this.maxRegularEnemies);
-    }
-
-    for (let i = 0; i < numEnemyTanks; i++) {
-      this.spawnEnemy(TankEnemy, this.maxTankEnemies);
-    }
-
-    for (let i = 0; i < numStealthEnemies; i++) {
-      this.spawnEnemy(StealthEnemy, this.maxStealthEnemies);
-    }
+    // Attempt to spawn a single regular enemy right when the level starts
+    this.spawnEnemy(this.types.regular);
   }
 
-  spawnEnemy(Enemy, maxEnemiesOfType) {
+  spawnEnemy(type) {
     if (this.game.boss) return;
-    const currentEnemies = this.enemies.filter((enemy) => enemy instanceof Enemy).length;
-    if (currentEnemies >= maxEnemiesOfType) return;
-    this.enemies.push(new Enemy(this.game));
-  }
-
-  respawnEnemies() {
-    // Respawn enemies after a timeout
-    const toRespawn = this.enemies.filter((enemy) => enemy.markedForDeletion);
-    toRespawn
-      .filter((enemy) => enemy instanceof RegularEnemy)
-      .forEach((enemy) => setTimeout(() => this.spawnEnemy(RegularEnemy, this.maxRegularEnemies), enemy.respawnTime));
-    toRespawn
-      .filter((enemy) => enemy instanceof TankEnemy)
-      .forEach((enemy) => setTimeout(() => this.spawnEnemy(TankEnemy, this.maxTankEnemies), enemy.respawnTime));
-    toRespawn
-      .filter((enemy) => enemy instanceof StealthEnemy)
-      .forEach((enemy) => setTimeout(() => this.spawnEnemy(StealthEnemy, this.maxStealthEnemies), enemy.respawnTime));
-  }
-
-  getLength() {
-    return this.enemies.length;
+    const currentEnemies = this.enemies.filter((enemy) => enemy instanceof type.obj).length;
+    if (currentEnemies >= type.numToSpawn) return;
+    this.enemies.push(new type.obj(this.game));
   }
 }

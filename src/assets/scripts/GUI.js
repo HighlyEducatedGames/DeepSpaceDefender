@@ -222,12 +222,21 @@ export default class GUI {
     let projectiles = 0;
     let particles = 0;
 
+    // Game objects
     entities += this.game.coins.length;
 
+    // Ally
     if (this.game.ally) {
       entities++;
       projectiles += this.game.ally.projectiles.length;
     }
+
+    // Enemies
+    entities += this.game.enemies.enemies.length;
+    projectiles += this.game.enemies.enemies.reduce((a, b) => a + b.projectiles.length, 0);
+
+    // Wormholes
+    entities += this.game.wormholes.wormholes.length * 2;
 
     return { entities, projectiles, particles };
   }

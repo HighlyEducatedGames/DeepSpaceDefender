@@ -5,31 +5,22 @@ class Enemy {
     this.game = game;
     this.x = null;
     this.y = null;
-    this.width = 50;
-    this.height = 50;
-    this.side = Math.random() < 0.5 ? 'left' : 'right';
-    this.speedMultiplier = this.game.level - 1 * 0.05;
-    this.speed = 1.5 * this.speedMultiplier;
-    this.vx = this.side === 'left' ? 1 : -1;
-    this.canShoot = false;
+    this.width = null;
+    this.height = null;
+    this.speed = null;
     this.attackInterval = null;
+    this.maxHealth = null;
+    this.damage = null;
+    this.score = null;
+    this.side = Math.random() < 0.5 ? 'left' : 'right';
+    this.vx = this.side === 'left' ? 1 : -1;
+    this.canShoot = true;
     this.lastAttackTime = 0;
-    this.maxHealth = 10;
     this.health = this.maxHealth;
-    this.damage = 10;
-    this.score = 10;
     this.projectiles = [];
     this.verticalMargin = 50;
     this.markedForDeletion = false;
-
-    this.image = new Image();
-    this.image.src = 'assets/images/enemy.png';
-
-    this.getSpawnPosition();
-
-    setTimeout(() => {
-      this.canShoot = true;
-    }, 2000);
+    this.image = null;
   }
 
   draw(ctx) {
@@ -50,7 +41,7 @@ class Enemy {
 
   update(deltaTime) {
     // Movement
-    this.x += this.speed * this.vx;
+    this.x += (this.speed * this.vx * deltaTime) / 1000;
 
     // Bounce back and forth on the x-axis
     if (this.x < this.width * 0.5 && this.vx < 0) this.vx = 1;
@@ -61,9 +52,8 @@ class Enemy {
     this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
 
     // Attack Logic
-    console.log(this.game.timestamp - this.lastAttackTime)
     if (this.canShoot && this.game.timestamp - this.lastAttackTime >= this.attackInterval) {
-      this.fireProjectile()
+      this.fireProjectile();
     }
 
     this.checkCollisions();
@@ -95,8 +85,8 @@ class Enemy {
   }
 
   fireProjectile() {
-    console.log('ENEMY FIRING')
-    this.projectiles.push(new EnemyProjectile(this.game, this.x, this.y));
+    const angleToPlayer = this.game.player.getAngleToPlayer(this);
+    this.projectiles.push(new EnemyProjectile(this.game, this.x, this.y, angleToPlayer));
     this.lastAttackTime = this.game.timestamp;
   }
 }
@@ -104,21 +94,26 @@ class Enemy {
 export class RegularEnemy extends Enemy {
   constructor(game) {
     super(game);
+    this.width = 50;
+    this.height = 50;
+    this.speed = 60;
+    this.maxHealth = 10;
     this.attackInterval = getRandomInterval(3000, 5000);
-    this.respawnTime = 7000;
+    this.image = new Image();
+    this.image.src = 'assets/images/enemy.png';
+
+    super.getSpawnPosition();
   }
 }
 
 export class TankEnemy extends Enemy {
   constructor(game) {
     super(game);
-    this.health = 30;
-    this.speed = 0.6;
     this.width = 60;
     this.height = 60;
+    this.speed = 40;
+    this.maxHealth = 30;
     this.attackInterval = getRandomInterval(2000, 3000);
-    this.respawnTime = 5000;
-
     this.image = new Image();
     this.image.src = 'assets/images/enemy_tank.png';
 
@@ -129,18 +124,21 @@ export class TankEnemy extends Enemy {
 export class StealthEnemy extends Enemy {
   constructor(game) {
     super(game);
-    this.health = 20;
+    this.width = 50;
+    this.height = 50;
+    this.speed = 60;
+    this.maxHealth = 20;
+    this.attackInterval = getRandomInterval(1000, 2000);
+    this.image = new Image();
+    this.image.src = 'assets/images/stealth_enemy.png';
+
+    // Stealth only properties
     this.visible = false;
-    this.visibleStartTime = performance.now();
+    this.visibleStartTime = this.game.timestamp;
     this.opacity = 0;
     this.visibleDuration = 3000;
     this.invisibleDuration = 3000;
-    this.attackInterval = getRandomInterval(1000, 2000);
-    this.respawnTime = 7000;
 
-    this.image = new Image();
-    this.image.src = 'assets/images/stealth_enemy.png';
-    
     super.getSpawnPosition();
   }
 
@@ -166,8 +164,8 @@ export class StealthEnemy extends Enemy {
     }
   }
 
-  update() {
-    super.update();
+  update(deltaTime) {
+    super.update(deltaTime);
     const currentTime = this.game.timestamp;
     const elapsedTime = currentTime - this.visibleStartTime;
 
@@ -196,15 +194,15 @@ export class StealthEnemy extends Enemy {
 }
 
 class EnemyProjectile {
-  constructor(game, x, y) {
+  constructor(game, x, y, angle) {
     this.game = game;
     this.x = x;
     this.y = y;
     this.width = 5;
     this.height = 5;
-    this.speed = 500;
-    this.vx = 0;
-    this.vy = 0;
+    this.speed = 250;
+    this.vx = Math.cos(angle);
+    this.vy = Math.sin(angle);
   }
 
   draw(ctx) {
@@ -217,7 +215,6 @@ class EnemyProjectile {
   update(deltaTime) {
     this.x += (this.speed * this.vx * deltaTime) / 1000;
     this.y += (this.speed * this.vy * deltaTime) / 1000;
-    this.traveledDistance += (this.speed * deltaTime) / 1000;
     if (this.game.outOfBounds(this)) this.markedForDeletion = true;
   }
 }
