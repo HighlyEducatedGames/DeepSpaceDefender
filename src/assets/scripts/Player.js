@@ -9,7 +9,7 @@ export default class Player {
     this.width = 50;
     this.height = 50;
     this.x = this.game.canvas.width * 0.5;
-    this.y = this.game.canvas.height * 0.5;
+    this.y = this.game.canvas.height * 0.5 + this.game.topMargin * 0.5;
     this.offset = 4;
     this.speed = 200;
     this.rotation = -Math.PI * 0.5;
