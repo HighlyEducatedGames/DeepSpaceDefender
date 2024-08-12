@@ -17,7 +17,7 @@ window.addEventListener('load', () => {
 
     // Update player inputs
     game.controls.update();
-    game.handleMainGameControls();
+    game.handleGameControls();
 
     if (!game.menu.isOpen) {
       // Playing the game
@@ -38,7 +38,6 @@ window.addEventListener('load', () => {
       if (game.debug) game.GUI.drawDebug(ctx);
     }
 
-    // Throttle the animation loop to the target fps (60) // TODO
     requestAnimationFrame(animate);
 
     // Store the tick time for debug text

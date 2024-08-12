@@ -14,7 +14,7 @@ export default class GUI {
 
     this.chargeBarWidth = 200;
     this.chargeBarHeight = 20;
-    this.chargeBarX = this.game.canvas.width * 0.5 - this.chargeBarWidth * 0.5 + 350;
+    this.chargeBarX = this.game.canvas.width * 0.5 - this.chargeBarWidth * 0.5 + 420;
     this.chargeBarY = 20;
 
     this.shieldBarWidth = 200;

@@ -34,6 +34,8 @@ export default class EnemyController {
   }
 
   update(deltaTime) {
+    if (!this.game.doEnemies) return;
+
     // Update existing enemies
     this.enemies.forEach((enemy) => enemy.update(deltaTime));
     this.enemies = this.enemies.filter((enemy) => !enemy.markedForDeletion);

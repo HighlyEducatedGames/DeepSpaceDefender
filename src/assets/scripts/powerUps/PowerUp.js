@@ -6,11 +6,9 @@ class PowerUp {
     this.width = null;
     this.height = null;
     this.speed = null;
-    this.directionX = 0;
-    this.directionY = 0;
+    this.dx = null;
+    this.dy = null;
     this.verticalMargin = 50;
-    this.spawnTime = this.game.timestamp;
-    this.expirationTime = 0;
     this.zigZagSpeed = 100;
     this.markedForDeletion = false;
   }
@@ -20,22 +18,15 @@ class PowerUp {
   }
 
   update(deltaTime) {
-    this.x += (this.speed * this.directionX * deltaTime) / 1000;
-    this.y += (this.speed * this.directionY * deltaTime) / 1000;
+    this.x += (this.speed * this.dx * deltaTime) / 1000;
+    this.y += (this.speed * this.dy * deltaTime) / 1000;
 
-    if (
-      this.x < -this.width ||
-      this.x > this.game.canvas.width ||
-      this.y < -this.height ||
-      this.y > this.game.canvas.height
-    ) {
-      this.markedForDeletion = true;
-    }
+    if (this.game.outOfBounds(this)) this.markedForDeletion = true;
   }
 
   getOffScreenSpawnPosition() {
     const side = Math.random() < 0.5 ? 'left' : 'right';
-    this.x = side === 'left' ? -this.width : this.game.canvas.width;
+    this.x = side === 'left' ? -this.width * 0.5 : this.game.canvas.width + this.width * 0.5;
     this.y = this.verticalMargin + Math.random() * (this.game.canvas.height - this.height - 2 * this.verticalMargin);
     this.directionX = side === 'left' ? 1 : -1;
     this.directionY = 0;

@@ -13,6 +13,7 @@ import Boss from './bosses/Boss.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import TemporalSerpent from './bosses/TemporalSerpent.js';
 import CyberDragon from './bosses/CyberDragon.js';
+import { Wormholes } from './hazards/Wormhole.js';
 
 export default class Game {
   constructor(canvas) {
@@ -20,7 +21,7 @@ export default class Game {
     this.canvas = canvas;
     this.width = this.canvas.width;
     this.height = this.canvas.height;
-    this.topMargin = 120;
+    this.topMargin = 90;
     this.controls = new Controls(this);
     this.player = new Player(this);
     this.menu = new Menu(this);
@@ -28,6 +29,7 @@ export default class Game {
     this.music = new MusicController(this);
     this.powerUps = new PowerUpManager(this);
     this.enemies = new EnemyController(this);
+    this.wormholes = new Wormholes(this);
     this.targetFPS = 60;
     this.targetFrameDuration = 1000 / this.targetFPS;
     this.timestamp = 0;
@@ -46,7 +48,6 @@ export default class Game {
     this.ally = null;
     this.allyNextSpawnTime = 0;
     this.allyInterval = 60000;
-
     this.images = {
       title: new Image(),
     };
@@ -54,6 +55,13 @@ export default class Game {
     this.sounds = {
       collision: new Audio('assets/audio/collision.mp3'),
     };
+
+    // DEBUG FLAGS
+    this.doAlly = false;
+    this.doEnemies = false;
+    this.doBoss = false;
+    this.doWormholes = false;
+    this.doPowerUps = false;
 
     this.crateStars();
     this.resetGame();
@@ -87,10 +95,13 @@ export default class Game {
     }
 
     // Reset and spawn non-boss enemies
-    // this.enemies.init();
+    if (this.doEnemies) this.enemies.init();
+
+    // Reset and restart wormholes
+    if (this.doWormholes) this.wormholes.init();
 
     // Initialize boss if boss level
-    if (this.level % 5 === 0) {
+    if (this.level % 5 === 0 && this.doBoss) {
       const bosses = [Boss, BiomechLeviathan, CyberDragon, TemporalSerpent];
       const bossIndex = Math.floor((level - 5) / 5) % bosses.length;
       this.boss = new bosses[bossIndex](this);
@@ -102,11 +113,9 @@ export default class Game {
 
     // Infinite time on boss levels
     this.countdown = this.boss ? Infinity : this.levelDuration / 1000;
-
-    // initWormholes(level); // TODO
   }
 
-  handleMainGameControls() {
+  handleGameControls() {
     // Toggle debug mode
     if (this.controls.keys.debug.justPressed()) {
       this.debug = !this.debug;
@@ -149,6 +158,7 @@ export default class Game {
   draw(ctx) {
     this.stars.forEach((star) => star.draw(ctx));
     this.coins.forEach((coin) => coin.draw(ctx));
+    this.wormholes.draw(ctx);
     if (this.boss) this.boss.draw(ctx);
     this.enemies.draw(ctx);
     this.effects.forEach((effect) => effect.draw(ctx));
@@ -172,12 +182,21 @@ export default class Game {
       ctx.fillText('Press B to Restart', centerX, centerY + 100);
       ctx.restore();
     }
+
+    // DEBUG - Vertical Margin
+    if (this.debug) {
+      ctx.strokeStyle = 'gray';
+      ctx.moveTo(0, this.topMargin);
+      ctx.lineTo(this.canvas.width, this.topMargin);
+      ctx.stroke();
+    }
   }
 
   update(deltaTime) {
     if (!this.isGameOver) {
       this.stars.forEach((star) => star.update(deltaTime));
       this.coins.forEach((coin) => coin.update(deltaTime));
+      this.wormholes.update(deltaTime);
       if (this.boss) this.boss.update(deltaTime);
       this.enemies.update(deltaTime);
       this.effects.forEach((effect) => effect.update(deltaTime));
@@ -235,12 +254,16 @@ export default class Game {
       }
     }
 
-    // Check if it's time to spawn the ally
+    // Ally Spawning
     this.allyNextSpawnTime += deltaTime;
     if (this.allyNextSpawnTime > this.allyInterval) {
       this.allyNextSpawnTime = 0;
-      if (!this.ally) this.ally = new Ally(this);
+      this.spawnAlly();
     }
+  }
+
+  spawnAlly() {
+    if (this.doAlly && !this.ally) this.ally = new Ally(this);
   }
 
   outOfBounds(object, extraMargin = 0) {

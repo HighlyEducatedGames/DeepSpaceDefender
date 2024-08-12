@@ -8,6 +8,7 @@ export default class Player {
     this.game = game;
     this.width = 50;
     this.height = 50;
+    this.radius = this.width * 0.5;
     this.x = this.game.canvas.width * 0.5;
     this.y = this.game.canvas.height * 0.5 + this.game.topMargin * 0.5;
     this.offset = 4;
@@ -394,6 +395,10 @@ export default class Player {
       this.lives = 0;
       this.game.gameOver();
     }
+  }
+
+  addHealth(number) {
+    this.health = Math.min(this.health + number, this.maxHealth);
   }
 
   addScore(number) {

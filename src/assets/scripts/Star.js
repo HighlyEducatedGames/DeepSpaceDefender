@@ -4,8 +4,10 @@ export default class Star {
     this.x = Math.random() * this.game.canvas.width;
     this.y = Math.random() * this.game.canvas.height;
     this.radius = Math.random() * 0.7 + 0.3;
+    this.dx = -1;
+    this.dy = 0;
     this.layer = Math.floor(Math.random() * this.game.parallaxLayers);
-    this.speed = (this.layer + 1) * 2;
+    this.speed = (this.layer + 1) * 90;
   }
 
   draw(ctx) {
@@ -15,9 +17,9 @@ export default class Star {
     ctx.fill();
   }
 
-  update() {
-    // Move star to the left
-    this.x -= this.speed;
+  update(deltaTime) {
+    this.x += (this.speed * this.dx * deltaTime) / 1000;
+    this.y += (this.speed * this.dy * deltaTime) / 1000;
 
     // If star moves off the left edge, reset it to the right edge
     if (this.x < 0) {
