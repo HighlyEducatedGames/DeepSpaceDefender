@@ -1,13 +1,8 @@
-/* global PAGE_LOADING */
+/* global loaded */
 import Game from './assets/scripts/Game.js';
 
 window.addEventListener('load', () => {
-  PAGE_LOADING = false;
-  document.getElementById('loadingCanvas').style.display = 'none';
-  document.getElementById('gameCanvas').style.display = 'block';
-  document.getElementById('menu-container').style.display = 'block';
-  document.getElementById('menu').style.display = 'block';
-
+  loaded();
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
   canvas.width = 1280;
