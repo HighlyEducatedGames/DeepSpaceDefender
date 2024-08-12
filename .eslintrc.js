@@ -12,6 +12,7 @@ module.exports = {
   plugins: ['prettier'],
   rules: {
     'no-console': 'warn',
+    'no-global-assign': 'warn',
     'prettier/prettier': [
       'error',
       {

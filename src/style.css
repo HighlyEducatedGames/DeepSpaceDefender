@@ -31,7 +31,10 @@ canvas {
 #credits,
 #howToPlay,
 #soundOptions,
-#controls {
+#controls,
+#menu,
+#gameCanvas,
+#menu-container {
   display: none;
 }
 
@@ -65,4 +68,8 @@ canvas {
 
 .action {
   color: #2eb91e;
+}
+
+#loadingCanvas {
+  border-radius: 60px;
 }
