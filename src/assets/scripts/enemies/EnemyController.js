@@ -76,4 +76,8 @@ export default class EnemyController {
     if (currentEnemies >= type.numToSpawn) return;
     this.enemies.push(new type.obj(this.game));
   }
+
+  getLength() {
+    return this.enemies.length;
+  }
 }

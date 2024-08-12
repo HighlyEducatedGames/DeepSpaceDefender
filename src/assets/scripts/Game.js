@@ -277,6 +277,7 @@ export default class Game {
   }
 
   addScore(score) {
+    if (typeof score !== 'number' || score === Infinity) return;
     this.score += score;
   }
 
