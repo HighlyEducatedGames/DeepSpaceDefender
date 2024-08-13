@@ -12,6 +12,7 @@ class Enemy {
     this.damage = null;
     this.score = null;
     this.side = Math.random() < 0.5 ? 'left' : 'right';
+    this.offScreenMargin = 100;
     this.vx = this.side === 'left' ? 1 : -1;
     this.canShoot = true;
     this.lastAttackTime = 0;
@@ -67,7 +68,10 @@ class Enemy {
   }
 
   getSpawnPosition() {
-    this.x = this.side === 'left' ? -this.width * 0.5 : this.game.width + this.width * 0.5;
+    this.x =
+      this.side === 'left'
+        ? -this.width * 0.5 - this.offScreenMargin
+        : this.game.width + this.width * 0.5 + this.offScreenMargin;
     this.y = getRandomYwithMargin(this.game, this.verticalMargin);
   }
 
