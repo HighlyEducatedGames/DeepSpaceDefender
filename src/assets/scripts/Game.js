@@ -46,7 +46,7 @@ export default class Game {
     this.levelDuration = 30000;
     this.maxCoins = 5;
     this.ally = null;
-    this.allyNextSpawnTime = 0;
+    this.allySpawnTime = 0;
     this.allyInterval = 60000;
     this.images = {
       title: new Image(),
@@ -58,7 +58,7 @@ export default class Game {
 
     // DEBUG FLAGS
     this.doAlly = false;
-    this.doEnemies = false;
+    this.doEnemies = true;
     this.doBoss = false;
     this.doWormholes = false;
     this.doPowerUps = false;
@@ -75,7 +75,7 @@ export default class Game {
     this.player = new Player(this);
     this.ally = null;
     this.allyNextSpawnTime = 0;
-    this.powerUps.removeAll(); // TODO: Do we want to clear only on restart or also on next level??
+    this.powerUps.removeAll();
     this.startLevel(1);
   }
 
@@ -86,7 +86,6 @@ export default class Game {
     this.levelDuration = Infinity;
     this.effects = [];
     this.maxCoins = 5;
-    this.player.stopPlayerMovement();
 
     // Add new coins to this level
     this.coins = [];
@@ -255,10 +254,11 @@ export default class Game {
     }
 
     // Ally Spawning
-    this.allyNextSpawnTime += deltaTime;
-    if (this.allyNextSpawnTime > this.allyInterval) {
-      this.allyNextSpawnTime = 0;
+    if (this.allySpawnTime > this.allyInterval) {
+      this.allySpawnTime = 0;
       this.spawnAlly();
+    } else {
+      this.allySpawnTime += deltaTime;
     }
   }
 
