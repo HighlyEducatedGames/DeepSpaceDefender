@@ -45,7 +45,7 @@ class Enemy {
 
     // Bounce back and forth on the x-axis
     if (this.x < this.width * 0.5 && this.vx < 0) this.vx = 1;
-    if (this.x > this.game.canvas.width - this.width * 0.5 && this.vx > 0) this.vx = -1;
+    if (this.x > this.game.width - this.width * 0.5 && this.vx > 0) this.vx = -1;
 
     // Projectiles
     this.projectiles.forEach((projectile) => projectile.update(deltaTime));
@@ -60,7 +60,7 @@ class Enemy {
   }
 
   getSpawnPosition() {
-    this.x = this.side === 'left' ? -this.width * 0.5 : this.game.canvas.width + this.width * 0.5;
+    this.x = this.side === 'left' ? -this.width * 0.5 : this.game.width + this.width * 0.5;
     this.y = getRandomYwithMargin(this.game, this.verticalMargin);
   }
 

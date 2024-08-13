@@ -66,8 +66,8 @@ export default class Wormhole {
   }
 
   getLocations() {
-    const canvasWidth = this.game.canvas.width;
-    const canvasHeight = this.game.canvas.height;
+    const canvasWidth = this.game.width;
+    const canvasHeight = this.game.height;
     const topMargin = this.game.topMargin + this.margin + this.radius;
     const margin = this.margin + this.radius;
     const spawnCenterX = canvasWidth * 0.5;

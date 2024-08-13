@@ -81,14 +81,14 @@ class FlameParticle {
 
     // Wrap around the canvas
     if (this.x < 0) {
-      this.x = this.game.canvas.width;
-    } else if (this.x > this.game.canvas.width) {
+      this.x = this.game.width;
+    } else if (this.x > this.game.width) {
       this.x = 0;
     }
 
     if (this.y < 0) {
-      this.y = this.game.canvas.height;
-    } else if (this.y > this.game.canvas.height) {
+      this.y = this.game.height;
+    } else if (this.y > this.game.height) {
       this.y = 0;
     }
 

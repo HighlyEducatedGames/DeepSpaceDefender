@@ -27,8 +27,8 @@ class PowerUp {
 
   getOffScreenSpawnPosition() {
     const side = Math.random() < 0.5 ? 'left' : 'right';
-    this.x = side === 'left' ? -this.width * 0.5 : this.game.canvas.width + this.width * 0.5;
-    this.y = this.verticalMargin + Math.random() * (this.game.canvas.height - this.height - 2 * this.verticalMargin);
+    this.x = side === 'left' ? -this.width * 0.5 : this.game.width + this.width * 0.5;
+    this.y = this.verticalMargin + Math.random() * (this.game.height - this.height - 2 * this.verticalMargin);
     this.directionX = side === 'left' ? 1 : -1;
     this.directionY = 0;
   }

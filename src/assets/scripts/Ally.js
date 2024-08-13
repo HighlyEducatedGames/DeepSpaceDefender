@@ -111,7 +111,7 @@ export default class Ally {
           break;
         case 1: // Enter from the right
           this.x -= entrySpeed;
-          if (this.x <= this.game.canvas.width - this.entryDistance) this.entering = false;
+          if (this.x <= this.game.width - this.entryDistance) this.entering = false;
           this.rotation = Math.PI;
           break;
         case 2: // Enter from the top
@@ -121,7 +121,7 @@ export default class Ally {
           break;
         case 3: // Enter from the bottom
           this.y -= entrySpeed;
-          if (this.y <= this.game.canvas.height - this.entryDistance) this.entering = false;
+          if (this.y <= this.game.height - this.entryDistance) this.entering = false;
           this.rotation = Math.PI * 1.5;
           break;
       }

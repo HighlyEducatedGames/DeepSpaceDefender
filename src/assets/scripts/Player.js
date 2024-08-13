@@ -9,8 +9,8 @@ export default class Player {
     this.width = 50;
     this.height = 50;
     this.radius = this.width * 0.5;
-    this.x = this.game.canvas.width * 0.5;
-    this.y = this.game.canvas.height * 0.5 + this.game.topMargin * 0.5;
+    this.x = this.game.width * 0.5;
+    this.y = this.game.height * 0.5 + this.game.topMargin * 0.5;
     this.offset = 4;
     this.speed = 200;
     this.rotation = -Math.PI * 0.5;
@@ -258,10 +258,10 @@ export default class Player {
     this.y += (this.velocity.y * deltaTime) / 1000;
 
     // Screen wrap
-    if (this.x < 0) this.x = this.game.canvas.width;
-    if (this.x > this.game.canvas.width) this.x = 0;
-    if (this.y < 0) this.y = this.game.canvas.height;
-    if (this.y > this.game.canvas.height) this.y = 0;
+    if (this.x < 0) this.x = this.game.width;
+    if (this.x > this.game.width) this.x = 0;
+    if (this.y < 0) this.y = this.game.height;
+    if (this.y > this.game.height) this.y = 0;
 
     // Give extra life if target score reached
     if (this.game.score >= this.nextLifeScore) {

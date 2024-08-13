@@ -2,8 +2,8 @@ export default class Coin {
   constructor(game) {
     this.game = game;
     this.margin = 50;
-    this.x = Math.random() * (this.game.canvas.width - this.margin * 2) + this.margin;
-    this.y = Math.random() * (game.canvas.height - game.topMargin - this.margin * 2) + game.topMargin + this.margin;
+    this.x = Math.random() * (this.game.width - this.margin * 2) + this.margin;
+    this.y = Math.random() * (this.game.height - game.topMargin - this.margin * 2) + game.topMargin + this.margin;
     this.width = 20;
     this.height = 20;
     this.radius = this.width * 0.5;

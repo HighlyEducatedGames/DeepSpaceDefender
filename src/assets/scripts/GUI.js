@@ -4,7 +4,7 @@ export default class GUI {
 
     this.boostBarWidth = 200;
     this.boostBarHeight = 20;
-    this.boostBarX = this.game.canvas.width * 0.5 - this.boostBarWidth * 0.5 - 250;
+    this.boostBarX = this.game.width * 0.5 - this.boostBarWidth * 0.5 - 250;
     this.boostBarY = 20;
 
     this.healthBarWidth = 200;
@@ -14,7 +14,7 @@ export default class GUI {
 
     this.chargeBarWidth = 200;
     this.chargeBarHeight = 20;
-    this.chargeBarX = this.game.canvas.width * 0.5 - this.chargeBarWidth * 0.5 + 420;
+    this.chargeBarX = this.game.width * 0.5 - this.chargeBarWidth * 0.5 + 420;
     this.chargeBarY = 20;
 
     this.shieldBarWidth = 200;
@@ -45,7 +45,7 @@ export default class GUI {
     ctx.fillText('Level: ' + this.game.level, 10, 50);
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.fillText('Time: ' + Math.floor(this.game.countdown), this.game.canvas.width * 0.5, 20);
+    ctx.fillText('Time: ' + Math.floor(this.game.countdown), this.game.width * 0.5, 20);
     ctx.restore();
 
     ctx.font = '10px "Press Start 2P", cursive';
@@ -198,9 +198,9 @@ export default class GUI {
     const line1Part2 = `${percent}%`;
     const line1Part1Width = ctx.measureText(line1Part1).width;
 
-    ctx.fillText(line3, 10, this.game.canvas.height - 40);
-    ctx.fillText(line2, 10, this.game.canvas.height - 25);
-    ctx.fillText(line1Part1, 10, this.game.canvas.height - 10);
+    ctx.fillText(line3, 10, this.game.height - 40);
+    ctx.fillText(line2, 10, this.game.height - 25);
+    ctx.fillText(line1Part1, 10, this.game.height - 10);
 
     let color;
     if (percent < 50) {
@@ -212,7 +212,7 @@ export default class GUI {
     }
 
     ctx.fillStyle = color;
-    ctx.fillText(line1Part2, 10 + line1Part1Width, this.game.canvas.height - 10);
+    ctx.fillText(line1Part2, 10 + line1Part1Width, this.game.height - 10);
   }
 
   getCounts() {

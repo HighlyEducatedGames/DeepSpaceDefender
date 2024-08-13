@@ -1,8 +1,8 @@
 export default class Star {
   constructor(game) {
     this.game = game;
-    this.x = Math.random() * this.game.canvas.width;
-    this.y = Math.random() * this.game.canvas.height;
+    this.x = Math.random() * this.game.width;
+    this.y = Math.random() * this.game.height;
     this.radius = Math.random() * 0.7 + 0.3;
     this.dx = -1;
     this.dy = 0;
@@ -23,8 +23,8 @@ export default class Star {
 
     // If star moves off the left edge, reset it to the right edge
     if (this.x < 0) {
-      this.x = this.game.canvas.width;
-      this.y = Math.random() * this.game.canvas.height;
+      this.x = this.game.width;
+      this.y = Math.random() * this.game.height;
     }
   }
 }

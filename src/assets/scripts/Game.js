@@ -185,7 +185,7 @@ export default class Game {
     if (this.debug) {
       ctx.strokeStyle = 'gray';
       ctx.moveTo(0, this.topMargin);
-      ctx.lineTo(this.canvas.width, this.topMargin);
+      ctx.lineTo(this.width, this.topMargin);
       ctx.stroke();
     }
   }
@@ -269,9 +269,9 @@ export default class Game {
     const radius = (object.radius || object.width * 0.5) + extraMargin;
     return (
       object.x + radius < 0 ||
-      object.x - radius > this.canvas.width ||
+      object.x - radius > this.width ||
       object.y + radius < 0 ||
-      object.y - radius > this.canvas.height
+      object.y - radius > this.height
     );
   }
 

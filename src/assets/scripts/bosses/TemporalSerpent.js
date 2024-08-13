@@ -24,8 +24,8 @@ export default class TemporalSerpent {
     this.maxSegments = 3000;
     this.healthBarWidth = 200;
     this.healthBarHeight = 20;
-    this.healthBarX = (this.game.canvas.width - this.healthBarWidth) * 0.5;
-    this.healthBarY = this.game.canvas.height - this.healthBarHeight - 30;
+    this.healthBarX = (this.game.width - this.healthBarWidth) * 0.5;
+    this.healthBarY = this.game.height - this.healthBarHeight - 30;
     this.projectiles = [];
     this.hazardZones = [];
     this.directionChangeInterval = 1500;
@@ -51,9 +51,9 @@ export default class TemporalSerpent {
       if (index !== 0) {
         if (
           segment.x > 0 &&
-          segment.x < this.game.canvas.width &&
+          segment.x < this.game.width &&
           segment.y > 0 &&
-          segment.y < this.game.canvas.height
+          segment.y < this.game.height
         ) {
           ctx.drawImage(
             this.images.segment,
@@ -78,7 +78,7 @@ export default class TemporalSerpent {
 
     // Serpent head
     const head = this.segments[0];
-    if (head.x > 0 && head.x < this.game.canvas.width && head.y > 0 && head.y < this.game.canvas.height) {
+    if (head.x > 0 && head.x < this.game.width && head.y > 0 && head.y < this.game.height) {
       ctx.drawImage(this.images.head, head.x - head.radius, head.y - head.radius, head.radius * 2, head.radius * 2);
 
       // DEBUG - Hitbox
@@ -106,7 +106,7 @@ export default class TemporalSerpent {
     ctx.font = '10px "Press Start 2P", cursive';
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
-    ctx.fillText('Temporal Serpent', this.game.canvas.width * 0.5, this.healthBarY + this.healthBarHeight + 20);
+    ctx.fillText('Temporal Serpent', this.game.width * 0.5, this.healthBarY + this.healthBarHeight + 20);
     ctx.restore();
   }
 

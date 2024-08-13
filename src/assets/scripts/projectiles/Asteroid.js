@@ -6,7 +6,7 @@ export default class Asteroid {
       { width: 50, height: 50 },
       { width: 30, height: 30 },
     ];
-    this.x = Math.random() * this.game.canvas.width;
+    this.x = Math.random() * this.game.width;
     this.y = -this.sizes[0].height;
     this.size = this.sizes[Math.floor(Math.random() * this.sizes.length)];
     this.width = this.size.width;
@@ -45,7 +45,7 @@ export default class Asteroid {
     this.y += (this.speed * deltaTime) / 1000;
 
     // Remove asteroids that go off-screen
-    if (this.y + this.height * 0.5 > this.game.canvas.height + 100) this.markedForDeletion = true;
+    if (this.y + this.height * 0.5 > this.game.height + 100) this.markedForDeletion = true;
 
     this.checkCollisions();
   }
