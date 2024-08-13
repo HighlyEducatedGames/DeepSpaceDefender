@@ -57,10 +57,17 @@ class Enemy {
     }
 
     this.checkCollisions();
+
+    // Arrow Indicator Logic
+    const offscreen = this.x < 0 || this.x > this.game.canvas.width || this.y < 0 || this.y > this.game.canvas.height;
+    if (offscreen && !this.arrowAdded) {
+      this.game.addArrowIndicator(this);
+      this.arrowAdded = true; // Prevent adding multiple arrows
+    }
   }
 
   getSpawnPosition() {
-    this.x = this.side === 'left' ? -this.width * 0.5 : this.game.canvas.width + this.width * 0.5;
+    this.x = this.side === 'left' ? -this.width * 0.5 - 100: this.game.canvas.width + this.width * 0.5 + 100;
     this.y = getRandomYwithMargin(this.game, this.verticalMargin);
   }
 
