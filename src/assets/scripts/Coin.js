@@ -38,8 +38,9 @@ export default class Coin {
       // Increase player's health
       this.game.player.addHealth(this.healthRestored);
 
-      // Play coin pickup sound
-      this.sound.cloneNode().play();
+      // Play the coin pickup sound
+      this.game.cloneSound(this.sound);
+
       this.markedForDeletion = true;
     }
 

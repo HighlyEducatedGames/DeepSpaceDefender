@@ -24,9 +24,9 @@ export default class Game {
     this.topMargin = 90;
     this.controls = new Controls(this);
     this.player = new Player(this);
+    this.music = new MusicController(this);
     this.menu = new Menu(this);
     this.GUI = new GUI(this);
-    this.music = new MusicController(this);
     this.powerUps = new PowerUpManager(this);
     this.enemies = new EnemyController(this);
     this.wormholes = new Wormholes(this);
@@ -281,6 +281,13 @@ export default class Game {
   }
 
   playCollision() {
-    this.sounds.collision.cloneNode().play();
+    this.sounds.collision.play();
+  }
+
+  cloneSound(sound) {
+    if (!(sound instanceof Audio)) return;
+    const clone = sound.cloneNode();
+    clone.volume = this.fxVol;
+    clone.play();
   }
 }

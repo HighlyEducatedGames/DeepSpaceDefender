@@ -2,38 +2,28 @@ export default class Menu {
   constructor(game) {
     this.game = game;
     this.menu = document.getElementById('menu-container');
-    this.backgroundMusicVolumeSlider = document.getElementById('backgroundMusicVolume');
-    this.soundEffectsVolumeSlider = document.getElementById('soundEffectsVolume');
+    this.musicVolumeSlider = document.getElementById('musicVolume');
+    this.fxVolumeSlider = document.getElementById('fxVolume');
+    this.testSound = document.getElementById('fire_sound');
+    this.musicVolumeSlider.value = this.game.music.musicVol;
+    this.fxVolumeSlider.value = this.game.music.fxVol;
     this.isOpen = true;
-    this.bgVol = localStorage.getItem('bg_vol') || '0.5';
-    this.fxVol = localStorage.getItem('fx_vol') || '0.5';
 
-    this.backgroundMusicVolumeSlider.value = this.bgVol;
-    this.soundEffectsVolumeSlider.value = this.fxVol;
-
-    this.backgroundMusicVolumeSlider.addEventListener('input', () => {
-      this.bgVol = this.backgroundMusicVolumeSlider.value;
-      this.game.music.background.volume = this.bgVol;
-      // bossMusic.volume = backgroundMusicVolumeSlider.value;
-      localStorage.setItem('bg_vol', this.bgVol);
+    this.musicVolumeSlider.addEventListener('input', () => {
+      this.game.music.setMusicVolume(this.musicVolumeSlider.value);
     });
 
     let soundEffectTimeout;
-    this.soundEffectsVolumeSlider.addEventListener('input', () => {
-      this.fxVol = this.soundEffectsVolumeSlider.value;
-      // soundEffects.forEach((sound) => (sound.volume = volume));// TODO
-      localStorage.setItem('fx_vol', this.fxVol);
-
-      clearTimeout(soundEffectTimeout);
-      soundEffectTimeout = setTimeout(this.playTestSound, 500); // Play test sound after 500ms
+    this.fxVolumeSlider.addEventListener('input', () => {
+      this.game.music.setFxVolume(this.musicVolumeSlider.value);
+      if (soundEffectTimeout) clearTimeout(soundEffectTimeout);
+      soundEffectTimeout = setTimeout(() => this.playTestSound(), 500);
     });
   }
 
   playTestSound() {
-    // TODO
-    /*const testSound = document.getElementById('fireSound');// TODO
-        testSound.currentTime = 0; // Reset the sound to the beginning
-        testSound.play();*/
+    this.testSound.currentTime = 0;
+    this.testSound.play();
   }
 
   showMenu() {
@@ -49,10 +39,6 @@ export default class Menu {
   }
 
   toggleMenu() {
-    if (this.isOpen) {
-      this.hideMenu();
-    } else {
-      this.showMenu();
-    }
+    this.isOpen ? this.hideMenu() : this.showMenu();
   }
 }

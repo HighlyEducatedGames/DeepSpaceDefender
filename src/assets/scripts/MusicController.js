@@ -2,11 +2,14 @@ export default class MusicController {
   constructor(game) {
     this.game = game;
     this.currentTrack = null;
-
+    this.musicVol = localStorage.getItem('music_vol') || '0.5';
+    this.fxVol = localStorage.getItem('fx_vol') || '0.5';
     this.tracks = {
-      background: new Audio('assets/audio/background-music.mp3'),
-      gameOver: new Audio('assets/audio/gameOverMusic.mp3'),
+      background: document.getElementById('background_music'),
+      gameOver: document.getElementById('game_over_music'),
     };
+    this.setMusicVolume(this.musicVol);
+    this.setFxVolume(this.fxVol);
   }
 
   setTrack(track) {
@@ -39,4 +42,22 @@ export default class MusicController {
   }
 
   update() {}
+
+  setMusicVolume(value) {
+    if (!value) return;
+    this.musicVol = value;
+    localStorage.setItem('music_vol', this.musicVol);
+    const elements = document.getElementById('audio-sources').children;
+    const filtered = Array.from(elements).filter((x) => x.getAttribute('id').includes('music'));
+    filtered.forEach((audio) => (audio.volume = value));
+  }
+
+  setFxVolume(value) {
+    if (!value) return;
+    this.fxVol = value;
+    localStorage.setItem('fx_vol', this.fxVol);
+    const elements = document.getElementById('audio-sources').children;
+    const filtered = Array.from(elements).filter((x) => x.getAttribute('id').includes('sound'));
+    filtered.forEach((audio) => (audio.volume = value));
+  }
 }
