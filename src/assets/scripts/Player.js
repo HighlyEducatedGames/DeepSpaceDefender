@@ -326,9 +326,7 @@ export default class Player {
       const angleOffset = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
       this.projectiles.push(new RegularProjectile(this.game, angleOffset));
     }
-    const sound = this.sounds.fire.cloneNode();
-    sound.volume = this.game.menu.fxVol;
-    sound.play();
+    this.game.cloneSound(this.sounds.fire);
   }
 
   useBomb() {

@@ -236,6 +236,9 @@ export default class GUI {
     // Wormholes
     entities += this.game.wormholes.wormholes.length * 2;
 
+    // Player
+    projectiles += this.game.player.projectiles.length;
+
     return { entities, projectiles, particles };
   }
 }

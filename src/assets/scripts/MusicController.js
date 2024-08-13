@@ -2,8 +2,8 @@ export default class MusicController {
   constructor(game) {
     this.game = game;
     this.currentTrack = null;
-    this.musicVol = localStorage.getItem('music_vol') || '0.5';
-    this.fxVol = localStorage.getItem('fx_vol') || '0.5';
+    this.musicVol = parseFloat(localStorage.getItem('music_vol') || '0.5');
+    this.fxVol = parseFloat(localStorage.getItem('fx_vol') || '0.5');
     this.tracks = {
       background: document.getElementById('background_music'),
       gameOver: document.getElementById('game_over_music'),

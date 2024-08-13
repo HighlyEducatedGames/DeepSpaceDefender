@@ -287,7 +287,7 @@ export default class Game {
   cloneSound(sound) {
     if (!(sound instanceof Audio)) return;
     const clone = sound.cloneNode();
-    clone.volume = this.fxVol;
+    clone.volume = this.music.fxVol;
     clone.play();
   }
 }

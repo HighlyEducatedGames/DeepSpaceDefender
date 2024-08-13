@@ -5,9 +5,9 @@ export default class Menu {
     this.musicVolumeSlider = document.getElementById('musicVolume');
     this.fxVolumeSlider = document.getElementById('fxVolume');
     this.testSound = document.getElementById('fire_sound');
+    this.isOpen = true;
     this.musicVolumeSlider.value = this.game.music.musicVol;
     this.fxVolumeSlider.value = this.game.music.fxVol;
-    this.isOpen = true;
 
     this.musicVolumeSlider.addEventListener('input', () => {
       this.game.music.setMusicVolume(this.musicVolumeSlider.value);
@@ -15,7 +15,7 @@ export default class Menu {
 
     let soundEffectTimeout;
     this.fxVolumeSlider.addEventListener('input', () => {
-      this.game.music.setFxVolume(this.musicVolumeSlider.value);
+      this.game.music.setFxVolume(this.fxVolumeSlider.value);
       if (soundEffectTimeout) clearTimeout(soundEffectTimeout);
       soundEffectTimeout = setTimeout(() => this.playTestSound(), 500);
     });
