@@ -19,8 +19,9 @@ export class ArrowIndicator {
     const canvasHeight = this.game.canvas.height;
 
     // Determine if the target is offscreen
-    const isOffScreen = this.target && (this.target.x < 0 || this.target.x > canvasWidth ||
-                                        this.target.y < 0 || this.target.y > canvasHeight);
+    const isOffScreen =
+      this.target &&
+      (this.target.x < 0 || this.target.x > canvasWidth || this.target.y < 0 || this.target.y > canvasHeight);
 
     if (!isOffScreen) return;
 
@@ -64,11 +65,11 @@ export class ArrowIndicator {
 
     // Draw the target image inside the circle
     ctx.drawImage(
-      this.targetImage, 
-      circleX - this.imageSize / 2, 
-      circleY - this.imageSize / 2, 
-      this.imageSize, 
-      this.imageSize
+      this.targetImage,
+      circleX - this.imageSize / 2,
+      circleY - this.imageSize / 2,
+      this.imageSize,
+      this.imageSize,
     );
 
     // Flashing effect: only draw the arrow if the current time modulo flashSpeed is less than half flashSpeed
@@ -90,15 +91,19 @@ export class ArrowIndicator {
 
   update() {
     // Check if the target is on screen
-    const targetOnScreen = this.target && this.target.x > 0 && this.target.x < this.game.canvas.width &&
-                           this.target.y > 0 && this.target.y < this.game.canvas.height;
-  
+    const targetOnScreen =
+      this.target &&
+      this.target.x > 0 &&
+      this.target.x < this.game.canvas.width &&
+      this.target.y > 0 &&
+      this.target.y < this.game.canvas.height;
+
     // Check if the target is marked for deletion or if the target no longer exists
     const targetKilled = !this.target || this.target.markedForDeletion;
-  
+
     // Remove the arrow if the target is on screen, marked for deletion, or doesn't exist
     if (targetOnScreen || targetKilled) {
-      this.game.arrowIndicators = this.game.arrowIndicators.filter(arrow => arrow !== this);
+      this.game.arrowIndicators = this.game.arrowIndicators.filter((arrow) => arrow !== this);
     }
   }
 }

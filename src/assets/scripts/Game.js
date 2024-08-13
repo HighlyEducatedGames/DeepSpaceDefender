@@ -62,7 +62,7 @@ export default class Game {
     // DEBUG FLAGS
     this.doAlly = false;
     this.doEnemies = true;
-    this.doBoss = false;
+    this.doBoss = true;
     this.doWormholes = false;
     this.doPowerUps = false;
 
@@ -109,6 +109,7 @@ export default class Game {
       const bossIndex = Math.floor((level - 5) / 5) % bosses.length;
       this.boss = new bosses[bossIndex](this);
       this.music.setTrack(this.boss.music);
+      this.music.play();
     } else {
       if (this.boss) this.boss = null;
       this.music.setTrack(this.music.tracks.background);

@@ -99,17 +99,17 @@ export default class Boss {
       this.lastAttackTime = Date.now();
     }
 
-    this.checkCollisions();
+    // this.checkCollisions();
   }
 
   checkCollisions() {
     // Check player projectiles to boss
-    this.game.player.projectiles.forEach((projectile) => {
-      if (this.game.checkCollision(projectile, this)) {
-        this.takeDamage(projectile.damage);
-        projectile.markedForDeletion = true;
-      }
-    });
+    // this.game.player.projectiles.forEach((projectile) => {
+    //   if (this.game.checkCollision(projectile, this)) {
+    //     this.takeDamage(projectile.damage);
+    //     projectile.markedForDeletion = true;
+    //   }
+    // });
 
     // Check boss projectiles to player
     this.projectiles.forEach((projectile) => {
