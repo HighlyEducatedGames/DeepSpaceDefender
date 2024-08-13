@@ -190,10 +190,9 @@ export default class GUI {
     ctx.font = '10px "Press Start 2P", cursive';
     const ms = Math.floor(this.game.tickMs * 10) / 10;
     const percent = Math.floor((this.game.tickMs / this.game.targetFrameDuration) * 100);
-    const counts = this.getCounts();
 
     const line3 = `Boss Phase: ${this.game.boss ? this.game.boss.phase : 0}`;
-    const line2 = `E: ${counts.entities} P: ${counts.projectiles} T: ${counts.particles}`;
+    const line2 = `E: ${this.getEntities()} P: ${this.game.projectiles.length} T: ${this.game.particles.length}`;
     const line1Part1 = `Tick: ${ms.toFixed(1)}ms - `;
     const line1Part2 = `${percent}%`;
     const line1Part1Width = ctx.measureText(line1Part1).width;
@@ -215,30 +214,16 @@ export default class GUI {
     ctx.fillText(line1Part2, 10 + line1Part1Width, this.game.height - 10);
   }
 
-  getCounts() {
-    let entities = 0;
-    let projectiles = 0;
-    let particles = 0;
-
-    // Game objects
+  getEntities() {
+    let entities = 1;
     entities += this.game.coins.length;
-
-    // Ally
-    if (this.game.ally) {
-      entities++;
-      projectiles += this.game.ally.projectiles.length;
-    }
-
-    // Enemies
+    if (this.game.ally) entities++;
+    if (this.game.boss) entities++;
     entities += this.game.enemies.enemies.length;
-    projectiles += this.game.enemies.enemies.reduce((a, b) => a + b.projectiles.length, 0);
-
-    // Wormholes
     entities += this.game.wormholes.wormholes.length * 2;
-
-    // Player
-    projectiles += this.game.player.projectiles.length;
-
-    return { entities, projectiles, particles };
+    entities += this.game.arrowIndicators.length;
+    entities += this.game.powerUps.activePowerUps.length;
+    entities += this.game.effects.length;
+    return entities;
   }
 }

@@ -34,7 +34,7 @@ export default class Player {
     this.boostCooldownEndTime = 0;
     this.isCharging = false;
     this.chargingSoundTimeout = null;
-    this.projectiles = [];
+    this.bomb = null;
     this.bombs = 20;
     this.shieldActive = false;
     this.missiles = 20;
@@ -122,8 +122,8 @@ export default class Player {
       ctx.fill();
     }
 
-    //Projectiles
-    this.projectiles.forEach((projectile) => projectile.draw(ctx));
+    // Bomb
+    if (this.bomb) this.bomb.draw(ctx);
 
     // DEBUG - Hitbox
     if (this.game.debug) {
@@ -269,8 +269,11 @@ export default class Player {
       this.nextLifeScore += 1500;
     }
 
-    // Projectiles
-    this.projectiles.forEach((projectile) => projectile.update(deltaTime));
+    // Bomb
+    if (this.bomb) {
+      this.bomb.update(deltaTime);
+      if (this.bomb.markedForDeletion) this.bomb = null;
+    }
 
     // this.checkCollisions();
   }
@@ -342,15 +345,15 @@ export default class Player {
     const projectilesToFire = this.powerUpActive ? 3 : 1;
     for (let i = 0; i < projectilesToFire; i++) {
       const angleOffset = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
-      this.projectiles.push(new RegularProjectile(this.game, angleOffset));
+      this.game.projectiles.push(new RegularProjectile(this.game, angleOffset));
     }
     this.game.cloneSound(this.sounds.fire);
   }
 
   useBomb() {
-    if (this.bombs <= 0) return;
+    if (this.bomb || this.bombs <= 0) return;
     this.bombs--;
-    this.projectiles.push(new Bomb(this.game));
+    this.bomb = new Bomb(this.game);
   }
 
   useBoost() {
@@ -388,7 +391,7 @@ export default class Player {
       const missile = new HomingMissile(this.game, target);
       // Only play the missile sound on the first spawned missile
       if (i === 0) missile.sound.cloneNode().play();
-      this.projectiles.push(missile);
+      this.game.projectiles.push(missile);
     }
   }
 
@@ -424,10 +427,6 @@ export default class Player {
 
   getDistanceToPlayer(object) {
     return Math.hypot(this.x - object.x, this.y - object.y);
-  }
-
-  getBomb() {
-    return this.projectiles.filter((projectile) => projectile instanceof Bomb)[0];
   }
 
   stopPlayerMovement() {

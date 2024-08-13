@@ -33,6 +33,7 @@ export default class Game {
     this.wormholes = new Wormholes(this);
     this.projectiles = [];
     this.particles = [];
+    this.effects = [];
     this.targetFPS = 60;
     this.targetFrameDuration = 1000 / this.targetFPS;
     this.timestamp = 0;
@@ -40,7 +41,6 @@ export default class Game {
     this.numStars = 50;
     this.parallaxLayers = 3;
     this.stars = [];
-    this.effects = [];
     this.boss = null;
     this.level = 0;
     this.score = 0;
@@ -51,13 +51,13 @@ export default class Game {
     this.ally = null;
     this.allySpawnTime = 0;
     this.allyInterval = 60000;
+    this.arrowIndicators = [];
     this.images = {
       title: document.getElementById('title_screen_image'),
     };
     this.sounds = {
       collision: document.getElementById('collision_sound'),
     };
-    this.arrowIndicators = [];
 
     // DEBUG FLAGS
     this.doAlly = false;
@@ -80,7 +80,6 @@ export default class Game {
     this.allyNextSpawnTime = 0;
     this.powerUps.removeAll();
     this.startLevel(1);
-    this.arrowIndicators = [];
   }
 
   // Set any properties here that change on a new level
@@ -88,8 +87,8 @@ export default class Game {
     this.level = level;
     this.levelStartTime = this.timestamp;
     this.levelDuration = 30000;
-    this.effects = [];
     this.maxCoins = 5;
+    this.effects = [];
     this.arrowIndicators = [];
 
     // Add new coins to this level
@@ -120,8 +119,7 @@ export default class Game {
   }
 
   addArrowIndicator(target) {
-    const arrow = new ArrowIndicator(this, target);
-    this.arrowIndicators.push(arrow);
+    this.arrowIndicators.push(new ArrowIndicator(this, target));
   }
 
   handleGameControls() {
@@ -175,9 +173,9 @@ export default class Game {
     this.effects.forEach((effect) => effect.draw(ctx));
     this.powerUps.draw(ctx);
     if (this.ally) this.ally.draw(ctx);
+    this.arrowIndicators.forEach((arrow) => arrow.draw(ctx));
     this.player.draw(ctx);
     this.GUI.draw(ctx);
-    this.arrowIndicators.forEach((arrow) => arrow.draw(ctx));
 
     // Game over text
     if (this.isGameOver) {
@@ -216,9 +214,9 @@ export default class Game {
       this.effects.forEach((effect) => effect.update(deltaTime));
       this.powerUps.update(deltaTime);
       if (this.ally) this.ally.update(deltaTime);
+      this.arrowIndicators.forEach((arrow) => arrow.update(deltaTime));
       this.player.update(deltaTime);
       this.levelUpdate(deltaTime);
-      this.arrowIndicators.forEach((arrow) => arrow.update());
     }
   }
 
@@ -232,6 +230,7 @@ export default class Game {
       this.allyNextSpawnTime = 0;
     }
     this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
+    this.arrowIndicators = this.arrowIndicators.filter((arrow) => !arrow.markedForDeletion);
   }
 
   checkCollision(object1, object2) {

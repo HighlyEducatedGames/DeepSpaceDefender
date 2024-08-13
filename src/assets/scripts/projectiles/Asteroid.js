@@ -70,7 +70,7 @@ export default class Asteroid {
     });
 
     // Check collision with bomb
-    const bomb = this.game.player.getBomb();
+    const bomb = this.game.player.bomb;
     if (bomb) {
       if (this.game.checkCollision(bomb, this)) this.markedForDeletion = true;
     }

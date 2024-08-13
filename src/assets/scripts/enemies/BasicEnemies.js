@@ -18,7 +18,6 @@ class Enemy {
     this.lastAttackTime = 0;
     this.maxHealth = null;
     this.health = this.maxHealth;
-    this.projectiles = [];
     this.verticalMargin = 50;
     this.markedForDeletion = false;
     this.image = null;
@@ -27,9 +26,6 @@ class Enemy {
   draw(ctx) {
     // Enemy
     ctx.drawImage(this.image, this.x - this.width * 0.5, this.y - this.height * 0.5, this.width, this.height);
-
-    // Projectiles
-    this.projectiles.forEach((projectile) => projectile.draw(ctx));
 
     // DEBUG - Hitbox
     if (this.game.debug) {
@@ -47,10 +43,6 @@ class Enemy {
     // Bounce back and forth on the x-axis
     if (this.x < this.width * 0.5 && this.vx < 0) this.vx = 1;
     if (this.x > this.game.width - this.width * 0.5 && this.vx > 0) this.vx = -1;
-
-    // Projectiles
-    this.projectiles.forEach((projectile) => projectile.update(deltaTime));
-    this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
 
     // Attack Logic
     if (this.canShoot && this.game.timestamp - this.lastAttackTime >= this.attackInterval) {
@@ -87,7 +79,7 @@ class Enemy {
 
   fireProjectile() {
     const angleToPlayer = this.game.player.getAngleToPlayer(this);
-    this.projectiles.push(new EnemyProjectile(this.game, this.x, this.y, angleToPlayer));
+    this.game.projectiles.push(new EnemyProjectile(this.game, this.x, this.y, angleToPlayer));
     this.lastAttackTime = this.game.timestamp;
   }
 
