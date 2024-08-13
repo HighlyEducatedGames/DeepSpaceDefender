@@ -18,6 +18,7 @@ export default class MusicController {
     this.stop();
     this.currentTrack = track;
     this.currentTrack.currentTrack = 0;
+    this.currentTrack.volume = this.musicVol;
   }
 
   play() {

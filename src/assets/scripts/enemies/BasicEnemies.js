@@ -9,13 +9,13 @@ class Enemy {
     this.height = null;
     this.speed = null;
     this.attackInterval = null;
-    this.maxHealth = null;
     this.damage = null;
     this.score = null;
     this.side = Math.random() < 0.5 ? 'left' : 'right';
     this.vx = this.side === 'left' ? 1 : -1;
     this.canShoot = true;
     this.lastAttackTime = 0;
+    this.maxHealth = null;
     this.health = this.maxHealth;
     this.projectiles = [];
     this.verticalMargin = 50;
@@ -65,29 +65,24 @@ class Enemy {
   }
 
   checkCollisions() {
-    // Enemy collision with player projectiles
-    this.game.player.projectiles.forEach((projectile) => {
-      if (this.game.checkCollision(projectile, this)) {
-        this.health -= projectile.damage;
-        if (this.health <= 0) this.markedForDeletion = true;
-        projectile.markedForDeletion = true;
-      }
-    });
-
     // Enemy collision with player
-    if (this.game.checkCollision(this.game.player, this)) {
-      // Only take damage from a stealth enemy if visible
-      if (!(this instanceof StealthEnemy) || (this instanceof StealthEnemy && this.visible)) {
-        this.game.player.takeDamage(this.damage);
-        this.game.playCollision();
-      }
-    }
+    // if (this.game.checkCollision(this, this.game.player)) {
+    //   // Only take damage from a stealth enemy if visible
+    //   if (!(this instanceof StealthEnemy) || (this instanceof StealthEnemy && this.visible)) {
+    //     this.game.player.collide(this.damage);
+    //   }
+    // }
   }
 
   fireProjectile() {
     const angleToPlayer = this.game.player.getAngleToPlayer(this);
     this.projectiles.push(new EnemyProjectile(this.game, this.x, this.y, angleToPlayer));
     this.lastAttackTime = this.game.timestamp;
+  }
+
+  takeDamage(damage) {
+    this.health -= damage;
+    if (this.health <= 0) this.markedForDeletion = true;
   }
 }
 
@@ -98,6 +93,7 @@ export class RegularEnemy extends Enemy {
     this.height = 50;
     this.speed = 60;
     this.maxHealth = 10;
+    this.damage = 10;
     this.attackInterval = getRandomInterval(3000, 5000);
     this.image = document.getElementById('enemy_image');
 
@@ -112,6 +108,7 @@ export class TankEnemy extends Enemy {
     this.height = 60;
     this.speed = 40;
     this.maxHealth = 30;
+    this.damage = 10;
     this.attackInterval = getRandomInterval(2000, 3000);
     this.image = document.getElementById('tank_enemy_image');
 
@@ -126,6 +123,7 @@ export class StealthEnemy extends Enemy {
     this.height = 50;
     this.speed = 60;
     this.maxHealth = 20;
+    this.damage = 10;
     this.attackInterval = getRandomInterval(1000, 2000);
     this.image = document.getElementById('stealth_enemy_image');
 
@@ -198,6 +196,7 @@ class EnemyProjectile {
     this.width = 5;
     this.height = 5;
     this.speed = 250;
+    this.damage = 10;
     this.vx = Math.cos(angle);
     this.vy = Math.sin(angle);
   }
@@ -212,6 +211,16 @@ class EnemyProjectile {
   update(deltaTime) {
     this.x += (this.speed * this.vx * deltaTime) / 1000;
     this.y += (this.speed * this.vy * deltaTime) / 1000;
+
+    this.checkCollisions();
     if (this.game.outOfBounds(this)) this.markedForDeletion = true;
+  }
+
+  checkCollisions() {
+    // Collision to player
+    if (this.game.checkCollision(this, this.game.player)) {
+      this.game.player.takeDamage(this.damage);
+      this.markedForDeletion = true;
+    }
   }
 }

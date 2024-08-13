@@ -82,7 +82,7 @@ export default class Game {
   startLevel(level) {
     this.level = level;
     this.levelStartTime = this.timestamp;
-    this.levelDuration = Infinity;
+    this.levelDuration = 30000;
     this.effects = [];
     this.maxCoins = 5;
 
@@ -167,8 +167,8 @@ export default class Game {
 
     // Game over text
     if (this.isGameOver) {
-      const centerX = this.game.canvas.width * 0.5;
-      const centerY = this.game.canvas.height * 0.5;
+      const centerX = this.width * 0.5;
+      const centerY = this.height * 0.5;
       ctx.save();
       ctx.fillStyle = 'red';
       ctx.textAlign = 'center';

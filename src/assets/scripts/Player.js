@@ -21,7 +21,9 @@ export default class Player {
     this.deceleration = 0.98;
     this.maxSpeed = 300;
     this.lives = 3;
-    this.lastCollisionTime = 0;
+    this.collided = false;
+    this.collisionTime = 0;
+    this.collisionDuration = 1000;
     this.maxHealth = 30;
     this.health = this.maxHealth;
     this.maxLives = 3;
@@ -269,7 +271,23 @@ export default class Player {
 
     // Projectiles
     this.projectiles.forEach((projectile) => projectile.update(deltaTime));
+
+    // this.checkCollisions();
   }
+
+  // collide(damage) {
+  //   if (!this.collided) {
+  //     this.collided = true;
+  //     this.collisionTime = 0;
+  //     this.takeDamage(damage);
+  //     this.game.playCollision();
+  //   } else {
+  //     if (this.collisionTime > this.collisionDuration) {
+  //     } else {
+  //       this.collisionTime += deltaTime;
+  //     }
+  //   }
+  // }
 
   setVolumes(value) {
     for (const sound in this.sounds) {
@@ -382,7 +400,7 @@ export default class Player {
     if (this.health <= 0) {
       this.lives--;
       this.health = this.maxHealth;
-      this.sounds.lostLife.cloneNode().play();
+      this.sounds.lostLife.play();
     }
     if (this.lives < 0) {
       this.health = 0;

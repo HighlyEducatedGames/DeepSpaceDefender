@@ -72,6 +72,18 @@ export default class RegularProjectile {
     if (this.x > this.game.canvas.width) this.x = 0;
     if (this.y < 0) this.y = this.game.canvas.height;
     if (this.y > this.game.canvas.height) this.y = 0;
+
+    this.checkCollisions();
+  }
+
+  checkCollisions() {
+    // Collision with enemies
+    this.game.enemies.enemies.forEach((enemy) => {
+      if (this.game.checkCollision(this, enemy)) {
+        enemy.takeDamage(this.damage);
+        this.markedForDeletion = true;
+      }
+    });
   }
 
   // TODO
