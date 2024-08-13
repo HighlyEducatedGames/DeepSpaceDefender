@@ -69,12 +69,14 @@ class Enemy {
 
   checkCollisions() {
     // Enemy collision with player
-    // if (this.game.checkCollision(this, this.game.player)) {
-    //   // Only take damage from a stealth enemy if visible
-    //   if (!(this instanceof StealthEnemy) || (this instanceof StealthEnemy && this.visible)) {
-    //     this.game.player.collide(this.damage);
-    //   }
-    // }
+    if (this.game.checkCollision(this, this.game.player)) {
+      // Only take damage from a stealth enemy if visible
+      if (!(this instanceof StealthEnemy) || (this instanceof StealthEnemy && this.visible)) {
+        this.game.player.takeDamage(this.damage);
+        this.game.playCollision();
+        this.markedForDeletion = true;
+      }
+    }
   }
 
   fireProjectile() {

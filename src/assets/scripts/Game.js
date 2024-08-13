@@ -299,7 +299,7 @@ export default class Game {
   }
 
   playCollision() {
-    this.sounds.collision.play();
+    this.cloneSound(this.sounds.collision);
   }
 
   cloneSound(sound) {
