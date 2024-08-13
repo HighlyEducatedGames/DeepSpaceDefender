@@ -14,6 +14,8 @@ import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import TemporalSerpent from './bosses/TemporalSerpent.js';
 import CyberDragon from './bosses/CyberDragon.js';
 import { Wormholes } from './hazards/Wormhole.js';
+import { ArrowIndicator } from './HUD.js';
+
 
 export default class Game {
   constructor(canvas) {
@@ -54,6 +56,7 @@ export default class Game {
     this.sounds = {
       collision: document.getElementById('collision_sound'),
     };
+    this.arrowIndicators = [];
 
     // DEBUG FLAGS
     this.doAlly = false;
@@ -76,6 +79,7 @@ export default class Game {
     this.allyNextSpawnTime = 0;
     this.powerUps.removeAll();
     this.startLevel(1);
+    this.arrowIndicators = [];
   }
 
   // Set any properties here that change on a new level
@@ -85,6 +89,7 @@ export default class Game {
     this.levelDuration = 30000;
     this.effects = [];
     this.maxCoins = 5;
+    this.arrowIndicators = [];
 
     // Add new coins to this level
     this.coins = [];
@@ -111,6 +116,11 @@ export default class Game {
 
     // Infinite time on boss levels
     this.countdown = this.boss ? Infinity : this.levelDuration / 1000;
+  }
+
+  addArrowIndicator(target) {
+    const arrow = new ArrowIndicator(this, target);
+    this.arrowIndicators.push(arrow);
   }
 
   handleGameControls() {
@@ -164,6 +174,7 @@ export default class Game {
     if (this.ally) this.ally.draw(ctx);
     this.player.draw(ctx);
     this.GUI.draw(ctx);
+    this.arrowIndicators.forEach(arrow => arrow.draw(ctx));
 
     // Game over text
     if (this.isGameOver) {
@@ -188,7 +199,8 @@ export default class Game {
       ctx.lineTo(this.width, this.topMargin);
       ctx.stroke();
     }
-  }
+}
+
 
   update(deltaTime) {
     if (!this.isGameOver) {
@@ -202,6 +214,7 @@ export default class Game {
       if (this.ally) this.ally.update(deltaTime);
       this.player.update(deltaTime);
       this.levelUpdate(deltaTime);
+      this.arrowIndicators.forEach(arrow => arrow.update());
     }
   }
 
