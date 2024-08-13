@@ -14,9 +14,7 @@ export default class Asteroid {
     this.damage = 10;
     this.speed = 200;
     this.markedForDeletion = false;
-
-    this.image = new Image();
-    this.image.src = 'assets/images/asteroid.png';
+    this.image = document.getElementById('asteroid_image');
   }
 
   draw(ctx) {

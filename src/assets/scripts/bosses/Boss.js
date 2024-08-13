@@ -18,17 +18,13 @@ export default class Boss {
     this.phase = 1;
     this.phaseTransitioned = [false, false, false];
     this.projectiles = [];
-
     this.healthBarWidth = this.width;
     this.healthBarHeight = 10;
     this.healthBarX = this.x - this.width * 0.5;
     this.healthBarY = this.y - this.height * 0.5 + this.height + 5;
-
     this.markedForDeletion = false;
-
-    this.image = new Image();
-    this.image.src = 'assets/images/boss.png';
-    this.music = new Audio('assets/audio/boss_music.mp3');
+    this.image = document.getElementById('boss_image');
+    this.music = document.getElementById('boss_music');
 
     getOffScreenRandomSide(this, 20);
 

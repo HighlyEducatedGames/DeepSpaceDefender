@@ -43,13 +43,10 @@ export default class CyberDragon {
     this.score = this.maxHealth;
     this.nextAsteroidTimer = null;
     this.markedForDeletion = false;
-
-    this.image = new Image();
-    this.image.src = 'assets/images/cyber_dragon.png';
-
+    this.image = document.getElementById('cyber_dragon_image');
     this.sounds = {
-      laserCharging: new Audio('assets/audio/laser_charging.mp3'),
-      spiralShot: new Audio('assets/audio/spiralShot.mp3'),
+      laserCharging: document.getElementById('laser_charging_sound'),
+      spiralShot: document.getElementById('spiral_shot_sound'),
     };
 
     getOffScreenRandomSide(this, 20);

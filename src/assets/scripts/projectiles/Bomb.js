@@ -8,8 +8,7 @@ export default class Bomb {
     this.bombFlashTime = performance.now();
     this.timeSinceBomb = 0;
     this.markedForDeletion = false;
-
-    this.sound = new Audio('assets/audio/bombSound.mp3');
+    this.sound = document.getElementById('bomb_sound');
 
     // Play bomb sound as soon as it is spawned
     this.sound.cloneNode().play();

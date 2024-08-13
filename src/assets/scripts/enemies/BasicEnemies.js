@@ -99,8 +99,7 @@ export class RegularEnemy extends Enemy {
     this.speed = 60;
     this.maxHealth = 10;
     this.attackInterval = getRandomInterval(3000, 5000);
-    this.image = new Image();
-    this.image.src = 'assets/images/enemy.png';
+    this.image = document.getElementById('enemy_image');
 
     super.getSpawnPosition();
   }
@@ -114,8 +113,7 @@ export class TankEnemy extends Enemy {
     this.speed = 40;
     this.maxHealth = 30;
     this.attackInterval = getRandomInterval(2000, 3000);
-    this.image = new Image();
-    this.image.src = 'assets/images/enemy_tank.png';
+    this.image = document.getElementById('tank_enemy_image');
 
     super.getSpawnPosition();
   }
@@ -129,8 +127,7 @@ export class StealthEnemy extends Enemy {
     this.speed = 60;
     this.maxHealth = 20;
     this.attackInterval = getRandomInterval(1000, 2000);
-    this.image = new Image();
-    this.image.src = 'assets/images/stealth_enemy.png';
+    this.image = document.getElementById('stealth_enemy_image');
 
     // Stealth only properties
     this.visible = false;

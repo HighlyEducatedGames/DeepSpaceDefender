@@ -7,8 +7,7 @@ export default class Explosion {
     this.particles = [];
     this.colors = ['red', 'orange', 'yellow'];
     this.markedForDeletion = false;
-
-    this.sound = new Audio('assets/audio/explosion.mp3');
+    this.sound = document.getElementById('explosion_sound');
 
     for (let i = 0; i < this.numParticles; i++) {
       const color = this.colors[Math.floor(Math.random() * this.colors.length)];

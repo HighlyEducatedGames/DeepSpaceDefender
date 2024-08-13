@@ -14,10 +14,8 @@ export default class HomingMissile {
     this.traveledDistance = 0;
     this.maxDistance = 3000;
     this.markedForDeletion = false;
-
-    this.image = new Image();
-    this.image.src = 'assets/images/homing_missile.png';
-    this.sound = new Audio('assets/audio/homing_missile_sound.mp3');
+    this.image = document.getElementById('missile_image');
+    this.sound = document.getElementById('missile_sound');
 
     this.findTarget();
   }

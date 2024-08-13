@@ -49,11 +49,10 @@ export default class Game {
     this.allySpawnTime = 0;
     this.allyInterval = 60000;
     this.images = {
-      title: new Image(),
+      title: document.getElementById('title_screen_image'),
     };
-    this.images.title.src = 'assets/images/title_screen.png';
     this.sounds = {
-      collision: new Audio('assets/audio/collision.mp3'),
+      collision: document.getElementById('collision_sound'),
     };
 
     // DEBUG FLAGS

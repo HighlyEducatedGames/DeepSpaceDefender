@@ -23,11 +23,9 @@ export default class GUI {
     this.shieldBarY = this.chargeBarY + this.chargeBarHeight + 5;
 
     this.images = {
-      bomb: new Image(),
-      missile: new Image(),
+      bomb: document.getElementById('bomb_powerup_image'),
+      missile: document.getElementById('missile_powerup_image'),
     };
-    this.images.bomb.src = 'assets/images/bombPowerUp.png';
-    this.images.missile.src = 'assets/images/homingMissilePowerUp.png';
   }
 
   draw(ctx) {

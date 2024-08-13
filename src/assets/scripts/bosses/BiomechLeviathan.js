@@ -30,19 +30,15 @@ export default class BiomechLeviathan {
     this.tractorBeamCooldown = null;
     this.tractorBeamActive = false;
     this.markedForDeletion = false;
-
-    this.image = new Image();
-    this.image.src = 'assets/images/biomech_leviathan.png';
-
+    this.image = document.getElementById('biomech_leviathan_image');
     this.sounds = {
-      tractorBeam: new Audio('assets/audio/tractorBeamSound.mp3'),
-      emp: new Audio('assets/audio/empSound.mp3'),
-      eat: new Audio('assets/audio/biomechEat.mp3'),
-      splat: new Audio('assets/audio/splatSound.mp3'),
-      noFire: new Audio('assets/audio/nofire.mp3'),
+      tractorBeam: document.getElementById('biomech_tractor_beam_sound'),
+      emp: document.getElementById('biomech_emp_sound'),
+      eat: document.getElementById('biomech_eat_sound'),
+      splat: document.getElementById('biomech_splat_sound'),
+      noFire: document.getElementById('no_fire_sound'),
     };
-
-    this.music = new Audio('assets/audio/boss_music.mp3');
+    this.music = document.getElementById('boss_music');
 
     getOffScreenRandomSide(this, 100);
   }

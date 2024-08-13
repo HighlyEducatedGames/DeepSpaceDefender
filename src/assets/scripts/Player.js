@@ -40,27 +40,21 @@ export default class Player {
     // this.bombFlashTime = 0;
     // this.bombSpawned = false;
     this.powerUpActive = false; // TODO power up controller
-
     this.images = {
-      idle: new Image(),
-      thrust: new Image(),
-      reverse: new Image(),
+      idle: document.getElementById('player_image'),
+      thrust: document.getElementById('player_thrust_image'),
+      reverse: document.getElementById('player_reverse_image'),
     };
-    this.images.idle.src = 'assets/images/player.png';
-    this.images.thrust.src = 'assets/images/player_thrust.png';
-    this.images.reverse.src = 'assets/images/player_reverse.png';
-
     this.sounds = {
-      acceleration: new Audio('assets/audio/acceleration.mp3'),
-      reverse: new Audio('assets/audio/reverse.mp3'),
-      fire: new Audio('assets/audio/fire.mp3'),
-      charging: new Audio('assets/audio/charging.mp3'),
-      flame: new Audio('assets/audio/flame.mp3'),
-      torchedEnemy: new Audio('assets/audio/torch.mp3'),
-      boost: new Audio('assets/audio/boost.mp3'),
-      lostLife: new Audio('assets/audio/lifeLost.mp3'),
+      acceleration: document.getElementById('acceleration_sound'),
+      reverse: document.getElementById('reverse_sound'),
+      fire: document.getElementById('fire_sound'),
+      charging: document.getElementById('charging_sound'),
+      flame: document.getElementById('flame_sound'),
+      torchedEnemy: document.getElementById('torch_sound'),
+      boost: document.getElementById('boost_sound'),
+      lostLife: document.getElementById('lifelost_sound'),
     };
-    this.setVolumes(0.5); // Initialize volume at 0.5 // TODO: load from localstorage, maybe in window load event
   }
 
   draw(ctx) {
@@ -332,7 +326,9 @@ export default class Player {
       const angleOffset = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
       this.projectiles.push(new RegularProjectile(this.game, angleOffset));
     }
-    this.sounds.fire.cloneNode().play();
+    const sound = this.sounds.fire.cloneNode();
+    sound.volume = this.game.menu.fxVol;
+    sound.play();
   }
 
   useBomb() {

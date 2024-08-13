@@ -34,13 +34,12 @@ export default class Ally {
     this.targetSpeedMultiplier = 1;
     this.targetSnapDistance = 10;
     this.markedForDeletion = false;
-    this.image = new Image();
-    this.image.src = 'assets/images/ally.png';
+    this.image = document.getElementById('ally_image');
     this.sounds = {
-      warning: new Audio('assets/audio/allySound.mp3'),
-      overAndOut: new Audio('assets/audio/allyOver.mp3'),
-      circularOrbit: new Audio('assets/audio/circularOrbitSound.mp3'),
-      followPlayer: new Audio('assets/audio/followPlayerSound.mp3'),
+      warning: document.getElementById('ally_sound'),
+      overAndOut: document.getElementById('ally_over_sound'),
+      circularOrbit: document.getElementById('ally_circular_orbit_sound'),
+      followPlayer: document.getElementById('ally_follow_player_sound'),
     };
 
     // Get spawning location and side

@@ -73,3 +73,7 @@ canvas {
 #loadingCanvas {
   border-radius: 60px;
 }
+
+.hidden-assets {
+  display: none;
+}

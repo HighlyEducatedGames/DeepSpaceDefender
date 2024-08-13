@@ -10,6 +10,7 @@ class PowerUp {
     this.dy = null;
     this.verticalMargin = 50;
     this.zigZagSpeed = 100;
+    this.sound = document.getElementById('powerup_sound');
     this.markedForDeletion = false;
   }
 
@@ -39,9 +40,7 @@ class ProjectilePowerUp extends PowerUp {
     this.width = 20;
     this.height = 20;
     this.speed = 75;
-    this.image = new Image();
-    this.image.src = 'assets/images/powerUp.png';
-    this.sound = new Audio('assets/audio/powerUp.mp3');
+    this.image = document.getElementById('powerup_image');
     super.getOffScreenSpawnPosition();
   }
 }
@@ -52,8 +51,7 @@ class BombPowerUp extends PowerUp {
     this.width = 30;
     this.height = 30;
     this.speed = 75;
-    this.image = new Image();
-    this.image.src = 'assets/images/bombPowerUp.png';
+    this.image = document.getElementById('bomb_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 }
@@ -64,8 +62,7 @@ class HomingMissilePowerUp extends PowerUp {
     this.width = 30;
     this.height = 30;
     this.speed = 75;
-    this.image = new Image();
-    this.image.src = 'assets/images/homingMissilePowerUp.png';
+    this.image = document.getElementById('missile_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 }
@@ -76,8 +73,7 @@ class ShieldPowerUp extends PowerUp {
     this.width = 30;
     this.height = 30;
     this.speed = 50;
-    this.image = new Image();
-    this.image.src = 'assets/images/shield_powerUp.png';
+    this.image = document.getElementById('shield_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 }
@@ -88,8 +84,7 @@ class ReversePowerUp extends PowerUp {
     this.width = 30;
     this.height = 30;
     this.speed = 150;
-    this.image = new Image();
-    this.image.src = 'assets/images/reversePowerUp.png';
+    this.image = document.getElementById('reverse_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 }
@@ -100,8 +95,7 @@ class BoostPowerUp extends PowerUp {
     this.width = 30;
     this.height = 30;
     this.speed = 100;
-    this.image = new Image();
-    this.image.src = 'assets/images/boostPowerUp.png';
+    this.image = document.getElementById('boost_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 }
@@ -112,8 +106,7 @@ class flamethrowerPowerUp extends PowerUp {
     this.width = 30;
     this.height = 30;
     this.speed = 100;
-    this.image = new Image();
-    this.image.src = 'assets/images/flamethrowerPowerUp.png';
+    this.image = document.getElementById('flame_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 }

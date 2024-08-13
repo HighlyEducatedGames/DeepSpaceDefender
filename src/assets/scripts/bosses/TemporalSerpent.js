@@ -28,23 +28,17 @@ export default class TemporalSerpent {
     this.healthBarY = this.game.canvas.height - this.healthBarHeight - 30;
     this.projectiles = [];
     this.hazardZones = [];
-
     this.directionChangeInterval = 1500;
     this.followPlayerInterval = 2500;
     this.lastDirectionChangeTime = performance.now();
     this.lastFollowPlayerTime = performance.now();
-
     this.images = {
-      base: new Image(),
-      head: new Image(),
-      segment: new Image(),
+      base: document.getElementById('temporal_serpent_image'),
+      head: document.getElementById('temporal_serpent_head_image'),
+      segment: document.getElementById('temporal_serpent_segment_image'),
     };
-    this.images.base.src = 'assets/images/temporal_serpent.png';
-    this.images.head.src = 'assets/images/serpentHead.png';
-    this.images.segment.src = 'assets/images/serpentSegment.png';
-
     this.sounds = {
-      hazard: new Audio('assets/audio/hazardZone.mp3'),
+      hazard: document.getElementById('hazard_sound'),
     };
 
     getOffScreenRandomSide(this, 100);
