@@ -12,7 +12,6 @@ export default class Ally {
     this.offset = 4;
     this.speed = 150;
     this.rotation = 0;
-    this.projectiles = [];
     this.warning = true;
     this.warningDuration = 3000;
     this.entryDistance = 50;
@@ -65,9 +64,6 @@ export default class Ally {
       ctx.rotate(this.rotation);
       ctx.drawImage(this.image, -this.width * 0.5, -this.height * 0.5, this.width, this.height);
       ctx.restore();
-
-      // Projectiles
-      this.projectiles.forEach((projectile) => projectile.draw(ctx));
 
       // DEBUG - Hitbox
       if (this.game.debug) {
@@ -212,15 +208,11 @@ export default class Ally {
       this.sounds.overAndOut.play();
     }
 
-    // Projectiles
-    this.projectiles.forEach((projectile) => projectile.update(deltaTime));
-    this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
-
     // Fire projectiles in the opposite direction of the player
     this.nextAttackTime += deltaTime;
     if (!this.markedForDeletion && this.movedToPlayer && !this.exiting && this.nextAttackTime > this.attackInterval) {
       this.nextAttackTime = 0;
-      this.projectiles.push(new AllyProjectile(this));
+      this.game.projectiles.push(new AllyProjectile(this));
     }
   }
 

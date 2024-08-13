@@ -16,7 +16,6 @@ import CyberDragon from './bosses/CyberDragon.js';
 import { Wormholes } from './hazards/Wormhole.js';
 import { ArrowIndicator } from './HUD.js';
 
-
 export default class Game {
   constructor(canvas) {
     this.debug = false;
@@ -32,6 +31,8 @@ export default class Game {
     this.powerUps = new PowerUpManager(this);
     this.enemies = new EnemyController(this);
     this.wormholes = new Wormholes(this);
+    this.projectiles = [];
+    this.particles = [];
     this.targetFPS = 60;
     this.targetFrameDuration = 1000 / this.targetFPS;
     this.timestamp = 0;
@@ -165,6 +166,8 @@ export default class Game {
 
   draw(ctx) {
     this.stars.forEach((star) => star.draw(ctx));
+    this.projectiles.forEach((projectile) => projectile.draw(ctx));
+    this.particles.forEach((particle) => particle.draw(ctx));
     this.coins.forEach((coin) => coin.draw(ctx));
     this.wormholes.draw(ctx);
     if (this.boss) this.boss.draw(ctx);
@@ -174,7 +177,7 @@ export default class Game {
     if (this.ally) this.ally.draw(ctx);
     this.player.draw(ctx);
     this.GUI.draw(ctx);
-    this.arrowIndicators.forEach(arrow => arrow.draw(ctx));
+    this.arrowIndicators.forEach((arrow) => arrow.draw(ctx));
 
     // Game over text
     if (this.isGameOver) {
@@ -199,12 +202,13 @@ export default class Game {
       ctx.lineTo(this.width, this.topMargin);
       ctx.stroke();
     }
-}
-
+  }
 
   update(deltaTime) {
     if (!this.isGameOver) {
       this.stars.forEach((star) => star.update(deltaTime));
+      this.projectiles.forEach((projectile) => projectile.update(deltaTime));
+      this.particles.forEach((particle) => particle.update(deltaTime));
       this.coins.forEach((coin) => coin.update(deltaTime));
       this.wormholes.update(deltaTime);
       if (this.boss) this.boss.update(deltaTime);
@@ -214,12 +218,14 @@ export default class Game {
       if (this.ally) this.ally.update(deltaTime);
       this.player.update(deltaTime);
       this.levelUpdate(deltaTime);
-      this.arrowIndicators.forEach(arrow => arrow.update());
+      this.arrowIndicators.forEach((arrow) => arrow.update());
     }
   }
 
   deleteOldObjects() {
     this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
+    this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
+    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
     if (this.boss && this.boss.markedForDeletion) this.boss = null;
     if (this.ally && this.ally.markedForDeletion && this.ally.projectiles.length === 0) {
       this.ally = null;
