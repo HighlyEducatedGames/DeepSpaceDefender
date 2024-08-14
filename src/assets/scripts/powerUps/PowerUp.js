@@ -1,3 +1,5 @@
+import { getRandomYwithMargin } from '../utilities.js';
+
 class PowerUp {
   constructor(game) {
     this.game = game;
@@ -16,21 +18,34 @@ class PowerUp {
 
   draw(ctx) {
     ctx.drawImage(this.image, this.x - this.width * 0.5, this.y - this.height * 0.5, this.width, this.height);
+
+    // DEBUG - Hitbox
+    if (this.game.debug) {
+      ctx.strokeStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 
   update(deltaTime) {
     this.x += (this.speed * this.dx * deltaTime) / 1000;
-    this.y += (this.speed * this.dy * deltaTime) / 1000;
+    this.y += Math.sin(this.x / 50) * 1.5;
 
-    if (this.game.outOfBounds(this)) this.markedForDeletion = true;
+    if (this.y < 0 || this.y + this.height > this.game.height) {
+      this.directionY *= -1;
+      this.y = Math.max(0, Math.min(this.y, this.game.height - this.height));
+    }
+
+    if (this.game.outOfBounds(this, this.width)) this.markedForDeletion = true;
   }
 
   getOffScreenSpawnPosition() {
     const side = Math.random() < 0.5 ? 'left' : 'right';
     this.x = side === 'left' ? -this.width * 0.5 : this.game.width + this.width * 0.5;
-    this.y = this.verticalMargin + Math.random() * (this.game.height - this.height - 2 * this.verticalMargin);
-    this.directionX = side === 'left' ? 1 : -1;
-    this.directionY = 0;
+    this.y = getRandomYwithMargin(this.game, this.height);
+    this.dx = side === 'left' ? 1 : -1;
+    this.dy = 0;
   }
 }
 
@@ -54,6 +69,15 @@ class BombPowerUp extends PowerUp {
     this.image = document.getElementById('bomb_powerup_image');
     super.getOffScreenSpawnPosition();
   }
+
+  update(deltaTime) {
+    super.update(deltaTime);
+    if (this.game.checkCollision(this, this.game.player)) {
+      this.game.player.addBomb();
+      this.game.cloneSound(this.sound);
+      this.markedForDeletion = true;
+    }
+  }
 }
 
 class HomingMissilePowerUp extends PowerUp {
@@ -64,6 +88,14 @@ class HomingMissilePowerUp extends PowerUp {
     this.speed = 75;
     this.image = document.getElementById('missile_powerup_image');
     super.getOffScreenSpawnPosition();
+  }
+  update(deltaTime) {
+    super.update(deltaTime);
+    if (this.game.checkCollision(this, this.game.player)) {
+      this.game.player.addMissile();
+      this.game.cloneSound(this.sound);
+      this.markedForDeletion = true;
+    }
   }
 }
 
@@ -100,7 +132,7 @@ class BoostPowerUp extends PowerUp {
   }
 }
 
-class flamethrowerPowerUp extends PowerUp {
+class FlameThrowerPowerUp extends PowerUp {
   constructor(game) {
     super(game);
     this.width = 30;
@@ -111,12 +143,12 @@ class flamethrowerPowerUp extends PowerUp {
   }
 }
 
-export default {
-  projectile: ProjectilePowerUp,
-  bomb: BombPowerUp,
-  missile: HomingMissilePowerUp,
-  shield: ShieldPowerUp,
-  reverse: ReversePowerUp,
-  boost: BoostPowerUp,
-  flame: flamethrowerPowerUp,
-};
+export default [
+  // ProjectilePowerUp,
+  BombPowerUp,
+  HomingMissilePowerUp,
+  // ShieldPowerUp,
+  // ReversePowerUp,
+  // BoostPowerUp,
+  // FlameThrowerPowerUp,
+];

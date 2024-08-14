@@ -61,10 +61,10 @@ export default class Game {
 
     // DEBUG FLAGS
     this.doAlly = false;
-    this.doEnemies = true;
-    this.doBoss = true;
+    this.doEnemies = false;
+    this.doBoss = false;
     this.doWormholes = false;
-    this.doPowerUps = false;
+    this.doPowerUps = true;
 
     this.crateStars();
     this.resetGame();
@@ -78,7 +78,6 @@ export default class Game {
     this.player = new Player(this);
     this.ally = null;
     this.allyNextSpawnTime = 0;
-    this.powerUps.removeAll();
     this.startLevel(1);
   }
 
@@ -102,6 +101,9 @@ export default class Game {
 
     // Reset and restart wormholes
     if (this.doWormholes) this.wormholes.init();
+
+    // Reset and restart powerUps
+    if (this.doPowerUps) this.powerUps.init();
 
     // Initialize boss if boss level
     if (this.level % 5 === 0 && this.doBoss) {

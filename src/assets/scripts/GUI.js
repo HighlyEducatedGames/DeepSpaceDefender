@@ -176,13 +176,23 @@ export default class GUI {
     ctx.font = '15px "Press Start 2P", cursive';
     ctx.fillText(':' + this.game.player.lives, livesIconX + 25, this.healthBarY + 18);
 
+    const colonText = ':';
+    const colonTextWidth = ctx.measureText(colonText).width;
+    const fullInventoryColor = 'gold';
+
     const bombIconX = this.chargeBarX + this.chargeBarWidth + 10;
     ctx.drawImage(this.images.bomb, bombIconX, this.chargeBarY, 20, 20);
-    ctx.fillText(':' + this.game.player.bombs, bombIconX + 25, this.chargeBarY + 18);
+    ctx.fillStyle = 'white';
+    ctx.fillText(colonText, bombIconX + 25, this.chargeBarY + 18);
+    ctx.fillStyle = this.game.player.bombs === this.game.player.maxBombs ? fullInventoryColor : 'white';
+    ctx.fillText(this.game.player.bombs, bombIconX + 25 + colonTextWidth, this.chargeBarY + 18);
 
     const missileIconX = this.shieldBarX + this.shieldBarWidth + 10;
     ctx.drawImage(this.images.missile, missileIconX, this.shieldBarY, 20, 20);
-    ctx.fillText(':' + this.game.player.missiles, missileIconX + 25, this.shieldBarY + 18);
+    ctx.fillStyle = 'white';
+    ctx.fillText(colonText, missileIconX + 25, this.shieldBarY + 18);
+    ctx.fillStyle = this.game.player.missiles === this.game.player.maxMissiles ? fullInventoryColor : 'white';
+    ctx.fillText(this.game.player.missiles, missileIconX + 25 + colonTextWidth, this.shieldBarY + 18);
   }
 
   drawDebug(ctx) {

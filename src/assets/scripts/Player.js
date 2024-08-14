@@ -35,9 +35,11 @@ export default class Player {
     this.isCharging = false;
     this.chargingSoundTimeout = null;
     this.bomb = null;
-    this.bombs = 20;
+    this.bombs = 0;
+    this.maxBombs = 20;
     this.shieldActive = false;
-    this.missiles = 20;
+    this.missiles = 0;
+    this.maxMissiles = 20;
     // this.bombSpawnTime = 0;
     // this.bombFlashTime = 0;
     // this.bombSpawned = false;
@@ -292,12 +294,6 @@ export default class Player {
   //   }
   // }
 
-  setVolumes(value) {
-    for (const sound in this.sounds) {
-      this.sounds[sound].volume = value;
-    }
-  }
-
   fireProjectile() {
     // if (empDisableFire) {
     //   const nofireSoundClone = nofireSound.cloneNode();
@@ -432,5 +428,13 @@ export default class Player {
   stopPlayerMovement() {
     this.velocity = { x: 0, y: 0 };
     this.thrust = 0;
+  }
+
+  addBomb() {
+    if (this.bombs < this.maxBombs) this.bombs++;
+  }
+
+  addMissile() {
+    if (this.missiles < this.maxMissiles) this.missiles++;
   }
 }
