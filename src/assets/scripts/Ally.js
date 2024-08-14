@@ -268,6 +268,7 @@ class AllyProjectile {
     // Check collision to enemies
     this.game.enemies.enemies.forEach((enemy) => {
       if (this.game.checkCollision(this, enemy)) {
+        this.game.playCollision();
         enemy.takeDamage(this.damage);
         if (enemy.markedForDeletion) this.game.addScore(enemy.score);
         this.markedForDeletion = true;

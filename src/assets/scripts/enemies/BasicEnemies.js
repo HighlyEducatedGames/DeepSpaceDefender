@@ -227,6 +227,7 @@ class EnemyProjectile {
   checkCollisions() {
     // Collision to player
     if (this.game.checkCollision(this, this.game.player)) {
+      this.game.playCollision();
       this.game.player.takeDamage(this.damage);
       this.markedForDeletion = true;
     }
