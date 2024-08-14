@@ -35,6 +35,7 @@ export default class EnemyController {
 
   update(deltaTime) {
     if (!this.game.doEnemies) return;
+    if (this.game.boss) return;
 
     // Update existing enemies
     this.enemies.forEach((enemy) => enemy.update(deltaTime));

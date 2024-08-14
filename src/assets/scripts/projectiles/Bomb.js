@@ -10,6 +10,7 @@ export default class Bomb {
     this.flashTimer = 0;
     this.flashPeriod = 200;
     this.flashDuration = 100;
+    this.hitBoss = false;
     this.markedForDeletion = false;
     this.sound = document.getElementById('bomb_sound');
 
@@ -63,5 +64,13 @@ export default class Bomb {
         enemy.takeDamage(this.damage);
       }
     });
+
+    // Check boss
+    if (this.game.boss && !this.hitBoss) {
+      if (this.game.checkCollision(this, this.game.boss)) {
+        this.hitBoss = true;
+        this.game.boss.takeDamage(this.damage);
+      }
+    }
   }
 }

@@ -139,7 +139,7 @@ export default class Boss {
   takeDamage(damage) {
     this.health -= damage;
     if (this.health <= 0) {
-      this.game.player.addScore(this.score);
+      this.game.addScore(this.score);
       this.game.effects.push(new Explosion(this.game, this.x, this.y));
       this.markedForDeletion = true;
       this.game.nextLevel();

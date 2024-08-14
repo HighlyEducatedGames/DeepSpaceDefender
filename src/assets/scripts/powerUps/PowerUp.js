@@ -30,6 +30,8 @@ class PowerUp {
 
   update(deltaTime) {
     this.x += (this.speed * this.dx * deltaTime) / 1000;
+
+    //Sin Wave
     this.y += Math.sin(this.x / 50) * 1.5;
 
     if (this.y < 0 || this.y + this.height > this.game.height) {
@@ -144,11 +146,11 @@ class FlameThrowerPowerUp extends PowerUp {
 }
 
 export default [
-  // ProjectilePowerUp,
+  //ProjectilePowerUp,
   BombPowerUp,
-  HomingMissilePowerUp,
-  // ShieldPowerUp,
-  // ReversePowerUp,
-  // BoostPowerUp,
-  // FlameThrowerPowerUp,
+  //HomingMissilePowerUp,
+  //ShieldPowerUp,
+  //ReversePowerUp,
+  //BoostPowerUp,
+  //FlameThrowerPowerUp,
 ];

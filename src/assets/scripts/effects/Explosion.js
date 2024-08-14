@@ -4,8 +4,8 @@ export default class Explosion {
     this.x = x;
     this.y = y;
     this.numParticles = 50;
-    this.particles = [];
     this.colors = ['red', 'orange', 'yellow'];
+    this.particles = [];
     this.markedForDeletion = false;
     this.sound = document.getElementById('explosion_sound');
 
@@ -18,11 +18,14 @@ export default class Explosion {
     this.sound.play();
   }
 
-  update() {
-    this.particles.forEach((particle, index) => {
-      if (particle.markedForDeletion) this.particles.splice(index, 1);
-    });
-    if (this.particles.length <= 0) this.markedForDeletion = true;
+  draw(ctx) {
+    this.particles.forEach((particle) => particle.draw(ctx));
+  }
+
+  update(deltaTime) {
+    this.particles.forEach((particle) => particle.update(deltaTime));
+    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
+    if (this.particles.length === 0) this.markedForDeletion;
   }
 }
 

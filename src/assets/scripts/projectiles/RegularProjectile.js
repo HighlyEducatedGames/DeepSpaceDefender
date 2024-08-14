@@ -86,6 +86,15 @@ export default class RegularProjectile {
         this.markedForDeletion = true;
       }
     });
+
+    // Collision with boss
+    if (this.game.boss) {
+      if (this.game.checkCollision(this, this.game.boss)) {
+        this.game.playCollision();
+        this.game.boss.takeDamage(this.damage);
+        this.markedForDeletion = true;
+      }
+    }
   }
 
   // TODO
