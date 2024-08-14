@@ -128,9 +128,10 @@ export default class Controls {
 
   handleKeyDown(key) {
     // Boss selector if in degug mode
-    if (this.game.debug && /[1-9]/.test(key)) {
-      this.game.startLevel(parseInt(key) * 5);
-    }
+    if (this.game.debug && /[1-9]/.test(key)) this.game.startLevel(parseInt(key) * 5);
+    // Change level with PGUP/PGDOWN;
+    if (this.game.debug && key === 'PageUp') this.game.nextLevel();
+    if (this.game.debug && key === 'PageDown') this.game.prevLevel();
   }
 
   handleKeyUp() {}

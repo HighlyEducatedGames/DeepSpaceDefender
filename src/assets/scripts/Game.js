@@ -250,6 +250,10 @@ export default class Game {
     this.startLevel(this.level + 1);
   }
 
+  prevLevel() {
+    if (this.level > 1) this.startLevel(this.level - 1);
+  }
+
   levelUpdate(deltaTime) {
     if (!this.boss) {
       // Countdown if not a boss level
