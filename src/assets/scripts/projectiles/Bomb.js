@@ -5,20 +5,20 @@ export default class Bomb {
     this.y = this.game.player.y;
     this.radius = 300;
     this.damage = 150;
-    this.bombFlashTime = performance.now();
-    this.timeSinceBomb = 0;
+    this.timer = 0;
+    this.duration = 1000;
+    this.flashTimer = 0;
+    this.flashPeriod = 200;
+    this.flashDuration = 100;
     this.markedForDeletion = false;
     this.sound = document.getElementById('bomb_sound');
 
     // Play bomb sound as soon as it is spawned
-    this.sound.cloneNode().play();
+    this.sound.play();
   }
 
   draw(ctx) {
-    // Flash for 1 second
-    const flashPeriod = 200; // Flash every 200ms
-    const flashDuration = 100; // Duration of each flash
-    if (this.timeSinceBomb % flashPeriod < flashDuration) {
+    if (this.flashTimer < this.flashDuration) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
@@ -34,11 +34,19 @@ export default class Bomb {
     }
   }
 
-  update() {
-    this.timeSinceBomb = performance.now() - this.bombFlashTime;
-    // Bomb only lasts for 1 second
-    if (this.timeSinceBomb >= 1000) {
+  update(deltaTime) {
+    if (this.timer >= this.duration) {
+      this.timer = 0;
       this.markedForDeletion = true;
+    } else {
+      this.timer += deltaTime;
+    }
+
+    // Flash timer
+    if (this.flashTimer >= this.flashPeriod) {
+      this.flashTimer = 0;
+    } else {
+      this.flashTimer += deltaTime;
     }
 
     // Follow the player
@@ -50,8 +58,10 @@ export default class Bomb {
 
   checkCollisions() {
     // Check Enemies
-    // Check projectiles
-    // Check spiral projections
-    // Check bosses
+    this.game.enemies.enemies.forEach((enemy) => {
+      if (this.game.checkCollision(this, enemy)) {
+        enemy.takeDamage(this.damage);
+      }
+    });
   }
 }

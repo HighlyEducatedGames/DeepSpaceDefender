@@ -73,7 +73,7 @@ class BombPowerUp extends PowerUp {
   update(deltaTime) {
     super.update(deltaTime);
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.player.addBomb();
+      this.game.player.addBomb(1);
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -92,7 +92,7 @@ class HomingMissilePowerUp extends PowerUp {
   update(deltaTime) {
     super.update(deltaTime);
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.player.addMissile();
+      this.game.player.addMissile(1);
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }

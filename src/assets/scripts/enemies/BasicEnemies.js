@@ -227,5 +227,10 @@ class EnemyProjectile {
       this.game.player.takeDamage(this.damage);
       this.markedForDeletion = true;
     }
+
+    // Collision to player bomb
+    if (this.game.player.bomb && this.game.checkCollision(this, this.game.player.bomb)) {
+      this.markedForDeletion = true;
+    }
   }
 }

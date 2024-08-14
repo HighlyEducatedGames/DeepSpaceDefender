@@ -61,8 +61,8 @@ export default class Game {
 
     // DEBUG FLAGS
     this.doAlly = false;
-    this.doEnemies = false;
-    this.doBoss = false;
+    this.doEnemies = true;
+    this.doBoss = true;
     this.doWormholes = false;
     this.doPowerUps = true;
 

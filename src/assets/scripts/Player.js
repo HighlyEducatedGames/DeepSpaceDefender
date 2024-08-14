@@ -40,10 +40,6 @@ export default class Player {
     this.shieldActive = false;
     this.missiles = 0;
     this.maxMissiles = 20;
-    // this.bombSpawnTime = 0;
-    // this.bombFlashTime = 0;
-    // this.bombSpawned = false;
-    this.powerUpActive = false; // TODO power up controller
     this.images = {
       idle: document.getElementById('player_image'),
       thrust: document.getElementById('player_thrust_image'),
@@ -408,8 +404,8 @@ export default class Player {
     }
   }
 
-  addHealth(number) {
-    this.health = Math.min(this.health + number, this.maxHealth);
+  addHealth(amount) {
+    this.health = Math.min(this.health + amount, this.maxHealth);
   }
 
   addScore(number) {
@@ -430,11 +426,11 @@ export default class Player {
     this.thrust = 0;
   }
 
-  addBomb() {
-    if (this.bombs < this.maxBombs) this.bombs++;
+  addBomb(amount) {
+    this.bombs = Math.min(this.bombs + amount, this.maxBombs);
   }
 
-  addMissile() {
-    if (this.missiles < this.maxMissiles) this.missiles++;
+  addMissile(amount) {
+    this.missiles = Math.min(this.missiles + amount, this.maxMissiles);
   }
 }
