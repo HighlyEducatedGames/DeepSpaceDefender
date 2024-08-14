@@ -72,6 +72,9 @@
     </div>
 
     <div id="menu-container">
+      <div class="controller">
+        <img src="assets/images/keyboard.png" id="controller-image" />
+      </div>
       <div id="menu">
         <h2>MENU</h2>
         <button onclick="showSoundOptions()">Sound Options</button>
@@ -262,12 +265,15 @@
       function updateMenuText(usingGamepad) {
         const fireText = document.getElementById('fireText');
         const menuText = document.getElementById('menuText');
+        const controllerImage = document.getElementById('controller-image');
         if (usingGamepad) {
           fireText.innerText = 'A';
           menuText.innerText = 'Start';
+          controllerImage.src = 'assets/images/controller.png';
         } else {
           fireText.innerText = 'Space';
           menuText.innerText = 'M';
+          controllerImage.src = 'assets/images/keyboard.png';
         }
       }
     </script>

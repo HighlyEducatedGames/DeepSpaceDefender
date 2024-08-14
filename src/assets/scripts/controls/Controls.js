@@ -10,10 +10,7 @@ export default class Controls {
     this.keyboardMap = {};
     this.controllerButtonMap = {};
     this.gamepadIndex = null;
-    this.prevGamepadState = {
-      buttons: [],
-      axis: [],
-    };
+    this.prevGamepadState = { buttons: [], axis: [] };
     this.triggerThreshold = 0.1;
     this.stickThreshold = 0.5;
     this.usingGamepad = {
@@ -94,7 +91,7 @@ export default class Controls {
       this.usingGamepad.value = true;
       this.gamepadIndex = e.gamepad.index;
       this.playHaptic(200);
-      this.prevGamepadState.buttons = navigator.getGamepads()[this.gamepadIndex].buttons;
+      this.prevGamepadState.buttons = navigator.getGamepads()[this.gamepadIndex].buttons.map(() => false);
       this.prevGamepadState.axis = navigator.getGamepads()[this.gamepadIndex].axes;
     });
 
@@ -140,24 +137,19 @@ export default class Controls {
     if (this.gamepadIndex === null) return;
     const gamePad = navigator.getGamepads()[this.gamepadIndex];
     if (!gamePad) return;
-    const buttons = gamePad.buttons;
+    const buttons = gamePad.buttons.map((button) => button.pressed && button.value > this.triggerThreshold);
     const axis = gamePad.axes;
 
-    buttons.forEach((button, index) => {
+    buttons.forEach((isPressed, index) => {
       const keyName = this.controllerButtonMap[index];
       if (!keyName) return;
       const key = this.keys[keyName];
 
-      // button.value is a binary 0|1 for buttons or a range 0-1 for triggers
-      if (button.value > this.triggerThreshold) {
-        if (!key.isPressed) {
-          this.pressKey(key);
-        } else {
-          this.holdKey(key);
-        }
-      } else if (key.isPressed) {
-        this.releaseKey(key);
-      }
+      const wasPressed = this.prevGamepadState.buttons[index];
+
+      if (isPressed && !wasPressed) this.pressKey(key);
+      else if (isPressed && wasPressed) this.holdKey(key);
+      else if (!isPressed && wasPressed) this.releaseKey(key);
     });
 
     const leftKey = this.keys.left;
@@ -182,7 +174,14 @@ export default class Controls {
     // the previous gamepad array state and the current gamepad array state
     if (
       !this.arraysEqual(this.prevGamepadState.buttons, buttons) ||
-      !this.arraysEqual(this.prevGamepadState.axis, axis)
+      !this.arraysEqual(
+        this.prevGamepadState.axis.map((x) => {
+          return Math.floor(x * 10) / 10;
+        }),
+        axis.map((x) => {
+          return Math.floor(x * 10) / 10;
+        }),
+      )
     ) {
       this.usingGamepad.value = true;
     }
