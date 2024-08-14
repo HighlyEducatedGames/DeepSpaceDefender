@@ -89,6 +89,7 @@ export default class Game {
     this.maxCoins = 5;
     this.effects = [];
     this.arrowIndicators = [];
+    this.crateStars();
 
     // Add new coins to this level
     this.coins = [];

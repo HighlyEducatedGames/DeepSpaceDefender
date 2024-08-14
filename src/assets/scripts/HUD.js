@@ -12,6 +12,7 @@ export class ArrowIndicator {
     this.bobSpeed = 2; // Speed of the bobbing effect
     this.bobAmplitude = 5; // Amplitude of the bobbing effect
     this.flashSpeed = 500; // Speed of the flashing effect in milliseconds
+    this.markedForDeletion = false;
   }
 
   draw(ctx) {
@@ -103,7 +104,7 @@ export class ArrowIndicator {
 
     // Remove the arrow if the target is on screen, marked for deletion, or doesn't exist
     if (targetOnScreen || targetKilled) {
-      this.game.arrowIndicators = this.game.arrowIndicators.filter((arrow) => arrow !== this);
+      this.markedForDeletion = true;
     }
   }
 }
