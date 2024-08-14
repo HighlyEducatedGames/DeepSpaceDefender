@@ -60,7 +60,7 @@ export default class Game {
     };
 
     // DEBUG FLAGS
-    this.doAlly = false;
+    this.doAlly = true;
     this.doEnemies = true;
     this.doBoss = true;
     this.doWormholes = false;
@@ -228,7 +228,7 @@ export default class Game {
     this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
     this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
     if (this.boss && this.boss.markedForDeletion) this.boss = null;
-    if (this.ally && this.ally.markedForDeletion && this.ally.projectiles.length === 0) {
+    if (this.ally && this.ally.markedForDeletion) {
       this.ally = null;
       this.allyNextSpawnTime = 0;
     }

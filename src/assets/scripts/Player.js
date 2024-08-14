@@ -408,11 +408,6 @@ export default class Player {
     this.health = Math.min(this.health + amount, this.maxHealth);
   }
 
-  addScore(number) {
-    this.score += number;
-    // Maybe play sound??
-  }
-
   getAngleToPlayer(object) {
     return Math.atan2(this.y - object.y, this.x - object.x);
   }

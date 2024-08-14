@@ -81,6 +81,7 @@ export default class RegularProjectile {
     this.game.enemies.enemies.forEach((enemy) => {
       if (this.game.checkCollision(this, enemy)) {
         enemy.takeDamage(this.damage);
+        if (enemy.markedForDeletion) this.game.addScore(enemy.score);
         this.markedForDeletion = true;
       }
     });

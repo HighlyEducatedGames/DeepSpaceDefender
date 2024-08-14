@@ -260,5 +260,18 @@ class AllyProjectile {
 
     // Delete if out of bounds
     if (this.game.outOfBounds(this)) this.markedForDeletion = true;
+
+    this.checkCollisions();
+  }
+
+  checkCollisions() {
+    // Check collision to enemies
+    this.game.enemies.enemies.forEach((enemy) => {
+      if (this.game.checkCollision(this, enemy)) {
+        enemy.takeDamage(this.damage);
+        if (enemy.markedForDeletion) this.game.addScore(enemy.score);
+        this.markedForDeletion = true;
+      }
+    });
   }
 }
