@@ -64,7 +64,7 @@ export default class GUI {
     if (this.game.player.isBoostReady()) {
       boostProgress = 1;
     } else {
-      const boostPowerUpActive = this.game.powerUps.boost.isActive;
+      const boostPowerUpActive = this.game.player.isBoosting;
       boostProgress = Math.max(
         0,
         (currentTime - this.game.player.boostCooldownEndTime + (boostPowerUpActive ? 500 : 7000)) /
@@ -99,7 +99,7 @@ export default class GUI {
 
   drawChargeBar(ctx) {
     const isCharging = this.game.player.isCharging;
-    const spacebarHeldTime = this.game.player.spacebarHeldTime;
+    const spacebarHeldTime = this.game.controls.keys.fire.pressedDuration;
     const flamethrowerActive = false; // TODO get from flamethrower class??
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
@@ -109,8 +109,7 @@ export default class GUI {
     ctx.strokeRect(this.chargeBarX, this.chargeBarY, this.chargeBarWidth, this.chargeBarHeight);
 
     if (isCharging) {
-      const currentTime = performance.now();
-      const chargeDuration = (currentTime - spacebarHeldTime) / 1000;
+      const chargeDuration = spacebarHeldTime / 1000;
       const chargeProgress = Math.min(chargeDuration / 2, 1);
 
       if (flamethrowerActive) {

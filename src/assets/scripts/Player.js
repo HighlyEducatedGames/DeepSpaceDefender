@@ -1,4 +1,4 @@
-import RegularProjectile from './projectiles/RegularProjectile.js';
+import { PlayerProjectile, ChargedProjectile } from './projectiles/PlayerProjectile.js';
 import Bomb from './projectiles/Bomb.js';
 import HomingMissile from './projectiles/HomingMissile.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
@@ -6,38 +6,31 @@ import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 export default class Player {
   constructor(game) {
     this.game = game;
-    this.width = 50;
-    this.height = 50;
-    this.radius = this.width * 0.5;
     this.x = this.game.width * 0.5;
     this.y = this.game.height * 0.5 + this.game.topMargin * 0.5;
+    this.width = 50;
+    this.height = 50;
     this.offset = 4;
     this.speed = 200;
+    this.maxSpeed = 300;
     this.rotation = -Math.PI * 0.5;
     this.rotationSpeed = 4;
     this.velocity = { x: 0, y: 0 };
     this.thrust = 0;
     this.acceleration = 300;
     this.deceleration = 0.98;
-    this.maxSpeed = 300;
+    this.maxLives = 9999;
     this.lives = 3;
-    this.collided = false;
-    this.collisionTime = 0;
-    this.collisionDuration = 1000;
     this.maxHealth = 30;
     this.health = this.maxHealth;
-    this.maxLives = 3;
-    this.lives = this.maxLives;
     this.nextLifeScore = 1500;
-    this.isBoosting = false;
-    this.boostEndTime = 0;
-    this.boostCooldownEndTime = 0;
     this.isCharging = false;
-    this.chargingSoundTimeout = null;
+    this.isBoosting = false; // TODO
+    this.shieldActive = false; // TODO
+    this.powerUpActive = false; // TODO
     this.bomb = null;
     this.bombs = 0;
     this.maxBombs = 20;
-    this.shieldActive = false;
     this.missiles = 0;
     this.maxMissiles = 20;
     this.images = {
@@ -58,19 +51,11 @@ export default class Player {
   }
 
   draw(ctx) {
-    const keys = this.game.controls.keys; // Current keys state
+    const keys = this.game.controls.keys;
 
     // Draw player
-
-    // Adjust the translation rotation center based on player rotation
-    // because the shift property moves the image off center.
-    // This keeps the player image centered in the hitbox when rotating
     const xAdjustPos = Math.cos(this.rotation) * this.offset;
     const yAdjustPos = Math.sin(this.rotation) * this.offset;
-
-    ctx.save();
-    ctx.translate(this.x - xAdjustPos, this.y - yAdjustPos);
-    ctx.rotate(this.rotation);
 
     let image;
     if (keys.up.isPressed) {
@@ -81,18 +66,21 @@ export default class Player {
       image = this.images.idle;
     }
 
+    ctx.save();
+    ctx.translate(this.x - xAdjustPos, this.y - yAdjustPos);
+    ctx.rotate(this.rotation);
     ctx.drawImage(image, -this.width * 0.5, -this.height * 0.5, this.width, this.height);
     ctx.restore();
 
     // Invincibility Shield
     if (this.game.controls.codes.invincibility.enabled) {
-      const gradient = ctx.createRadialGradient(this.x, this.y, this.width / 2, this.x, this.y, this.width);
-      gradient.addColorStop(0, 'rgba(255, 69, 0, 0.5)'); // Red/orange color with 50% opacity
-      gradient.addColorStop(0.7, 'rgba(255, 140, 0, 0.2)'); // Lighter orange color with 20% opacity
-      gradient.addColorStop(1, 'rgba(255, 165, 0, 0)'); // Even lighter orange color with 0% opacity
+      const gradient = ctx.createRadialGradient(this.x, this.y, this.width * 0.5, this.x, this.y, this.width);
+      gradient.addColorStop(0, 'rgba(255, 69, 0, 0.5)');
+      gradient.addColorStop(0.7, 'rgba(255, 140, 0, 0.2)');
+      gradient.addColorStop(1, 'rgba(255, 165, 0, 0)');
       ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
+      ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -104,7 +92,7 @@ export default class Player {
       gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
       ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
+      ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -116,7 +104,7 @@ export default class Player {
       gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
       ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
+      ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -161,53 +149,6 @@ export default class Player {
       this.sounds.reverse.pause();
       this.sounds.reverse.currentTime = 0;
     }
-
-    // Game over if player is out of lives and health
-    if (this.lives <= 0 && this.health <= 0) {
-      this.game.gameOver();
-    }
-
-    if (!this.game.menu.isOpen && !this.game.isGameOver) {
-      if (keys.fire.justPressed()) this.fireProjectile();
-      if (keys.bomb.justPressed()) this.useBomb();
-      if (keys.boost.justPressed()) this.useBoost();
-      if (keys.missile.justPressed()) this.useMissile();
-    }
-
-    /*if (keys.fire.isPressed) {
-      if (!this.isCharging) {
-        this.isCharging = true;
-        // this.spacebarHeldTime = performance.now();
-        this.chargingSoundTimeout = setTimeout(() => {
-          if (/!*!flamethrowerActive &&*!/ this.sounds.charging.paused) {
-            // TODO: flamethrower conditional
-            this.sounds.charging.play();
-          }
-        }, 250);
-      }
-    } else {
-      this.isCharging = false;
-      clearTimeout(this.chargingSoundTimeout);
-      this.sounds.charging.pause();
-      this.sounds.charging.currentTime = 0;
-      this.sounds.flame.pause();
-      this.sounds.flame.currentTime = 0;
-    }
-
-      // EMP blast effect on player
-  if (empBlast && empBlast.active) {
-    const dx = empBlast.x - player.x;
-    const dy = empBlast.y - player.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    if (distance < empBlast.radius) {
-      // Apply EMP effects to the player
-      player.velocity.x = 0;
-      player.velocity.y = 0;
-    }
-  }
-
-  }*/
 
     // Boost handling
     if (this.isBoosting) {
@@ -263,7 +204,7 @@ export default class Player {
 
     // Give extra life if target score reached
     if (this.game.score >= this.nextLifeScore) {
-      this.lives++;
+      this.addLife(1);
       this.nextLifeScore += 1500;
     }
 
@@ -273,24 +214,36 @@ export default class Player {
       if (this.bomb.markedForDeletion) this.bomb = null;
     }
 
-    // this.checkCollisions();
+    // Charging projectile mechanic
+    if (this.game.controls.keys.fire.isPressed) {
+      if (!this.isCharging) {
+        this.isCharging = true;
+        this.sounds.charging.loop = true;
+        this.sounds.charging.play();
+      }
+    } else {
+      if (this.isCharging) {
+        this.isCharging = false;
+        this.sounds.charging.pause();
+        this.sounds.charging.currentTime = 0;
+        if (this.game.controls.keys.fire.pressedDuration > 1000) this.fireProjectile(true);
+      }
+    }
+
+    // Player inputs
+    if (!this.game.menu.isOpen && !this.game.isGameOver) {
+      if (keys.fire.justPressed()) this.fireProjectile();
+      if (keys.bomb.justPressed()) this.useBomb();
+      if (keys.boost.justPressed()) this.useBoost();
+      if (keys.missile.justPressed()) this.useMissile();
+    }
+
+    this.checkCollisions();
   }
 
-  // collide(damage) {
-  //   if (!this.collided) {
-  //     this.collided = true;
-  //     this.collisionTime = 0;
-  //     this.takeDamage(damage);
-  //     this.game.playCollision();
-  //   } else {
-  //     if (this.collisionTime > this.collisionDuration) {
-  //     } else {
-  //       this.collisionTime += deltaTime;
-  //     }
-  //   }
-  // }
+  checkCollisions() {}
 
-  fireProjectile() {
+  fireProjectile(charged = false) {
     // if (empDisableFire) {
     //   const nofireSoundClone = nofireSound.cloneNode();
     //   nofireSoundClone.volume = nofireSound.volume; // Ensure the cloned sound has the same volume
@@ -336,8 +289,9 @@ export default class Player {
 
     const projectilesToFire = this.powerUpActive ? 3 : 1;
     for (let i = 0; i < projectilesToFire; i++) {
-      const angleOffset = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
-      this.game.projectiles.push(new RegularProjectile(this.game, angleOffset));
+      const angle = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
+      const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
+      this.game.projectiles.push(projectile);
     }
     this.game.cloneSound(this.sounds.fire);
   }
@@ -406,6 +360,10 @@ export default class Player {
 
   addHealth(amount) {
     this.health = Math.min(this.health + amount, this.maxHealth);
+  }
+
+  addLife(amount) {
+    this.lives = Math.min(this.lives + amount, this.maxLives);
   }
 
   getAngleToPlayer(object) {
