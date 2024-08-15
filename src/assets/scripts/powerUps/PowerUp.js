@@ -52,12 +52,13 @@ class PowerUp {
 }
 
 class BombPowerUp extends PowerUp {
+  static image = document.getElementById('bomb_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 75;
-    this.image = document.getElementById('bomb_powerup_image');
+    this.image = BombPowerUp.image;
     super.getOffScreenSpawnPosition();
   }
 
@@ -73,12 +74,13 @@ class BombPowerUp extends PowerUp {
 }
 
 class HomingMissilePowerUp extends PowerUp {
+  static image = document.getElementById('missile_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 75;
-    this.image = document.getElementById('missile_powerup_image');
+    this.image = HomingMissilePowerUp.image;
     super.getOffScreenSpawnPosition();
   }
   update(deltaTime) {
@@ -93,12 +95,13 @@ class HomingMissilePowerUp extends PowerUp {
 }
 
 class ProjectilePowerUp extends PowerUp {
+  static image = document.getElementById('powerup_image');
   constructor(game) {
     super(game);
     this.width = 20;
     this.height = 20;
     this.speed = 75;
-    this.image = document.getElementById('powerup_image');
+    this.image = ProjectilePowerUp.image;
     super.getOffScreenSpawnPosition();
   }
 
@@ -114,13 +117,14 @@ class ProjectilePowerUp extends PowerUp {
 }
 
 class BoostPowerUp extends PowerUp {
+  static image = document.getElementById('boost_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 100;
     this.duration = 5000;
-    this.image = document.getElementById('boost_powerup_image');
+    this.image = BoostPowerUp.image;
     super.getOffScreenSpawnPosition();
   }
 
@@ -138,12 +142,13 @@ class BoostPowerUp extends PowerUp {
 }
 
 class ShieldPowerUp extends PowerUp {
+  static image = document.getElementById('shield_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 50;
-    this.image = document.getElementById('shield_powerup_image');
+    this.image = ShieldPowerUp.image;
     super.getOffScreenSpawnPosition();
   }
 
@@ -159,12 +164,13 @@ class ShieldPowerUp extends PowerUp {
 }
 
 class ReversePowerUp extends PowerUp {
+  static image = document.getElementById('reverse_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 150;
-    this.image = document.getElementById('reverse_powerup_image');
+    this.image = ReversePowerUp.image;
     super.getOffScreenSpawnPosition();
   }
 
@@ -180,12 +186,13 @@ class ReversePowerUp extends PowerUp {
 }
 
 class FlameThrowerPowerUp extends PowerUp {
+  static image = document.getElementById('flame_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 100;
-    this.image = document.getElementById('flame_powerup_image');
+    this.image = FlameThrowerPowerUp.image;
     super.getOffScreenSpawnPosition();
   }
 
@@ -201,35 +208,37 @@ class FlameThrowerPowerUp extends PowerUp {
 }
 
 class LaserPowerUp extends PowerUp {
+  static image = document.getElementById('laser_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 100;
-    this.image = document.getElementById('laser_powerup_image');
+    this.image = LaserPowerUp.image;
     super.getOffScreenSpawnPosition();
   }
 }
 
-class ParticleBombUp extends PowerUp {
+class ParticleBombPowerUp extends PowerUp {
+  static image = document.getElementById('particle_bomb_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 100;
-    this.image = document.getElementById('particle_bomb_powerup_image');
+    this.image = ParticleBombPowerUp.image;
     super.getOffScreenSpawnPosition();
   }
 }
 
-export default [
-  //BombPowerUp,
-  // HomingMissilePowerUp,
-  // ProjectilePowerUp,
-  // BoostPowerUp,
-  // ShieldPowerUp,
-  // ReversePowerUp,
-  FlameThrowerPowerUp,
-  // LaserPowerUp,
-  // ParticleBombUp,
-];
+export default {
+  bomb: BombPowerUp,
+  missile: HomingMissilePowerUp,
+  projectile: ProjectilePowerUp,
+  boost: BoostPowerUp,
+  shield: ShieldPowerUp,
+  reverse: ReversePowerUp,
+  flame: FlameThrowerPowerUp,
+  laser: LaserPowerUp,
+  particleBomb: ParticleBombPowerUp,
+};

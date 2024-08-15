@@ -2,6 +2,7 @@ import { PlayerProjectile, ChargedProjectile } from './projectiles/PlayerProject
 import Bomb from './projectiles/Bomb.js';
 import HomingMissile from './projectiles/HomingMissile.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
+import FlameParticle from './projectiles/Flame.js';
 
 export default class Player {
   constructor(game) {
@@ -216,7 +217,7 @@ export default class Player {
     }
 
     // Charging projectile mechanic
-    if (this.game.controls.keys.fire.isPressed) {
+    if (this.game.controls.keys.fire.isPressed && !this.game.getPowers().flame.active) {
       if (!this.isCharging) {
         this.isCharging = true;
       }
@@ -242,6 +243,11 @@ export default class Player {
       if (keys.missile.justPressed()) this.useMissile();
 
       if (this.game.getPowers().flame.active && keys.fire.isPressed) this.fireFlame();
+    }
+
+    if ((!this.game.getPowers().flame.active || !keys.fire.isPressed) && !this.sounds.flame.paused) {
+      this.sounds.flame.pause();
+      this.sounds.flame.currentTime = 0;
     }
 
     this.checkCollisions();
@@ -293,6 +299,11 @@ export default class Player {
 
   fireFlame() {
     console.log('FIRE FLAME');
+    if (this.sounds.flame.paused) {
+      this.sounds.flame.loop = true;
+      this.sounds.flame.play();
+    }
+    this.game.particles.push(new FlameParticle(this.game));
   }
 
   useBomb() {

@@ -35,6 +35,7 @@ export default class GUI {
     this.drawChargeBar(ctx);
     this.drawShieldBar(ctx);
     this.drawInventories(ctx);
+    this.drawPowerCooldowns(ctx);
     if (this.game.debug) this.drawDebug(ctx);
   }
 
@@ -195,6 +196,27 @@ export default class GUI {
     ctx.fillText(colonText, missileIconX + 25, this.shieldBarY + 18);
     ctx.fillStyle = this.game.player.missiles === this.game.player.maxMissiles ? fullInventoryColor : 'white';
     ctx.fillText(this.game.player.missiles, missileIconX + 25 + colonTextWidth, this.shieldBarY + 18);
+  }
+
+  drawPowerCooldowns(ctx) {
+    const arr = Object.values(this.game.getPowers());
+    const size = 30;
+    const startX = this.game.width - size - 10;
+    const startY = this.game.height - size - 10;
+    ctx.strokeStyle = 'white';
+    for (let i = 0; i < arr.length; i++) {
+      const xPos = startX - (size + 10) * i;
+      const yPos = startY;
+      ctx.strokeRect(xPos, yPos, size, size);
+      if (arr[i].image) ctx.drawImage(arr[i].image, xPos, yPos, size, size);
+      if (arr[i].active) {
+        const filled = (arr[i].timer / arr[i].duration) * size;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(xPos, yPos, size, size);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.fillRect(xPos, yPos + filled, size, size - filled);
+      }
+    }
   }
 
   drawDebug(ctx) {

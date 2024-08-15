@@ -1,9 +1,9 @@
-import powerUps from './PowerUp.js';
+import powerUpObjects from './PowerUp.js';
 
 export default class PowerUpController {
   constructor(game) {
     this.game = game;
-    this.powerUpBuilders = powerUps;
+    this.powerUpBuilders = Object.values(powerUpObjects);
     this.flyingPowerUps = [];
     this.maxPowerUps = 5;
     this.spawnTime = 0;
@@ -16,8 +16,13 @@ export default class PowerUpController {
       reverse: new Power(this.game, 10000),
       flame: new Power(this.game, 10000),
       laser: new Power(this.game, 10000),
-      particle: new Power(this.game, 10000),
+      particleBomb: new Power(this.game, 10000),
     };
+
+    for (const key in this.powers) {
+      if (!powerUpObjects[key]) continue;
+      this.powers[key].image = powerUpObjects[key].image;
+    }
   }
 
   draw(ctx) {
