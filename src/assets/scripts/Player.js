@@ -25,7 +25,11 @@ export default class Player {
     this.health = this.maxHealth;
     this.nextLifeScore = 1500;
     this.isCharging = false;
-    this.isBoosting = false; // TODO
+    this.isBoosting = false;
+    this.boostSpeed = 600;
+    this.boostEndTime = 0;
+    this.boostCooldownEndTime = 0;
+    this.boostPowerUpActive = false; // TODO
     this.shieldActive = false; // TODO
     this.powerUpActive = false; // TODO
     this.bomb = null;
@@ -150,10 +154,17 @@ export default class Player {
       this.sounds.reverse.currentTime = 0;
     }
 
+    // Speed limiter
+    const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    if (speed > this.maxSpeed) {
+      this.velocity.x *= this.maxSpeed / speed;
+      this.velocity.y *= this.maxSpeed / speed;
+    }
+
     // Boost handling
     if (this.isBoosting) {
-      this.velocity.x = Math.cos(this.rotation) * this.maxSpeed * 2;
-      this.velocity.y = Math.sin(this.rotation) * this.maxSpeed * 2;
+      this.velocity.x = Math.cos(this.rotation) * this.boostSpeed;
+      this.velocity.y = Math.sin(this.rotation) * this.boostSpeed;
 
       // Check if the boost duration has ended
       if (this.game.timestamp >= this.boostEndTime) this.isBoosting = false;
@@ -167,13 +178,6 @@ export default class Player {
     if (!keys.up.isPressed && !keys.down.isPressed) {
       this.velocity.x *= this.deceleration;
       this.velocity.y *= this.deceleration;
-    }
-
-    // Speed limiter
-    const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-    if (speed > this.maxSpeed) {
-      this.velocity.x *= this.maxSpeed / speed;
-      this.velocity.y *= this.maxSpeed / speed;
     }
 
     // Tractor beam effect on player
@@ -218,16 +222,19 @@ export default class Player {
     if (this.game.controls.keys.fire.isPressed) {
       if (!this.isCharging) {
         this.isCharging = true;
-        this.sounds.charging.loop = true;
-        this.sounds.charging.play();
       }
     } else {
       if (this.isCharging) {
         this.isCharging = false;
         this.sounds.charging.pause();
         this.sounds.charging.currentTime = 0;
-        if (this.game.controls.keys.fire.pressedDuration > 1000) this.fireProjectile(true);
+        if (keys.fire.pressedDuration > 1000) this.fireProjectile(true);
       }
+    }
+    // Play charging sound after 500ms charge
+    if (this.isCharging && keys.fire.pressedDuration > 200 && this.sounds.charging.paused) {
+      this.sounds.charging.loop = true;
+      this.sounds.charging.play();
     }
 
     // Player inputs
@@ -244,6 +251,14 @@ export default class Player {
   checkCollisions() {}
 
   fireProjectile(charged = false) {
+    const projectilesToFire = this.powerUpActive ? 3 : 1;
+    for (let i = 0; i < projectilesToFire; i++) {
+      const angle = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
+      const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
+      this.game.projectiles.push(projectile);
+    }
+    this.game.cloneSound(this.sounds.fire);
+
     // if (empDisableFire) {
     //   const nofireSoundClone = nofireSound.cloneNode();
     //   nofireSoundClone.volume = nofireSound.volume; // Ensure the cloned sound has the same volume
@@ -286,14 +301,6 @@ export default class Player {
     // }
 
     // if (/*|| flamethrowerActive || empDisableFire*/) return; // TODO
-
-    const projectilesToFire = this.powerUpActive ? 3 : 1;
-    for (let i = 0; i < projectilesToFire; i++) {
-      const angle = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
-      const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
-      this.game.projectiles.push(projectile);
-    }
-    this.game.cloneSound(this.sounds.fire);
   }
 
   useBomb() {
@@ -303,20 +310,12 @@ export default class Player {
   }
 
   useBoost() {
-    if (
-      this.isBoosting ||
-      (!this.game.controls.codes.unlimitedBoost.enabled && this.game.timestamp < this.boostCooldownEndTime)
-    )
-      return;
-
+    if (!this.isBoostReady()) return;
     this.isBoosting = true;
-    // boostEndTime = performance.now() + 500;
-    // boostCooldownEndTime = performance.now() + (boostPowerUpActive ? 500 : 7000); // Reduced cooldown if boost power-up is active
-    // const boostSoundClone = boostSound.cloneNode();
-    // boostSoundClone.volume = boostSound.volume;
-    // boostSoundClone.play();
-    // player.velocity.x = Math.cos(player.rotation) * player.maxSpeed * 2;
-    // player.velocity.y = Math.sin(player.rotation) * player.maxSpeed * 2;
+    this.boostEndTime = this.game.timestamp + 500;
+    // Reduced cooldown if boost power-up is active
+    this.boostCooldownEndTime = this.game.timestamp + (this.boostPowerUpActive ? 500 : 7000);
+    this.sounds.boost.play();
   }
 
   isBoostReady() {
@@ -344,6 +343,7 @@ export default class Player {
   takeDamage(amount) {
     this.game.controls.playHaptic(100, 0.25);
     if (this.game.controls.codes.invincibility.enabled) return;
+    if (this.isBoosting) return;
 
     this.health -= amount;
     if (this.health <= 0) {
