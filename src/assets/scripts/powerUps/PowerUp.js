@@ -217,6 +217,16 @@ class LaserPowerUp extends PowerUp {
     this.image = LaserPowerUp.image;
     super.getOffScreenSpawnPosition();
   }
+
+  update(deltaTime) {
+    super.update(deltaTime);
+    // Player Collision
+    if (this.game.checkCollision(this, this.game.player)) {
+      this.game.powerUps.powers.laser.activate();
+      this.game.cloneSound(this.sound);
+      this.markedForDeletion = true;
+    }
+  }
 }
 
 class ParticleBombPowerUp extends PowerUp {
@@ -228,6 +238,16 @@ class ParticleBombPowerUp extends PowerUp {
     this.speed = 100;
     this.image = ParticleBombPowerUp.image;
     super.getOffScreenSpawnPosition();
+  }
+
+  update(deltaTime) {
+    super.update(deltaTime);
+    // Player Collision
+    if (this.game.checkCollision(this, this.game.player)) {
+      this.game.powerUps.powers.particleBomb.activate();
+      this.game.cloneSound(this.sound);
+      this.markedForDeletion = true;
+    }
   }
 }
 

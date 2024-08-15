@@ -3,6 +3,7 @@ import Bomb from './projectiles/Bomb.js';
 import HomingMissile from './projectiles/HomingMissile.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import FlameParticle from './projectiles/Flame.js';
+import Laser from './projectiles/Laser.js';
 
 export default class Player {
   constructor(game) {
@@ -35,6 +36,7 @@ export default class Player {
     this.maxBombs = 20;
     this.missiles = 0;
     this.maxMissiles = 20;
+    this.laser = new Laser(this.game);
     this.images = {
       idle: document.getElementById('player_image'),
       thrust: document.getElementById('player_thrust_image'),
@@ -112,6 +114,9 @@ export default class Player {
 
     // Bomb
     if (this.bomb) this.bomb.draw(ctx);
+
+    // Laser
+    if (this.laser.active) this.laser.draw(ctx);
 
     // DEBUG - Hitbox
     if (this.game.debug) {
@@ -216,6 +221,9 @@ export default class Player {
       if (this.bomb.markedForDeletion) this.bomb = null;
     }
 
+    // Laser
+    if (this.laser.active) this.laser.update(deltaTime);
+
     // Charging projectile mechanic
     if (this.game.controls.keys.fire.isPressed && !this.game.getPowers().flame.active) {
       if (!this.isCharging) {
@@ -242,12 +250,24 @@ export default class Player {
       if (keys.boost.justPressed()) this.useBoost();
       if (keys.missile.justPressed()) this.useMissile();
 
-      if (this.game.getPowers().flame.active && keys.fire.isPressed) this.fireFlame();
+      if (keys.fire.isPressed) {
+        if (this.game.getPowers().laser.active) this.fireLaser();
+        else if (this.game.getPowers().flame.active) this.fireFlame();
+      } else {
+        this.laser.active = false;
+      }
     }
 
+    // Turn off flame sound if still playing and no longer firing
     if ((!this.game.getPowers().flame.active || !keys.fire.isPressed) && !this.sounds.flame.paused) {
       this.sounds.flame.pause();
       this.sounds.flame.currentTime = 0;
+    }
+
+    // Turn off laser sound if still playing and no longer firing
+    if ((!this.game.getPowers().laser.active || !keys.fire.isPressed) && !this.laser.sounds.fire.paused) {
+      this.laser.sounds.fire.pause();
+      this.laser.sounds.fire.currentTime = 0;
     }
 
     this.checkCollisions();
@@ -257,6 +277,7 @@ export default class Player {
 
   fireProjectile(charged = false) {
     if (this.game.getPowers().flame.active) return;
+    if (this.game.getPowers().laser.active) return;
 
     const powers = this.game.getPowers();
 
@@ -282,28 +303,22 @@ export default class Player {
     //   nofireSoundClone.play(); // Play the cloned sound
     //   return; // Prevent firing if EMP effect is active
     // }
-
-    // if (playerLaserPowerUpActive) {
-    //   // Fire laser beam
-    //   console.log('Firing player laser'); // Debugging statement
-    //   createPlayerLaserBeam(
-    //     player.x,
-    //     player.y,
-    //     Math.cos(player.rotation),
-    //     Math.sin(player.rotation),
-    //     'rgba(0, 255, 255, 1)',
-    //   );
-    //   return;
-    // }
   }
 
   fireFlame() {
-    console.log('FIRE FLAME');
     if (this.sounds.flame.paused) {
       this.sounds.flame.loop = true;
       this.sounds.flame.play();
     }
     this.game.particles.push(new FlameParticle(this.game));
+  }
+
+  fireLaser() {
+    if (this.laser.sounds.fire.paused) {
+      this.laser.sounds.fire.loop = true;
+      this.laser.sounds.fire.play();
+    }
+    this.laser.active = true;
   }
 
   useBomb() {
