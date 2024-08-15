@@ -64,7 +64,7 @@ export default class GUI {
     if (this.game.player.isBoostReady()) {
       boostProgress = 1;
     } else {
-      const boostPowerUpActive = this.game.player.boostPowerUpActive;
+      const boostPowerUpActive = this.game.getPowers().boost.active;
       boostProgress = Math.max(
         0,
         (currentTime - this.game.player.boostCooldownEndTime + (boostPowerUpActive ? 500 : 7000)) /
@@ -78,11 +78,13 @@ export default class GUI {
     ctx.strokeStyle = 'gray';
     ctx.strokeRect(this.boostBarX, this.boostBarY, this.boostBarWidth, this.boostBarHeight);
 
-    // if (this.game.powerUps.boost.isActive) { // TODO once powerups are addded
-    //   ctx.strokeStyle = 'white';
-    //   ctx.lineWidth = 3;
-    //   ctx.strokeRect(this.boostBarX - 3, this.boostBarY - 3, this.boostBarWidth + 6, this.boostBarHeight + 6);
-    // }
+    if (this.game.getPowers().boost.active) {
+      ctx.save();
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(this.boostBarX - 3, this.boostBarY - 3, this.boostBarWidth + 6, this.boostBarHeight + 6);
+      ctx.restore();
+    }
   }
 
   drawHealthBar(ctx) {
@@ -135,31 +137,32 @@ export default class GUI {
       ctx.lineTo(halfwayMarkerX, this.chargeBarY + this.chargeBarHeight);
       ctx.stroke();
 
-      // TODO
-      // if (reversePowerUpActive) {
-      //   ctx.strokeStyle = 'yellow';
-      //   ctx.lineWidth = 5;
-      //   ctx.strokeRect(chargeBarX - 2.5, chargeBarY - 2.5, chargeBarWidth + 5, chargeBarHeight + 5);
-      // }
+      if (this.game.getPowers().reverse.active) {
+        ctx.save();
+        ctx.strokeStyle = 'yellow';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(this.chargeBarX - 2.5, this.chargeBarY - 2.5, this.chargeBarWidth + 5, this.chargeBarHeight + 5);
+        ctx.restore();
+      }
 
-      // if (powerUpActive) {
-      //   ctx.strokeStyle = 'blue';
-      //   ctx.lineWidth = 3;
-      //   ctx.strokeRect(chargeBarX, chargeBarY, chargeBarWidth, chargeBarHeight);
-      // }
+      if (this.game.getPowers().projectile.active) {
+        ctx.save();
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(this.chargeBarX, this.chargeBarY, this.chargeBarWidth, this.chargeBarHeight);
+        ctx.restore();
+      }
     }
   }
 
   drawShieldBar(ctx) {
-    const shieldActive = false; // TODO get from player??
-    const shieldPowerUpExpirationTime = 0; // TODO get from player??
+    const powerUp = this.game.getPowers().shield;
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(this.shieldBarX, this.shieldBarY, this.shieldBarWidth, this.shieldBarHeight);
 
-    if (shieldActive) {
-      const currentTime = performance.now();
-      const shieldProgress = Math.max(0, (shieldPowerUpExpirationTime - currentTime) / 15000);
+    if (powerUp.active) {
+      const shieldProgress = Math.max(0, powerUp.timer / powerUp.duration);
       ctx.fillStyle = 'cyan';
       ctx.fillRect(this.shieldBarX, this.shieldBarY, this.shieldBarWidth * shieldProgress, this.shieldBarHeight);
     }
@@ -231,7 +234,7 @@ export default class GUI {
     entities += this.game.enemies.enemies.length;
     entities += this.game.wormholes.wormholes.length * 2;
     entities += this.game.arrowIndicators.length;
-    entities += this.game.powerUps.activePowerUps.length;
+    entities += this.game.powerUps.flyingPowerUps.length;
     entities += this.game.effects.length;
     return entities;
   }

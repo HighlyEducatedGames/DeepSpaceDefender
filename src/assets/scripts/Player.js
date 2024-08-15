@@ -29,9 +29,6 @@ export default class Player {
     this.boostSpeed = 600;
     this.boostEndTime = 0;
     this.boostCooldownEndTime = 0;
-    this.boostPowerUpActive = false; // TODO
-    this.shieldActive = false; // TODO
-    this.powerUpActive = false; // TODO
     this.bomb = null;
     this.bombs = 0;
     this.maxBombs = 20;
@@ -101,7 +98,7 @@ export default class Player {
     }
 
     // Shield Effect
-    if (this.shieldActive) {
+    if (this.game.getPowers().shield.active) {
       const gradient = ctx.createRadialGradient(this.x, this.y, this.width * 0.5, this.x, this.y, this.width);
       gradient.addColorStop(0, 'rgba(0, 255, 255, 0.5)');
       gradient.addColorStop(0.7, 'rgba(0, 255, 255, 0.2)');
@@ -243,6 +240,8 @@ export default class Player {
       if (keys.bomb.justPressed()) this.useBomb();
       if (keys.boost.justPressed()) this.useBoost();
       if (keys.missile.justPressed()) this.useMissile();
+
+      if (this.game.getPowers().flame.active && keys.fire.isPressed) this.fireFlame();
     }
 
     this.checkCollisions();
@@ -251,13 +250,25 @@ export default class Player {
   checkCollisions() {}
 
   fireProjectile(charged = false) {
-    const projectilesToFire = this.powerUpActive ? 3 : 1;
+    if (this.game.getPowers().flame.active) return;
+
+    const powers = this.game.getPowers();
+
+    const projectilesToFire = powers.projectile.active ? 3 : 1;
     for (let i = 0; i < projectilesToFire; i++) {
-      const angle = this.powerUpActive ? (i - 1) * (Math.PI / 18) : 0;
+      const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
       const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
       this.game.projectiles.push(projectile);
     }
     this.game.cloneSound(this.sounds.fire);
+
+    if (powers.reverse.active) {
+      for (let i = 0; i < 3; i++) {
+        const angle = (i - 1) * (Math.PI / 18) + Math.PI;
+        const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
+        this.game.projectiles.push(projectile);
+      }
+    }
 
     // if (empDisableFire) {
     //   const nofireSoundClone = nofireSound.cloneNode();
@@ -278,29 +289,10 @@ export default class Player {
     //   );
     //   return;
     // }
+  }
 
-    // if (reversePowerUpActive) {
-    //   for (let i = 0; i < 3; i++) {
-    //     const angleOffset = (i - 1) * (Math.PI / 18);
-    //     let reverseProjectile = {
-    //       x: player.x - (Math.cos(player.rotation + angleOffset) * player.width) / 2,
-    //       y: player.y - (Math.sin(player.rotation + angleOffset) * player.height) / 2,
-    //       width: projectileSize,
-    //       height: projectileSize,
-    //       speed: projectileSpeed,
-    //       directionX: -Math.cos(player.rotation + angleOffset),
-    //       directionY: -Math.sin(player.rotation + angleOffset),
-    //       fromPlayer: true,
-    //       isCharged: isCharged,
-    //       traveledDistance: 0,
-    //       damage: damage,
-    //       split: false,
-    //     };
-    //     projectiles.push(reverseProjectile);
-    //   }
-    // }
-
-    // if (/*|| flamethrowerActive || empDisableFire*/) return; // TODO
+  fireFlame() {
+    console.log('FIRE FLAME');
   }
 
   useBomb() {
@@ -314,7 +306,7 @@ export default class Player {
     this.isBoosting = true;
     this.boostEndTime = this.game.timestamp + 500;
     // Reduced cooldown if boost power-up is active
-    this.boostCooldownEndTime = this.game.timestamp + (this.boostPowerUpActive ? 500 : 7000);
+    this.boostCooldownEndTime = this.game.timestamp + (this.game.getPowers().boost.active ? 500 : 7000);
     this.sounds.boost.play();
   }
 
@@ -344,6 +336,7 @@ export default class Player {
     this.game.controls.playHaptic(100, 0.25);
     if (this.game.controls.codes.invincibility.enabled) return;
     if (this.isBoosting) return;
+    if (this.game.getPowers().shield.active) return;
 
     this.health -= amount;
     if (this.health <= 0) {

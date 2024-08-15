@@ -316,4 +316,8 @@ export default class Game {
     clone.volume = this.music.fxVol;
     clone.play();
   }
+
+  getPowers() {
+    return this.powerUps.powers;
+  }
 }
