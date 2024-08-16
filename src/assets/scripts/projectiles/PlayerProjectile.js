@@ -78,7 +78,7 @@ export class ChargedProjectile extends PlayerProjectile {
 
   update(deltaTime) {
     super.update(deltaTime);
-    if (this.traveledDistance >= this.splitDistance) {
+    if (this.isFull && this.traveledDistance >= this.splitDistance) {
       this.splitChargedProjectile();
       this.markedForDeletion = true;
     }

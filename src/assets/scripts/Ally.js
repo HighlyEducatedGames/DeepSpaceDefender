@@ -274,5 +274,14 @@ class AllyProjectile {
         this.markedForDeletion = true;
       }
     });
+
+    // Check collision to boss
+    if (this.game.boss) {
+      if (this.game.checkCollision(this, this.game.boss)) {
+        this.game.playCollision();
+        this.game.boss.takeDamage(this.damage);
+        this.markedForDeletion = true;
+      }
+    }
   }
 }
