@@ -165,7 +165,12 @@ export default class GUI {
     if (powerUp.active) {
       const shieldProgress = Math.max(0, powerUp.timer / powerUp.duration);
       ctx.fillStyle = 'cyan';
-      ctx.fillRect(this.shieldBarX, this.shieldBarY, this.shieldBarWidth * shieldProgress, this.shieldBarHeight);
+      ctx.fillRect(
+        this.shieldBarX,
+        this.shieldBarY,
+        this.shieldBarWidth - this.shieldBarWidth * shieldProgress,
+        this.shieldBarHeight,
+      );
     }
 
     ctx.strokeStyle = 'gray';
