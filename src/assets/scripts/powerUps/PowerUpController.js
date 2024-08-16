@@ -70,11 +70,13 @@ class Power {
     this.active = false;
     this.timer = 0;
     this.duration = duration;
+    this.startTime = 0;
   }
 
   activate() {
     this.active = true;
     this.timer = 0;
+    this.startTime = this.game.timestamp;
   }
 
   update(deltaTime) {
