@@ -16,8 +16,6 @@ export default class HomingMissile {
     this.markedForDeletion = false;
     this.image = document.getElementById('missile_image');
     this.sound = document.getElementById('missile_sound');
-
-    this.findTarget();
   }
 
   draw(ctx) {
@@ -54,25 +52,24 @@ export default class HomingMissile {
     // Check for collision with target
     if (this.game.checkCollision(this, this.target)) {
       this.target.takeDamage(this.damage);
-      this.game.player.sounds.collision.cloneNode().play();
+      this.game.playCollision();
       this.markedForDeletion = true;
     }
   }
 
-  findTarget() {
-    const enemies = this.game.enemies;
-    // TODO: // Find nearest target ??//
-    const randomIndex = Math.floor(Math.random() * enemies.length);
-    this.target = this.boss ? this.boss : enemies[randomIndex];
+  // findTarget() {
+  //   const enemies = this.game.enemies;
+  //   const randomIndex = Math.floor(Math.random() * enemies.length);
+  //   this.target = this.boss ? this.boss : enemies[randomIndex];
 
-    // TODO: make sure its the head trageted with the serpent head
-    // projectileCollisionRadius: 125, // 250 diameter / 2 is set in cyberdragon creation
-    // if (this.target) {
-    //   if (this.target instanceof CyberDragon) this.collisionRadius = cyberDragon.projectileCollisionRadius;
-    //   else if (this.target instanceof BiomechLeviathan)
-    //     this.collisionRadius = biomechLeviathan.projectileCollisionRadius;
-    //   else if (this.target instanceof TemporalSerpent) this.collisionRadius = temporalSerpent.playerCollisionRadius;
-    //   else this.collisionRadius = Math.max(this.target.width, this.target.height) / 2;
-    // }
-  }
+  //   // TODO: make sure its the head trageted with the serpent head
+  //   // projectileCollisionRadius: 125, // 250 diameter / 2 is set in cyberdragon creation
+  //   // if (this.target) {
+  //   //   if (this.target instanceof CyberDragon) this.collisionRadius = cyberDragon.projectileCollisionRadius;
+  //   //   else if (this.target instanceof BiomechLeviathan)
+  //   //     this.collisionRadius = biomechLeviathan.projectileCollisionRadius;
+  //   //   else if (this.target instanceof TemporalSerpent) this.collisionRadius = temporalSerpent.playerCollisionRadius;
+  //   //   else this.collisionRadius = Math.max(this.target.width, this.target.height) / 2;
+  //   // }
+  // }
 }

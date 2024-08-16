@@ -359,16 +359,21 @@ export default class Player {
 
   useMissile() {
     if (this.missiles <= 0) return;
-    const enemies = this.game.enemies;
-    const randomEnemy = Math.floor(Math.random() * enemies.length); // TODO: // Find nearest target ??//
-    const target = this.boss ? this.boss : enemies[randomEnemy];
-    if (!target) return;
+    const enemies = this.game.enemies.enemies.slice();
     this.missiles--;
-    for (let i = 0; i < 3; i++) {
-      const missile = new HomingMissile(this.game, target);
-      // Only play the missile sound on the first spawned missile
-      if (i === 0) missile.sound.cloneNode().play();
-      this.game.projectiles.push(missile);
+    if (!this.boss) {
+      for (let i = 0; i < 3 && enemies.length > 0; i++) {
+        // Ensure we don't exceed the number of enemies
+        const randomIndex = Math.floor(Math.random() * enemies.length);
+        const target = enemies[randomIndex];
+        if (target) {
+          const missile = new HomingMissile(this.game, target);
+          // Only play the missile sound on the first spawned missile
+          if (i === 0) this.game.cloneSound(missile.sound);
+          this.game.projectiles.push(missile);
+          enemies.splice(randomIndex, 1); // Remove the selected enemy from the array
+        }
+      }
     }
   }
 
