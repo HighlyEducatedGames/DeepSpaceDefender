@@ -21,12 +21,14 @@ export default class Laser {
   }
 
   draw(ctx) {
+    ctx.save();
     ctx.strokeStyle = 'rgba(0, 255, 255, 1)';
     ctx.lineWidth = this.width;
     ctx.beginPath();
     ctx.moveTo(this.startX, this.startY);
     ctx.lineTo(this.endX, this.endY);
     ctx.stroke();
+    ctx.restore();
   }
 
   update() {
