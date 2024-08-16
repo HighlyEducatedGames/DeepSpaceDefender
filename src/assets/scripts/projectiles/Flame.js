@@ -1,15 +1,19 @@
+import Explosion from '../effects/Explosion.js';
+
 export default class FlameParticle {
   constructor(game) {
     this.game = game;
     this.x = this.game.player.x + Math.cos(this.game.player.rotation) * this.game.player.width * 0.5;
     this.y = this.game.player.y + Math.sin(this.game.player.rotation) * this.game.player.height * 0.5;
-    this.size = Math.random() * 20 + 10;
+    this.radius = Math.random() * 20 + 10;
     this.color = `rgba(${255}, ${Math.random() * 150}, 0, 1)`;
     this.velocity = {
       x: Math.cos(this.game.player.rotation) * 10 + (Math.random() - 0.5) * 2,
       y: Math.sin(this.game.player.rotation) * 10 + (Math.random() - 0.5) * 2,
     };
     this.alpha = 1;
+    this.damage = 1;
+    this.tickingDamage = 1;
     this.markedForDeletion = false;
   }
 
@@ -18,7 +22,7 @@ export default class FlameParticle {
       ctx.save();
       ctx.globalAlpha = this.alpha;
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.fillStyle = this.color;
       ctx.fill();
       ctx.restore();
@@ -28,7 +32,7 @@ export default class FlameParticle {
   update() {
     this.x += this.velocity.x;
     this.y += this.velocity.y;
-    this.size *= 0.96;
+    this.radius *= 0.96;
     this.alpha -= 0.02;
 
     // Wrap around the canvas
@@ -44,36 +48,32 @@ export default class FlameParticle {
       this.y = 0;
     }
 
-    if (this.size < 0.5 || this.alpha <= 0) this.markedForDeletion = true;
+    if (this.radius < 0.5 || this.alpha <= 0) this.markedForDeletion = true;
 
     this.checkCollisions();
   }
 
   checkCollisions() {
-    // flameParticles.forEach((particle) => {
-    //   // Check damage to regular enemies
-    //   enemies.forEach((enemy, enemyIndex) => {
-    //     const dx = particle.x - (enemy.x + enemy.width / 2);
-    //     const dy = particle.y - (enemy.y + enemy.height / 2);
-    //     const distance = Math.sqrt(dx * dx + dy * dy);
-    //     if (distance < enemy.width / 2) {
-    //       enemy.health -= 1; // Adjust the damage value as needed
-    //       // Play torch sound on collision
-    //       if (torchSound) {
-    //         if (torchSound.paused) {
-    //           torchSound.play();
-    //         } else {
-    //           torchSound.currentTime = 0; // Reset sound if it's already playing
-    //           torchSound.play();
-    //         }
-    //       }
-    //       if (enemy.health <= 0) {
-    //         // Handle enemy death
-    //         score += 10; // Increase score or any other logic
-    //         createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
-    //       }
-    //     }
-    //   });
+    // Check collision to each enemy
+    this.game.enemies.enemies.forEach((enemy) => {
+      if (this.game.checkCollision(this, enemy)) {
+        enemy.takeDamage(this.damage);
+        if (enemy.markedForDeletion) {
+          this.game.cloneSound(this.game.player.sounds.torch);
+          this.game.addScore(enemy.score);
+          this.game.effects.push(new Explosion(this.game, enemy.x, enemy.y));
+        }
+      }
+    });
+
+    // Check collision with boss
+    if (this.game.boss) {
+      if (this.game.checkCollision(this, this.game.boss)) {
+        this.game.boss.takeDamage(this.tickingDamage);
+        this.markedForDeletion = true;
+      }
+    }
+
     //   // Check damage to projectiles
     //   projectiles.forEach((projectile, index) => {
     //     const dx = particle.x - (projectile.x + projectile.width / 2);
@@ -167,7 +167,7 @@ export default class FlameParticle {
     //     const dx = particle.x - hazardParticle.x;
     //     const dy = particle.y - hazardParticle.y;
     //     const distance = Math.sqrt(dx * dx + dy * dy);
-    //     if (distance < hazardParticle.size) {
+    //     if (distance < hazardParticle.radius) {
     //       // Remove the hazard particle
     //       hazardParticles.splice(hazardIndex, 1);
     //     }
