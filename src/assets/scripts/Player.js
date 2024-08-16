@@ -374,6 +374,8 @@ export default class Player {
           enemies.splice(randomIndex, 1); // Remove the selected enemy from the array
         }
       }
+    } else {
+      this.game.projectiles.push(new HomingMissile(this.game, this.boss));
     }
   }
 

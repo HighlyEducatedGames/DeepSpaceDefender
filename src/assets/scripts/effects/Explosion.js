@@ -1,8 +1,9 @@
 export default class Explosion {
-  constructor(game, x, y) {
+  constructor(game, x, y, doSound = true) {
     this.game = game;
     this.x = x;
     this.y = y;
+    this.doSound = doSound;
     this.numParticles = 50;
     this.colors = ['red', 'orange', 'yellow'];
     this.particles = [];
@@ -14,8 +15,10 @@ export default class Explosion {
       this.particles.push(new ExplosionParticle(this, color));
     }
 
-    this.sound.currentTime = 0;
-    this.sound.play();
+    if (this.doSound) {
+      this.sound.currentTime = 0;
+      this.sound.play();
+    }
   }
 
   draw(ctx) {

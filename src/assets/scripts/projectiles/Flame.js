@@ -59,9 +59,9 @@ export default class FlameParticle {
       if (this.game.checkCollision(this, enemy)) {
         enemy.takeDamage(this.damage);
         if (enemy.markedForDeletion) {
-          this.game.cloneSound(this.game.player.sounds.torch);
+          this.game.cloneSound(this.game.player.sounds.torchedEnemy);
           this.game.addScore(enemy.score);
-          this.game.effects.push(new Explosion(this.game, enemy.x, enemy.y));
+          this.game.effects.push(new Explosion(this.game, enemy.x, enemy.y, false));
         }
       }
     });
