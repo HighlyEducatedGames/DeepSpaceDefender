@@ -100,33 +100,31 @@ export default class Player {
       ctx.fill();
     }
 
-// Shield Effect
-if (this.game.getPowers().shield.active) {
-  const shieldPower = this.game.getPowers().shield;
-  const timeElapsed = this.game.timestamp - shieldPower.startTime;
-  const remainingTime = shieldPower.duration - timeElapsed;
+    // Shield Effect
+    if (this.game.getPowers().shield.active) {
+      const shieldPower = this.game.getPowers().shield;
+      const remainingTime = shieldPower.duration - shieldPower.timer;
 
-  let drawShield = true;
+      let drawShield = true;
 
-  // Check if the shield has less than or equal to 3 seconds remaining
-  if (remainingTime <= 3000) {
-      // Flash shield by toggling visibility every 300ms
-      const flashInterval = 300;
-      drawShield = Math.floor(remainingTime / flashInterval) % 2 === 0;
-  }
+      // Check if the shield has less than or equal to 3 seconds remaining
+      if (remainingTime <= 3000) {
+        // Flash shield by toggling visibility every 300ms
+        const flashInterval = 300;
+        drawShield = Math.floor(remainingTime / flashInterval) % 2 === 0;
+      }
 
-  if (drawShield) {
-      const gradient = ctx.createRadialGradient(this.x, this.y, this.width * 0.5, this.x, this.y, this.width);
-      gradient.addColorStop(0, 'rgba(0, 255, 255, 0.5)');
-      gradient.addColorStop(0.7, 'rgba(0, 255, 255, 0.2)');
-      gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2);
-      ctx.fill();
-  }
-}
-
+      if (drawShield) {
+        const gradient = ctx.createRadialGradient(this.x, this.y, this.width * 0.5, this.x, this.y, this.width);
+        gradient.addColorStop(0, 'rgba(0, 255, 255, 0.5)');
+        gradient.addColorStop(0.7, 'rgba(0, 255, 255, 0.2)');
+        gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
 
     // Bomb
     if (this.bomb) this.bomb.draw(ctx);
