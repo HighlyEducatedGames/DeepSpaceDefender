@@ -103,22 +103,6 @@ export default class Boss {
   }
 
   checkCollisions() {
-    // Check player projectiles to boss
-    // this.game.player.projectiles.forEach((projectile) => {
-    //   if (this.game.checkCollision(projectile, this)) {
-    //     this.takeDamage(projectile.damage);
-    //     projectile.markedForDeletion = true;
-    //   }
-    // });
-
-    // Check boss projectiles to player
-    this.projectiles.forEach((projectile) => {
-      if (this.game.checkCollision(projectile, this.game.player)) {
-        this.game.player.takeDamage(projectile.damage);
-        projectile.markedForDeletion = true;
-      }
-    });
-
     // Check player projectiles to boss projectiles
     this.projectiles.forEach((bossProjectile) => {
       this.game.player.projectiles.forEach((playerProjectile) => {
@@ -129,11 +113,6 @@ export default class Boss {
         }
       });
     });
-
-    // Check boss to player
-    if (this.game.checkCollision(this, this.game.player)) {
-      // TODO what to do on collision
-    }
   }
 
   takeDamage(damage) {
@@ -208,6 +187,11 @@ class BossProjectile {
 
     // Remove if projectile outside the canvas boundaries
     if (this.game.outOfBounds(this)) {
+      this.markedForDeletion = true;
+    }
+
+    if (this.game.checkCollision(this, this.game.player)) {
+      this.game.player.takeDamage(this.damage);
       this.markedForDeletion = true;
     }
   }

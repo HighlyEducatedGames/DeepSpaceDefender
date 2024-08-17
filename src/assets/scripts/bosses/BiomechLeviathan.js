@@ -29,6 +29,8 @@ export default class BiomechLeviathan {
     this.tractorBeam = null;
     this.tractorBeamCooldown = null;
     this.tractorBeamActive = false;
+    this.lastCollisionTime = 0;
+    this.collisionCooldown = 3000;
     this.markedForDeletion = false;
     this.image = document.getElementById('biomech_leviathan_image');
     this.sounds = {
@@ -77,6 +79,10 @@ export default class BiomechLeviathan {
     this.x += (Math.cos(angleToPlayer) * this.speed * deltaTime) / 1000;
     this.y += (Math.sin(angleToPlayer) * this.speed * deltaTime) / 1000;
 
+    // Update health bar to follow boss
+    this.healthBarX = this.x - this.width * 0.5;
+    this.healthBarY = this.y + this.height * 0.5 + 10;
+
     // Health values to change phases at
     const phases = {
       1: 1.0,
@@ -103,27 +109,20 @@ export default class BiomechLeviathan {
         break;
     }
 
-    this.checkCollisions();
+    this.checkCollisions(deltaTime);
   }
 
-  checkCollisions() {
-    // Collision with player projectiles
-    this.game.player.projectiles.forEach((projectile) => {
-      if (this.game.checkCollision(projectile, this)) {
-        this.health -= projectile.damage;
-        if (this.health <= 0) this.markedForDeletion = true;
-        projectile.markedForDeletion = true;
+  checkCollisions(deltaTime) {
+    this.lastCollisionTime += deltaTime;
+    if (this.lastCollisionTime >= this.collisionCooldown) {
+      // Collision with player
+      if (this.game.checkCollision(this.game.player, { x: this.x, y: this.y, radius: this.playerCollisionRadius })) {
+        this.game.player.takeDamage(this.damage);
+        this.game.playCollision();
+        this.sounds.eat.play();
+        this.lastCollisionTime = 0;
       }
-    });
-
-    // Collision with player
-    if (this.game.checkCollision(this.game.player, { x: this.x, y: this.y, radius: this.playerCollisionRadius })) {
-      this.game.player.takeDamage(this.damage);
-      this.game.player.sounds.collision.cloneNode().play();
     }
-
-    // Bomb stops tractor beam and puts it on cooldown for 5 seconds // TODO
-    // Stop the tractor beam and start the cooldown
   }
 
   spawnInkCloud() {
