@@ -252,13 +252,13 @@ class ParticleBombPowerUp extends PowerUp {
 }
 
 export default {
-  bomb: BombPowerUp,
-  missile: HomingMissilePowerUp,
-  projectile: ProjectilePowerUp,
-  boost: BoostPowerUp,
-  shield: ShieldPowerUp,
-  reverse: ReversePowerUp,
-  flame: FlameThrowerPowerUp,
+  // bomb: BombPowerUp,
+  // missile: HomingMissilePowerUp,
+  // projectile: ProjectilePowerUp,
+  // boost: BoostPowerUp,
+  // shield: ShieldPowerUp,
+  // reverse: ReversePowerUp,
+  // flame: FlameThrowerPowerUp,
   laser: LaserPowerUp,
-  particleBomb: ParticleBombPowerUp,
+  // particleBomb: ParticleBombPowerUp,
 };

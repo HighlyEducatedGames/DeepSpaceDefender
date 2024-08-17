@@ -239,7 +239,7 @@ export default class Player {
     if (this.laser.active) this.laser.update(deltaTime);
 
     // Charging projectile mechanic
-    if (this.game.controls.keys.fire.isPressed && !this.game.getPowers().flame.active) {
+    if (this.game.controls.keys.fire.isPressed && !this.game.getPowers().flame.active && !this.game.getPowers().laser.active) {
       if (!this.isCharging) {
         this.isCharging = true;
       }
