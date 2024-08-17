@@ -361,7 +361,7 @@ export default class Player {
     if (this.missiles <= 0) return;
     const enemies = this.game.enemies.enemies.slice();
     this.missiles--;
-    if (!this.boss) {
+    if (!this.game.boss) {
       for (let i = 0; i < 3 && enemies.length > 0; i++) {
         // Ensure we don't exceed the number of enemies
         const randomIndex = Math.floor(Math.random() * enemies.length);
@@ -375,7 +375,7 @@ export default class Player {
         }
       }
     } else {
-      this.game.projectiles.push(new HomingMissile(this.game, this.boss));
+      this.game.projectiles.push(new HomingMissile(this.game, this.game.boss));
     }
   }
 
