@@ -323,10 +323,6 @@ export default class Game {
     clone.play();
   }
 
-  getPowers() {
-    return this.player.abilities;
-  }
-
   getRandomY(margin = 0) {
     return Math.random() * (this.height - this.topMargin - margin * 2) + this.topMargin + margin;
   }

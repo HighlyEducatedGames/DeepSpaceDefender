@@ -105,7 +105,7 @@ class ProjectilePowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.getPowers().projectile.activate();
+      this.game.player.abilities.projectile.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -127,7 +127,7 @@ class BoostPowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.getPowers().boost.activate();
+      this.game.player.abilities.boost.activate();
       // Reset cooldown when you get the powerup so you can use boost right away
       this.game.player.boostCooldownEndTime = this.game.timestamp;
       this.game.cloneSound(this.sound);
@@ -150,7 +150,7 @@ class ShieldPowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.getPowers().shield.activate();
+      this.game.player.abilities.shield.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -171,7 +171,7 @@ class ReversePowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.getPowers().reverse.activate();
+      this.game.player.abilities.reverse.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -192,7 +192,7 @@ class FlameThrowerPowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.getPowers().flame.activate();
+      this.game.player.abilities.flame.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -213,7 +213,7 @@ class LaserPowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.getPowers().laser.activate();
+      this.game.player.abilities.laser.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -234,7 +234,7 @@ class ParticleBombPowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.getPowers().particleBomb.activate();
+      this.game.player.abilities.particleBomb.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }

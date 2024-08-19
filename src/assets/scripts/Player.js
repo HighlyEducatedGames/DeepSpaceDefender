@@ -114,8 +114,8 @@ export default class Player {
     }
 
     // Shield Effect
-    if (this.game.getPowers().shield.active) {
-      const shieldPower = this.game.getPowers().shield;
+    if (this.abilities.shield.active) {
+      const shieldPower = this.abilities.shield;
       const remainingTime = shieldPower.duration - shieldPower.timer;
 
       let drawShield = true;
@@ -263,11 +263,7 @@ export default class Player {
     this.particleBomb.update(deltaTime);
 
     // Charging projectile mechanic
-    if (
-      this.game.controls.keys.fire.isPressed &&
-      !this.game.getPowers().flame.active &&
-      !this.game.getPowers().laser.active
-    ) {
+    if (this.game.controls.keys.fire.isPressed && !this.abilities.flame.active && !this.abilities.laser.active) {
       if (!this.isCharging) {
         this.isCharging = true;
       }
@@ -292,21 +288,21 @@ export default class Player {
       if (keys.missile.justPressed()) this.useMissile();
 
       if (keys.fire.isPressed) {
-        if (this.game.getPowers().laser.active) this.fireLaser();
-        else if (this.game.getPowers().flame.active) this.fireFlame();
+        if (this.abilities.laser.active) this.fireLaser();
+        else if (this.abilities.flame.active) this.fireFlame();
       } else {
         this.laser.active = false;
       }
     }
 
     // Turn off flame sound if still playing and no longer firing
-    if ((!this.game.getPowers().flame.active || !keys.fire.isPressed) && !this.sounds.flame.paused) {
+    if ((!this.abilities.flame.active || !keys.fire.isPressed) && !this.sounds.flame.paused) {
       this.sounds.flame.pause();
       this.sounds.flame.currentTime = 0;
     }
 
     // Turn off laser sound if still playing and no longer firing
-    if ((!this.game.getPowers().laser.active || !keys.fire.isPressed) && !this.laser.sounds.fire.paused) {
+    if ((!this.abilities.laser.active || !keys.fire.isPressed) && !this.laser.sounds.fire.paused) {
       this.laser.sounds.fire.pause();
       this.laser.sounds.fire.currentTime = 0;
     }
@@ -317,15 +313,15 @@ export default class Player {
   checkCollisions() {}
 
   fireProjectile(charged = false) {
-    if (this.game.getPowers().particleBomb.active) {
-      this.particleBomb.activate();
+    if (this.abilities.particleBomb.active) {
+      this.fireParticleBomb();
       return;
     }
 
-    if (this.game.getPowers().flame.active) return;
-    if (this.game.getPowers().laser.active) return;
+    if (this.abilities.flame.active) return;
+    if (this.abilities.laser.active) return;
 
-    const powers = this.game.getPowers();
+    const powers = this.abilities;
     const projectilesToFire = powers.projectile.active ? 3 : 1;
 
     for (let i = 0; i < projectilesToFire; i++) {
@@ -368,10 +364,7 @@ export default class Player {
   }
 
   fireParticleBomb() {
-    if (!this.particleBomb.active) {
-      console.log('Activating Particle Bomb');
-      this.particleBomb.activate();
-    }
+    this.particleBomb.activate();
   }
 
   useBomb() {
@@ -385,7 +378,7 @@ export default class Player {
     this.isBoosting = true;
     this.boostEndTime = this.game.timestamp + 500;
     // Reduced cooldown if boost power-up is active
-    this.boostCooldownEndTime = this.game.timestamp + (this.game.getPowers().boost.active ? 500 : 7000);
+    this.boostCooldownEndTime = this.game.timestamp + (this.abilities.boost.active ? 500 : 7000);
     this.sounds.boost.play();
   }
 
@@ -422,7 +415,7 @@ export default class Player {
     this.game.controls.playHaptic(100, 0.25);
     if (this.game.controls.codes.invincibility.enabled) return;
     if (this.isBoosting) return;
-    if (this.game.getPowers().shield.active) return;
+    if (this.abilities.shield.active) return;
 
     this.health -= amount;
     if (this.health <= 0) {

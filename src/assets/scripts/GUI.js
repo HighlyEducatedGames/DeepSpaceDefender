@@ -62,16 +62,14 @@ export default class GUI {
     ctx.fillRect(this.boostBarX, this.boostBarY, this.boostBarWidth, this.boostBarHeight);
 
     const currentTime = this.game.timestamp;
+    const boostPowerUpActive = this.game.player.abilities.boost.active;
+
     let boostProgress;
     if (this.game.player.isBoostReady()) {
       boostProgress = 1;
     } else {
-      const boostPowerUpActive = this.game.getPowers().boost.active;
-      boostProgress = Math.max(
-        0,
-        (currentTime - this.game.player.boostCooldownEndTime + (boostPowerUpActive ? 500 : 7000)) /
-          (boostPowerUpActive ? 500 : 7000),
-      );
+      const cooldown = boostPowerUpActive ? 500 : 7000;
+      boostProgress = Math.max(0, (currentTime - this.game.player.boostCooldownEndTime + cooldown) / cooldown);
     }
 
     ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
@@ -80,7 +78,7 @@ export default class GUI {
     ctx.strokeStyle = 'gray';
     ctx.strokeRect(this.boostBarX, this.boostBarY, this.boostBarWidth, this.boostBarHeight);
 
-    if (this.game.getPowers().boost.active) {
+    if (boostPowerUpActive) {
       ctx.save();
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 3;
@@ -139,7 +137,7 @@ export default class GUI {
       ctx.lineTo(halfwayMarkerX, this.chargeBarY + this.chargeBarHeight);
       ctx.stroke();
 
-      if (this.game.getPowers().reverse.active) {
+      if (this.game.player.abilities.reverse.active) {
         ctx.save();
         ctx.strokeStyle = 'yellow';
         ctx.lineWidth = 5;
@@ -147,7 +145,7 @@ export default class GUI {
         ctx.restore();
       }
 
-      if (this.game.getPowers().projectile.active) {
+      if (this.game.player.abilities.projectile.active) {
         ctx.save();
         ctx.strokeStyle = 'blue';
         ctx.lineWidth = 3;
@@ -158,7 +156,7 @@ export default class GUI {
   }
 
   drawShieldBar(ctx) {
-    const powerUp = this.game.getPowers().shield;
+    const powerUp = this.game.player.abilities.shield;
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(this.shieldBarX, this.shieldBarY, this.shieldBarWidth, this.shieldBarHeight);
@@ -205,7 +203,7 @@ export default class GUI {
   }
 
   drawPowerCooldowns(ctx) {
-    const arr = Object.values(this.game.getPowers());
+    const arr = Object.values(this.game.player.abilities);
     const size = 30;
     const startX = this.game.width - size - 10;
     const startY = this.game.height - size - 10;
