@@ -133,6 +133,9 @@ export default class Player {
 
     // Laser
     if (this.laser.active) this.laser.draw(ctx);
+        
+    // particle bomb
+    if (this.particleBomb.active) this.particleBomb.draw(ctx);
 
     // DEBUG - Hitbox
     if (this.game.debug) {
@@ -239,6 +242,9 @@ export default class Player {
 
     // Laser
     if (this.laser.active) this.laser.update(deltaTime);
+
+    // Particle Bomb
+    if (this.particleBomb.active) this.particleBomb.update(deltaTime);
 
     // Charging projectile mechanic
     if (this.game.controls.keys.fire.isPressed && !this.game.getPowers().flame.active && !this.game.getPowers().laser.active) {

@@ -4,6 +4,7 @@ export default class ParticleBomb {
     this.particles = [];
     this.active = false;
     this.expirationTime = 0;
+    this.sound = document.getElementById('particle_bomb_sound')
   }
 
   activate() {
@@ -11,8 +12,7 @@ export default class ParticleBomb {
     console.log("ParticleBomb activated.");
     this.expirationTime = this.game.timestamp + 5000; // Set bomb active for 5 seconds
     this.createParticles();
-    const particleBombFireSoundClone = this.game.cloneSound(this.game.sounds.particleBombFire);
-    particleBombFireSoundClone.play();
+    this.game.cloneSound(this.sound);
   }
 
   createParticles() {
@@ -23,12 +23,13 @@ export default class ParticleBomb {
       const particle = {
         x: this.game.player.x,
         y: this.game.player.y,
-        size: 5,
-        speed: 300,
+        radius: 5,
+        speed: 500,
         directionX: Math.cos(angle),
         directionY: Math.sin(angle),
         alpha: 1,
-        fadeRate: 0.03
+        fadeRate: 0.02,
+        damage: 10
       };
       this.particles.push(particle);
     }
@@ -41,6 +42,7 @@ export default class ParticleBomb {
         console.log("ParticleBomb expired.");
       }
       this.updateParticles(deltaTime);
+      this.checkCollisions();
     }
   }
 
@@ -50,24 +52,40 @@ export default class ParticleBomb {
       particle.x += (particle.speed * particle.directionX * deltaTime) / 1000;
       particle.y += (particle.speed * particle.directionY * deltaTime) / 1000;
       particle.alpha -= particle.fadeRate;
-      if (particle.alpha <= 0) {
-        this.particles.splice(i, 1);
-      }
+      if (particle.alpha <= 0) particle.markedForDeletion = true;
     }
+    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
   }
 
   draw(ctx) {
     this.particles.forEach((particle) => {
       ctx.fillStyle = `rgba(255, 165, 0, ${particle.alpha})`;
       ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
       ctx.fill();
     });
   }
 
   checkCollisions() {
     this.particles.forEach((particle) => {
-      // Check damage to enemies, bosses, etc., similar to your previous code
+      // Collision with enemies
+      this.game.enemies.enemies.forEach((enemy) => {
+        if (this.game.checkCollision(particle, enemy)) {
+          this.game.playCollision();
+          enemy.takeDamage(particle.damage);
+          if (enemy.markedForDeletion) this.game.addScore(enemy.score);
+          particle.markedForDeletion = true;
+        }
+      });
+
+      // Collision with boss
+      if (this.game.boss) {
+        if (this.game.checkCollision(particle, this.game.boss)) {
+          this.game.playCollision();
+          this.game.boss.takeDamage(particle.damage);
+          particle.markedForDeletion = true;
+        }
+      }
     });
   }
 }
