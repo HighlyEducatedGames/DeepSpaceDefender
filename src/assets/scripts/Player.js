@@ -4,6 +4,7 @@ import HomingMissile from './projectiles/HomingMissile.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import FlameParticle from './projectiles/Flame.js';
 import Laser from './projectiles/Laser.js';
+import ParticleBomb from './projectiles/ParticleBomb.js';
 
 export default class Player {
   constructor(game) {
@@ -37,6 +38,7 @@ export default class Player {
     this.missiles = 0;
     this.maxMissiles = 20;
     this.laser = new Laser(this.game);
+    this.particleBomb = new ParticleBomb(this.game);
     this.images = {
       idle: document.getElementById('player_image'),
       thrust: document.getElementById('player_thrust_image'),
@@ -253,7 +255,6 @@ export default class Player {
     }
     // Play charging sound after 500ms charge
     if (this.isCharging && keys.fire.pressedDuration > 200 && this.sounds.charging.paused) {
-      this.sounds.charging.loop = true;
       this.sounds.charging.play();
     }
 
@@ -267,6 +268,7 @@ export default class Player {
       if (keys.fire.isPressed) {
         if (this.game.getPowers().laser.active) this.fireLaser();
         else if (this.game.getPowers().flame.active) this.fireFlame();
+        else if (this.game.getPowers().particleBomb.active) this.fireParticleBomb();
       } else {
         this.laser.active = false;
       }
@@ -290,16 +292,31 @@ export default class Player {
   checkCollisions() {}
 
   fireProjectile(charged = false) {
-    if (this.game.getPowers().flame.active) return;
-    if (this.game.getPowers().laser.active) return;
+    if (this.particleBomb.active) {
+        console.log("ParticleBomb is active in fireProjectile, activating it.");
+        this.particleBomb.activate();
+        return;
+    }
+
+    console.log("Firing projectile. Charged:", charged);
+
+    if (this.game.getPowers().flame.active) {
+        console.log("Flame power active, skipping projectile firing.");
+        return;
+    }
+    if (this.game.getPowers().laser.active) {
+        console.log("Laser power active, skipping projectile firing.");
+        return;
+    }
 
     const powers = this.game.getPowers();
-
     const projectilesToFire = powers.projectile.active ? 3 : 1;
+
     for (let i = 0; i < projectilesToFire; i++) {
-      const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
-      const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
-      this.game.projectiles.push(projectile);
+        const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
+        const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
+        this.game.projectiles.push(projectile);
+        console.log("Projectile fired at angle:", angle);
     }
     this.game.cloneSound(this.sounds.fire);
 
@@ -334,6 +351,13 @@ export default class Player {
     }
     this.laser.active = true;
   }
+
+  fireParticleBomb() {
+    if (!this.particleBomb.active) {
+        console.log("Activating Particle Bomb");
+        this.particleBomb.activate();
+    }
+}
 
   useBomb() {
     if (this.bomb || this.bombs <= 0) return;

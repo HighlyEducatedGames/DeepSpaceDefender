@@ -59,7 +59,7 @@ export default class Laser {
 
     this.generateParticles();
     this.updateParticles(deltaTime);
-    this.handleCollisions();
+    // this.handleCollisions();
 
     this.manageSound();
   }
@@ -96,52 +96,10 @@ export default class Laser {
     });
   }
 
-  handleCollisions() {
-    this.checkEnemyCollisions();
-    this.checkBossCollisions();
-  }
-
-  checkEnemyCollisions() {
-    this.game.enemies.enemies.forEach((enemy) => {
-      const dx = this.endX - (enemy.x + enemy.width / 2);
-      const dy = this.endY - (enemy.y + enemy.height / 2);
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance < enemy.width / 2) {
-        enemy.takeDamage(this.enemyDamage);
-        if (this.sounds.hit) this.sounds.hit.play();
-
-        if (enemy.markedForDeletion) {
-          // Play sound and add score
-          if (this.game.player.sounds.torchedEnemy) {
-            this.game.cloneSound(this.game.player.sounds.torchedEnemy);
-          }
-          this.game.addScore(enemy.score);
-          
-          // Create an explosion effect
-          this.game.effects.push(new Explosion(this.game, enemy.x, enemy.y, false));
-        }
-      }
-    });
-  }
-
-  checkBossCollisions() {
-    const boss = this.game.boss;
-    if (boss) {
-      const dx = this.endX - (boss.x + boss.width / 2);
-      const dy = this.endY - (boss.y + boss.height / 2);
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance < boss.width / 2) {
-        boss.health -= this.bossDamage;
-        if (this.sounds.hit) this.sounds.hit.play();
-
-        if (boss.health <= 0) {
-          this.game.handleBossDeath();
-        }
-      }
-    }
-  }
+  // handleCollisions() {
+  //   this.checkEnemyCollisions();
+  //   this.checkBossCollisions();
+  // }
 
   manageSound() {
     if (this.active) {
@@ -202,7 +160,6 @@ class PlayerLaserParticle {
     this.life = this.maxLife;
     this.vx = (Math.random() - 0.5) * this.speed;
     this.vy = (Math.random() - 0.5) * this.speed;
-    this.distance = 0;
     this.markedForDeletion = false;
   }
 
@@ -214,9 +171,8 @@ class PlayerLaserParticle {
   }
 
   update(deltaTime) {
-    this.distance += (this.speed * deltaTime) / 1000;
-    this.x += this.vx * this.distance;
-    this.y += this.vy * this.distance;
+    this.x += this.vx;
+    this.y += this.vy;
     this.life--;
 
     if (this.life <= 0) this.markedForDeletion = true;
@@ -226,5 +182,51 @@ class PlayerLaserParticle {
     if (this.x > this.game.width) this.x = 0;
     if (this.y < 0) this.y = this.game.height;
     if (this.y > this.game.height) this.y = 0;
+
+    this.checkCollisions();
+  }
+
+  checkCollisions() {
+    this.checkEnemyCollisions();
+    this.checkBossCollisions();
+  }
+
+  checkEnemyCollisions() {
+    this.game.enemies.enemies.forEach((enemy) => {
+      if (this.game.checkCollision(this, enemy)) {
+        console.log('Collision detected with enemy:', enemy);
+        enemy.takeDamage(this.game.laser.enemyDamage); // Adjusted to use laser damage
+        if (this.game.laser.sounds.hit) this.game.laser.sounds.hit.play(); // Use laser's hit sound
+
+        if (enemy.markedForDeletion) {
+          console.log('Enemy marked for deletion:', enemy);
+          // Play sound and add score
+          if (this.game.player.sounds.torchedEnemy) {
+            this.game.cloneSound(this.game.player.sounds.torchedEnemy);
+          }
+          this.game.addScore(enemy.score);
+          
+          // Create an explosion effect
+          this.game.effects.push(new Explosion(this.game, enemy.x, enemy.y, false));
+        }
+      }
+    });
+  }
+
+  checkBossCollisions() {
+    const boss = this.game.boss;
+    if (boss) {
+      if (this.game.checkCollision(this, boss)) {
+        console.log('Collision detected with boss:', boss);
+        boss.takeDamage(this.game.laser.bossDamage); // Adjusted to use laser damage
+        if (this.game.laser.sounds.hit) this.game.laser.sounds.hit.play(); // Use laser's hit sound
+
+        if (boss.health <= 0) {
+          console.log('Boss defeated:', boss);
+          this.game.handleBossDeath();
+        }
+      }
+    }
   }
 }
+

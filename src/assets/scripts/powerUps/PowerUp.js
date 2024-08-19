@@ -260,5 +260,5 @@ export default {
   // reverse: ReversePowerUp,
   // flame: FlameThrowerPowerUp,
   laser: LaserPowerUp,
-  // particleBomb: ParticleBombPowerUp,
+  particleBomb: ParticleBombPowerUp,
 };
