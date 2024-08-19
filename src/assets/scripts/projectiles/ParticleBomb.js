@@ -74,6 +74,14 @@ export default class ParticleBomb {
           particle.markedForDeletion = true;
         }
       }
+
+      // Collision with other projectiles
+      this.game.projectiles.forEach((projectile) => {
+        if (this.game.checkCollision(particle, projectile)) {
+          particle.markedForDeletion = true;
+          projectile.markedForDeletion = true;
+        }
+      });
     });
   }
 }
