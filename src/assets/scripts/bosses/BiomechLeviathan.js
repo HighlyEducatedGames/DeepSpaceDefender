@@ -1,3 +1,4 @@
+import Explosion from '../effects/Explosion.js';
 import { getOffScreenRandomSide } from '../utilities.js';
 
 export default class BiomechLeviathan {
@@ -10,6 +11,7 @@ export default class BiomechLeviathan {
     this.speed = 40;
     this.maxHealth = 2000;
     this.health = this.maxHealth;
+    this.score = this.maxHealth;
     this.lastAttackTime = 0;
     this.attackInterval = 1500;
     this.canAttack = true;
@@ -146,6 +148,15 @@ export default class BiomechLeviathan {
 
   getTractorBeam() {
     return this.tractorBeam;
+  }
+
+  takeDamage(damage) {
+    this.health -= damage;
+    if (this.health <= 0) {
+      this.markedForDeletion = true;
+      this.game.effects.push(new Explosion(this.game, this.x, this.y));
+      this.game.addScore(this.score)
+    }
   }
 }
 
