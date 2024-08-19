@@ -1,32 +1,16 @@
-import powerUpObjects from './PowerUp.js';
+import PowerUps from './PowerUp.js';
 
 export default class PowerUpController {
   constructor(game) {
     this.game = game;
-    this.powerUpBuilders = Object.values(powerUpObjects);
-    this.flyingPowerUps = [];
+    this.powerUps = [];
     this.maxPowerUps = 5;
     this.spawnTime = 0;
     this.spawnInterval = 5000;
-
-    this.powers = {
-      projectile: new Power(this.game, 15000),
-      shield: new Power(this.game, 15000),
-      boost: new Power(this.game, 10000),
-      reverse: new Power(this.game, 10000),
-      flame: new Power(this.game, 10000),
-      laser: new Power(this.game, 10000),
-      particleBomb: new Power(this.game, 10000),
-    };
-
-    for (const key in this.powers) {
-      if (!powerUpObjects[key]) continue;
-      this.powers[key].image = powerUpObjects[key].image;
-    }
   }
 
   draw(ctx) {
-    this.flyingPowerUps.forEach((powerUp) => powerUp.draw(ctx));
+    this.powerUps.forEach((powerUp) => powerUp.draw(ctx));
   }
 
   update(deltaTime) {
@@ -39,16 +23,12 @@ export default class PowerUpController {
       this.spawnTime += deltaTime;
     }
 
-    this.flyingPowerUps.forEach((powerUp) => powerUp.update(deltaTime));
-    this.flyingPowerUps = this.flyingPowerUps.filter((powerUp) => !powerUp.markedForDeletion);
-
-    for (const key in this.powers) {
-      this.powers[key].update(deltaTime);
-    }
+    this.powerUps.forEach((powerUp) => powerUp.update(deltaTime));
+    this.powerUps = this.powerUps.filter((powerUp) => !powerUp.markedForDeletion);
   }
 
   reset() {
-    this.flyingPowerUps = [];
+    this.powerUps = [];
   }
 
   init() {
@@ -56,36 +36,12 @@ export default class PowerUpController {
   }
 
   spawn() {
-    if (this.flyingPowerUps.length < this.maxPowerUps) {
-      const index = Math.floor(Math.random() * this.powerUpBuilders.length);
-      const powerUp = new this.powerUpBuilders[index](this.game);
-      this.flyingPowerUps.push(powerUp);
-    }
-  }
-}
-
-class Power {
-  constructor(game, duration) {
-    this.game = game;
-    this.active = false;
-    this.timer = 0;
-    this.duration = duration;
-    this.startTime = 0;
-  }
-
-  activate() {
-    this.active = true;
-    this.timer = 0;
-    this.startTime = this.game.timestamp;
-  }
-
-  update(deltaTime) {
-    if (this.active) {
-      if (this.timer >= this.duration) {
-        this.active = false;
-      } else {
-        this.timer += deltaTime;
-      }
+    if (this.powerUps.length < this.maxPowerUps) {
+      // Randomly spawn a powerup from the array
+      const powerUpArray = Object.values(PowerUps);
+      const index = Math.floor(Math.random() * powerUpArray.length);
+      const powerUp = new powerUpArray[index](this.game);
+      this.powerUps.push(powerUp);
     }
   }
 }

@@ -318,6 +318,6 @@ export default class Game {
   }
 
   getPowers() {
-    return this.powerUps.powers;
+    return this.player.abilities;
   }
 }

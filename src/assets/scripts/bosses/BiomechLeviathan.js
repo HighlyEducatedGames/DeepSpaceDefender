@@ -155,7 +155,7 @@ export default class BiomechLeviathan {
     if (this.health <= 0) {
       this.markedForDeletion = true;
       this.game.effects.push(new Explosion(this.game, this.x, this.y));
-      this.game.addScore(this.score)
+      this.game.addScore(this.score);
     }
   }
 }
