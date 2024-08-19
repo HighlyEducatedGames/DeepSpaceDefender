@@ -28,10 +28,6 @@ export function getRandomDirection() {
   return directions[Math.floor(Math.random() * directions.length)];
 }
 
-export function getRandomYwithMargin(game, margin) {
-  return Math.random() * (game.height - game.topMargin - margin * 2) + game.topMargin + margin;
-}
-
 export function getRandomInterval(min, max) {
   return Math.random() * (max - min) + min;
 }

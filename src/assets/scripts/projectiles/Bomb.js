@@ -1,5 +1,6 @@
 export default class Bomb {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.x = this.game.player.x;
     this.y = this.game.player.y;

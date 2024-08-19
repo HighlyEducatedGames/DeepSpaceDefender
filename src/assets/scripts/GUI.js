@@ -1,5 +1,6 @@
 export default class GUI {
   constructor(game) {
+    /** @type {import('./Game.js').default} */
     this.game = game;
 
     this.boostBarWidth = 200;

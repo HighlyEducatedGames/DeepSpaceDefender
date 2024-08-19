@@ -77,7 +77,7 @@ export default class Game {
     this.score = 0;
     this.player = new Player(this);
     this.ally = null;
-    this.allyNextSpawnTime = 0;
+    this.allySpawnTime = 0;
     this.startLevel(1);
   }
 
@@ -160,10 +160,47 @@ export default class Game {
 
   // Main game loop
   render(ctx, deltaTime) {
-    this.draw(ctx);
     this.update(deltaTime);
-    this.deleteOldObjects();
-    this.music.update();
+    this.checkCollisions();
+    this.cleanup();
+    this.draw(ctx);
+  }
+
+  update(deltaTime) {
+    if (!this.isGameOver) {
+      this.levelUpdate(deltaTime);
+      this.player.update(deltaTime);
+      this.stars.forEach((star) => star.update(deltaTime));
+      this.coins.forEach((coin) => coin.update(deltaTime));
+      // HERE
+      this.projectiles.forEach((projectile) => projectile.update(deltaTime));
+      this.particles.forEach((particle) => particle.update(deltaTime));
+      this.wormholes.update(deltaTime);
+      if (this.boss) this.boss.update(deltaTime);
+      this.enemies.update(deltaTime);
+      this.effects.forEach((effect) => effect.update(deltaTime));
+      this.powerUps.update(deltaTime);
+      if (this.ally) this.ally.update(deltaTime);
+      this.arrowIndicators.forEach((arrow) => arrow.update(deltaTime));
+    }
+  }
+
+  checkCollisions() {
+    this.coins.forEach((coin) => coin.checkCollisions());
+  }
+
+  cleanup() {
+    this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
+    // HERE
+    this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
+    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
+    if (this.boss && this.boss.markedForDeletion) this.boss = null;
+    if (this.ally && this.ally.markedForDeletion) {
+      this.ally = null;
+      this.allySpawnTime = 0;
+    }
+    this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
+    this.arrowIndicators = this.arrowIndicators.filter((arrow) => !arrow.markedForDeletion);
   }
 
   draw(ctx) {
@@ -206,37 +243,6 @@ export default class Game {
     }
   }
 
-  update(deltaTime) {
-    if (!this.isGameOver) {
-      this.stars.forEach((star) => star.update(deltaTime));
-      this.projectiles.forEach((projectile) => projectile.update(deltaTime));
-      this.particles.forEach((particle) => particle.update(deltaTime));
-      this.coins.forEach((coin) => coin.update(deltaTime));
-      this.wormholes.update(deltaTime);
-      if (this.boss) this.boss.update(deltaTime);
-      this.enemies.update(deltaTime);
-      this.effects.forEach((effect) => effect.update(deltaTime));
-      this.powerUps.update(deltaTime);
-      if (this.ally) this.ally.update(deltaTime);
-      this.arrowIndicators.forEach((arrow) => arrow.update(deltaTime));
-      this.player.update(deltaTime);
-      this.levelUpdate(deltaTime);
-    }
-  }
-
-  deleteOldObjects() {
-    this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
-    this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
-    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
-    if (this.boss && this.boss.markedForDeletion) this.boss = null;
-    if (this.ally && this.ally.markedForDeletion) {
-      this.ally = null;
-      this.allyNextSpawnTime = 0;
-    }
-    this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
-    this.arrowIndicators = this.arrowIndicators.filter((arrow) => !arrow.markedForDeletion);
-  }
-
   checkCollision(object1, object2) {
     const dx = object1.x - object2.x;
     const dy = object1.y - object2.y;
@@ -261,7 +267,7 @@ export default class Game {
     if (!this.boss) {
       // Countdown if not a boss level
       const elapsedTime = this.timestamp - this.levelStartTime;
-      this.countdown = Math.max(0, ((this.levelDuration - elapsedTime) / 1000).toFixed(1));
+      this.countdown = Math.max(0, (this.levelDuration - elapsedTime) / 1000).toFixed(1);
 
       // Advance to next level if time over
       if (elapsedTime >= this.levelDuration) {
@@ -319,5 +325,9 @@ export default class Game {
 
   getPowers() {
     return this.player.abilities;
+  }
+
+  getRandomY(margin = 0) {
+    return Math.random() * (this.height - this.topMargin - margin * 2) + this.topMargin + margin;
   }
 }

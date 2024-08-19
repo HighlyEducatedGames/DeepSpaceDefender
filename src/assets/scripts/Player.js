@@ -9,6 +9,7 @@ import AbilityTimer from './AbilityTimer.js';
 
 export default class Player {
   constructor(game) {
+    /** @type {import('./Game.js').default} */
     this.game = game;
     this.x = this.game.width * 0.5;
     this.y = this.game.height * 0.5 + this.game.topMargin * 0.5;

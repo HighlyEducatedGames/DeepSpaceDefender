@@ -2,6 +2,7 @@ import Explosion from '../effects/Explosion.js';
 
 export default class FlameParticle {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.x = this.game.player.x + Math.cos(this.game.player.rotation) * this.game.player.width * 0.5;
     this.y = this.game.player.y + Math.sin(this.game.player.rotation) * this.game.player.height * 0.5;

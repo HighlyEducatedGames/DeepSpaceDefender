@@ -1,7 +1,6 @@
-import { getRandomYwithMargin } from '../utilities.js';
-
 class PowerUp {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.x = null;
     this.y = null;
@@ -10,7 +9,7 @@ class PowerUp {
     this.speed = null;
     this.dx = null;
     this.dy = null;
-    this.verticalMargin = 50;
+    this.margin = 50;
     this.zigZagSpeed = 100;
     this.sound = document.getElementById('powerup_sound');
     this.markedForDeletion = false;
@@ -45,7 +44,7 @@ class PowerUp {
   getOffScreenSpawnPosition() {
     const side = Math.random() < 0.5 ? 'left' : 'right';
     this.x = side === 'left' ? -this.width * 0.5 : this.game.width + this.width * 0.5;
-    this.y = getRandomYwithMargin(this.game, this.height);
+    this.y = this.game.getRandomY(this.margin);
     this.dx = side === 'left' ? 1 : -1;
     this.dy = 0;
   }

@@ -2,6 +2,7 @@ import Explosion from '../effects/Explosion.js';
 
 export default class Laser {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.startX = 0;
     this.startY = 0;

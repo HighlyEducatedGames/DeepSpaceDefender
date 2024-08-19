@@ -1,5 +1,6 @@
 export default class MusicController {
   constructor(game) {
+    /** @type {import('./Game.js').default} */
     this.game = game;
     this.currentTrack = null;
     this.musicVol = parseFloat(localStorage.getItem('music_vol') || '0.5');
@@ -41,8 +42,6 @@ export default class MusicController {
     this.stop();
     this.play();
   }
-
-  update() {}
 
   setMusicVolume(value) {
     if (!value) return;

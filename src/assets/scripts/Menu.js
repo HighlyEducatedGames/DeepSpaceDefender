@@ -1,5 +1,6 @@
 export default class Menu {
   constructor(game) {
+    /** @type {import('./Game.js').default} */
     this.game = game;
     this.menu = document.getElementById('menu-container');
     this.musicVolumeSlider = document.getElementById('musicVolume');

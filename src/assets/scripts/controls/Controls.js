@@ -5,6 +5,7 @@ import Key from './Key.js';
 
 export default class Controls {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.keys = {};
     this.keyboardMap = {};

@@ -1,9 +1,10 @@
 export default class Coin {
   constructor(game) {
+    /** @type {import('./Game.js').default} */
     this.game = game;
     this.margin = 50;
     this.x = Math.random() * (this.game.width - this.margin * 2) + this.margin;
-    this.y = Math.random() * (this.game.height - game.topMargin - this.margin * 2) + game.topMargin + this.margin;
+    this.y = this.game.getRandomY(this.margin);
     this.width = 20;
     this.height = 20;
     this.radius = this.width * 0.5;
@@ -30,22 +31,20 @@ export default class Coin {
   }
 
   update() {
-    // Check collision with player
-    if (this.game.checkCollision(this, this.game.player)) {
-      // Add to player score
-      this.game.addScore(this.points);
-
-      // Increase player's health
-      this.game.player.addHealth(this.healthRestored);
-
-      // Play the coin pickup sound
-      this.game.cloneSound(this.sound);
-
-      this.markedForDeletion = true;
-    }
-
     // Oscillate vertically
     this.bobbingAngle += this.bobbingSpeed * 0.01;
     this.y += Math.sin(this.bobbingAngle) * this.bobbingAmplitude;
+  }
+
+  checkCollisions() {
+    if (this.markedForDeletion) return;
+
+    // Collision with player
+    if (this.game.checkCollision(this, this.game.player)) {
+      this.game.addScore(this.points);
+      this.game.player.addHealth(this.healthRestored);
+      this.game.cloneSound(this.sound);
+      this.markedForDeletion = true;
+    }
   }
 }

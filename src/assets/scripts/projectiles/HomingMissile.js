@@ -1,5 +1,6 @@
 export default class HomingMissile {
   constructor(game, target) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.target = target;
     this.x = this.game.player.x;

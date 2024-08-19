@@ -1,5 +1,6 @@
 export default class Explosion {
   constructor(game, x, y, doSound = true) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.x = x;
     this.y = y;

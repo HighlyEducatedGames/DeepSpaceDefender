@@ -1,5 +1,6 @@
 export default class ParticleBomb {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.particles = [];
     this.sound = document.getElementById('particle_bomb_sound');

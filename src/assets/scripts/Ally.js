@@ -2,6 +2,7 @@ import { getOffScreenRandomSide } from './utilities.js';
 
 export default class Ally {
   constructor(game) {
+    /** @type {import('./Game.js').default} */
     this.game = game;
     this.x = null;
     this.y = null;
@@ -47,7 +48,7 @@ export default class Ally {
     this.y = y;
     this.enteringSide = side;
 
-    // Play warning sound immediatlly
+    // Play warning sound immediately
     this.sounds.warning.play();
     setTimeout(() => {
       this.warned();
@@ -95,7 +96,7 @@ export default class Ally {
     const distanceToPlayer = this.game.player.getDistanceToPlayer(this);
     const angleToPlayer = this.game.player.getAngleToPlayer(this);
 
-    // Come into the game orthoganal to the canvas edges before moving to the player
+    // Come into the game orthogonal to the canvas edges before moving to the player
     if (this.entering) {
       const entrySpeed = (this.speed * deltaTime) / 1000;
       this.rotation = angleToPlayer;
@@ -133,7 +134,7 @@ export default class Ally {
       }
     } else if (this.exiting) {
       // Handle exit motion
-      // Rotate to point orthagonaly toward exit side
+      // Rotate to point orthogonal toward exit side
       let exitSpeed = (this.speed * deltaTime) / 1000;
       switch (this.exitingSide) {
         case 0: // Exit left

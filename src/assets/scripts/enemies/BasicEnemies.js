@@ -1,7 +1,8 @@
-import { getRandomYwithMargin, getRandomInterval } from '../utilities.js';
+import { getRandomInterval } from '../utilities.js';
 
 class Enemy {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.x = null;
     this.y = null;
@@ -18,7 +19,7 @@ class Enemy {
     this.lastAttackTime = 0;
     this.maxHealth = null;
     this.health = this.maxHealth;
-    this.verticalMargin = 50;
+    this.margin = 50;
     this.markedForDeletion = false;
     this.image = null;
   }
@@ -64,7 +65,7 @@ class Enemy {
       this.side === 'left'
         ? -this.width * 0.5 - this.offScreenMargin
         : this.game.width + this.width * 0.5 + this.offScreenMargin;
-    this.y = getRandomYwithMargin(this.game, this.verticalMargin);
+    this.y = this.game.getRandomY(this.margin);
   }
 
   checkCollisions() {

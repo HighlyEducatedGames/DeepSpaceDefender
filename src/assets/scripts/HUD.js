@@ -1,5 +1,6 @@
 export class ArrowIndicator {
   constructor(game, target) {
+    /** @type {import('./Game.js').default} */
     this.game = game;
     this.target = target;
     this.size = 20; // Size of the arrow

@@ -3,6 +3,7 @@ import Explosion from '../effects/Explosion.js';
 
 export default class Boss {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.x = null;
     this.y = null;

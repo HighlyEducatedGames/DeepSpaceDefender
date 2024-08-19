@@ -2,6 +2,7 @@ import { getRandomDirection, getOffScreenRandomSide } from '../utilities.js';
 
 export default class TemporalSerpent {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.x = 250;
     this.y = 250;

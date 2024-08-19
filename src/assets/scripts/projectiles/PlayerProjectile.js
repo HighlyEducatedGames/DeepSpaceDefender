@@ -1,5 +1,6 @@
 export class PlayerProjectile {
   constructor(game, angle) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.angle = angle;
     this.x = this.game.player.x + Math.cos(this.game.player.rotation + angle) * (this.game.player.width * 0.5);

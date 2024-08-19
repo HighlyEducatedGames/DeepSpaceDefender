@@ -1,5 +1,6 @@
 export default class AbilityTimer {
   constructor(game, duration, image) {
+    /** @type {import('./Game.js').default} */
     this.game = game;
     this.duration = duration;
     this.image = document.getElementById(image);

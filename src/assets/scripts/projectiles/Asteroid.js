@@ -1,5 +1,6 @@
 export default class Asteroid {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.sizes = [
       { width: 75, height: 75 },

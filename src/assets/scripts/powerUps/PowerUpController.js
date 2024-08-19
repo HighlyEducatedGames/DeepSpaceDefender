@@ -2,6 +2,7 @@ import PowerUps from './PowerUp.js';
 
 export default class PowerUpController {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.powerUps = [];
     this.maxPowerUps = 5;

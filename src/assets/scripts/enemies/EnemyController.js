@@ -2,6 +2,7 @@ import { RegularEnemy, StealthEnemy, TankEnemy } from './BasicEnemies.js';
 
 export default class EnemyController {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.enemies = [];
     this.types = {

@@ -1,5 +1,6 @@
 export class Wormholes {
   constructor(game) {
+    /** @type {import('../Game.js').default} */
     this.game = game;
     this.wormholes = [];
     this.spawnTime = 0;
