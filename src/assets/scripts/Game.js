@@ -52,6 +52,7 @@ export default class Game {
     this.allySpawnTime = 0;
     this.allyInterval = 60000;
     this.arrowIndicators = [];
+    this.frame = 0;
     this.images = {
       title: document.getElementById('title_screen_image'),
     };

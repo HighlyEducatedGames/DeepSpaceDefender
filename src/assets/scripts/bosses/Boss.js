@@ -18,7 +18,6 @@ export default class Boss {
     this.canShoot = false;
     this.phase = 1;
     this.phaseTransitioned = [false, false, false];
-    this.projectiles = [];
     this.healthBarWidth = this.width;
     this.healthBarHeight = 10;
     this.healthBarX = this.x - this.width * 0.5;
@@ -105,7 +104,7 @@ export default class Boss {
 
   checkCollisions() {
     // Check player projectiles to boss projectiles
-    this.projectiles.forEach((bossProjectile) => {
+    /*this.projectiles.forEach((bossProjectile) => {
       this.game.player.projectiles.forEach((playerProjectile) => {
         if (this.game.checkCollision(bossProjectile, playerProjectile)) {
           bossProjectile.markedForDeletion = true;
@@ -113,7 +112,7 @@ export default class Boss {
           // TODO make larger, charged projectiles, pass through enemy projectiles
         }
       });
-    });
+    });*/
   }
 
   takeDamage(damage) {
@@ -128,14 +127,14 @@ export default class Boss {
 
   // Single projectile attack
   attackPattern1() {
-    this.projectiles.push(new BossProjectile(this, 20, this.game.player.getAngleToPlayer(this), 250));
+    this.game.projectiles.push(new BossProjectile(this, 20, this.game.player.getAngleToPlayer(this), 250));
   }
 
   // Spread shot attack
   attackPattern2() {
     for (let i = -2; i <= 2; i++) {
       let angle = Math.atan2(this.game.player.y - this.y, this.game.player.x - this.x) + (i * Math.PI) / 12;
-      this.projectiles.push(new BossProjectile(this, 25, angle, 275));
+      this.game.projectiles.push(new BossProjectile(this, 25, angle, 275));
     }
   }
 
@@ -147,7 +146,7 @@ export default class Boss {
     const angleToPlayer = this.game.player.getAngleToPlayer(this);
     for (let i = 0; i < numberOfProjectiles; i++) {
       let angle = i * angleIncrement + angleToPlayer;
-      this.projectiles.push(new BossProjectile(this, 20, angle, 350));
+      this.game.projectiles.push(new BossProjectile(this, 20, angle, 350));
     }
   }
 }
@@ -155,6 +154,7 @@ export default class Boss {
 class BossProjectile {
   constructor(boss, radius, angle, speed) {
     this.boss = boss;
+    /** @type {import('../Game.js').default} */
     this.game = this.boss.game;
     this.x = this.boss.x;
     this.y = this.boss.y;
@@ -164,13 +164,26 @@ class BossProjectile {
     this.directionY = Math.sin(angle);
     this.damage = 10;
     this.markedForDeletion = false;
-
-    this.image = new Image();
-    this.image.src = 'assets/images/boss_projectile.png';
+    this.image = document.getElementById('boss_projectile_sprite_sheet');
+    this.spriteWidth = 30;
+    this.spriteHeight = 30;
+    this.maxFrames = 8;
+    this.staggerFrames = 5;
   }
 
   draw(ctx) {
-    ctx.drawImage(this.image, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+    const frameX = Math.floor(this.game.frame / this.staggerFrames) % (this.maxFrames - 1);
+    ctx.drawImage(
+      this.image,
+      frameX * this.spriteWidth,
+      0,
+      this.spriteWidth,
+      this.spriteHeight,
+      this.x - this.radius,
+      this.y - this.radius,
+      this.radius * 2,
+      this.radius * 2,
+    );
 
     // DEBUG - Hitbox
     if (this.game.debug) {

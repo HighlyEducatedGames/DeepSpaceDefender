@@ -13,6 +13,7 @@ window.addEventListener('load', () => {
   function animate(timestamp = 0) {
     const deltaTime = timestamp - game.timestamp;
     game.timestamp = timestamp;
+    game.frame++;
 
     // Clear the entire canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
