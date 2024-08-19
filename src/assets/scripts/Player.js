@@ -133,9 +133,9 @@ export default class Player {
 
     // Laser
     if (this.laser.active) this.laser.draw(ctx);
-        
+
     // particle bomb
-    if (this.particleBomb.active) this.particleBomb.draw(ctx);
+    this.particleBomb.draw(ctx);
 
     // DEBUG - Hitbox
     if (this.game.debug) {
@@ -244,10 +244,14 @@ export default class Player {
     if (this.laser.active) this.laser.update(deltaTime);
 
     // Particle Bomb
-    if (this.particleBomb.active) this.particleBomb.update(deltaTime);
+    this.particleBomb.update(deltaTime);
 
     // Charging projectile mechanic
-    if (this.game.controls.keys.fire.isPressed && !this.game.getPowers().flame.active && !this.game.getPowers().laser.active) {
+    if (
+      this.game.controls.keys.fire.isPressed &&
+      !this.game.getPowers().flame.active &&
+      !this.game.getPowers().laser.active
+    ) {
       if (!this.isCharging) {
         this.isCharging = true;
       }
@@ -274,7 +278,6 @@ export default class Player {
       if (keys.fire.isPressed) {
         if (this.game.getPowers().laser.active) this.fireLaser();
         else if (this.game.getPowers().flame.active) this.fireFlame();
-        else if (this.game.getPowers().particleBomb.active) this.fireParticleBomb();
       } else {
         this.laser.active = false;
       }
@@ -298,31 +301,21 @@ export default class Player {
   checkCollisions() {}
 
   fireProjectile(charged = false) {
-    if (this.particleBomb.active) {
-        console.log("ParticleBomb is active in fireProjectile, activating it.");
-        this.particleBomb.activate();
-        return;
+    if (this.game.getPowers().particleBomb.active) {
+      this.particleBomb.activate();
+      return;
     }
 
-    console.log("Firing projectile. Charged:", charged);
-
-    if (this.game.getPowers().flame.active) {
-        console.log("Flame power active, skipping projectile firing.");
-        return;
-    }
-    if (this.game.getPowers().laser.active) {
-        console.log("Laser power active, skipping projectile firing.");
-        return;
-    }
+    if (this.game.getPowers().flame.active) return;
+    if (this.game.getPowers().laser.active) return;
 
     const powers = this.game.getPowers();
     const projectilesToFire = powers.projectile.active ? 3 : 1;
 
     for (let i = 0; i < projectilesToFire; i++) {
-        const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
-        const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
-        this.game.projectiles.push(projectile);
-        console.log("Projectile fired at angle:", angle);
+      const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
+      const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
+      this.game.projectiles.push(projectile);
     }
     this.game.cloneSound(this.sounds.fire);
 
@@ -360,10 +353,10 @@ export default class Player {
 
   fireParticleBomb() {
     if (!this.particleBomb.active) {
-        console.log("Activating Particle Bomb");
-        this.particleBomb.activate();
+      console.log('Activating Particle Bomb');
+      this.particleBomb.activate();
     }
-}
+  }
 
   useBomb() {
     if (this.bomb || this.bombs <= 0) return;

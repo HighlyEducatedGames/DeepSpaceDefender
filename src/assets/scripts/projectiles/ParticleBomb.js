@@ -2,21 +2,15 @@ export default class ParticleBomb {
   constructor(game) {
     this.game = game;
     this.particles = [];
-    this.active = false;
-    this.expirationTime = 0;
-    this.sound = document.getElementById('particle_bomb_sound')
+    this.sound = document.getElementById('particle_bomb_sound');
   }
 
   activate() {
-    this.active = true;
-    console.log("ParticleBomb activated.");
-    this.expirationTime = this.game.timestamp + 5000; // Set bomb active for 5 seconds
     this.createParticles();
     this.game.cloneSound(this.sound);
   }
 
   createParticles() {
-    console.log("Creating particles for ParticleBomb.");
     const numParticles = 20;
     for (let i = 0; i < numParticles; i++) {
       const angle = (i / numParticles) * Math.PI * 2;
@@ -29,21 +23,24 @@ export default class ParticleBomb {
         directionY: Math.sin(angle),
         alpha: 1,
         fadeRate: 0.02,
-        damage: 10
+        damage: 10,
       };
       this.particles.push(particle);
     }
   }
 
+  draw(ctx) {
+    this.particles.forEach((particle) => {
+      ctx.fillStyle = `rgba(255, 165, 0, ${particle.alpha})`;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
   update(deltaTime) {
-    if (this.active) {
-      if (this.game.timestamp > this.expirationTime) {
-        this.active = false;
-        console.log("ParticleBomb expired.");
-      }
-      this.updateParticles(deltaTime);
-      this.checkCollisions();
-    }
+    this.updateParticles(deltaTime);
+    this.checkCollisions();
   }
 
   updateParticles(deltaTime) {
@@ -55,15 +52,6 @@ export default class ParticleBomb {
       if (particle.alpha <= 0) particle.markedForDeletion = true;
     }
     this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
-  }
-
-  draw(ctx) {
-    this.particles.forEach((particle) => {
-      ctx.fillStyle = `rgba(255, 165, 0, ${particle.alpha})`;
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-      ctx.fill();
-    });
   }
 
   checkCollisions() {
