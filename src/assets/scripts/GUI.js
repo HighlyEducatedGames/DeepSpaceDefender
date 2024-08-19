@@ -210,33 +210,32 @@ export default class GUI {
     const startY = this.game.height - size - 10;
 
     for (let i = 0; i < arr.length; i++) {
-        const xPos = startX - (size + 10) * i;
-        const yPos = startY;
+      const xPos = startX - (size + 10) * i;
+      const yPos = startY;
 
-        // Set the opacity based on whether the power is active or not
-        ctx.globalAlpha = arr[i].active ? 1 : 0.3;
+      // Set the opacity based on whether the power is active or not
+      ctx.globalAlpha = arr[i].active ? 1 : 0.3;
 
-        // Draw the border
-        ctx.strokeStyle = 'white';
-        ctx.strokeRect(xPos, yPos, size, size);
+      // Draw the border
+      ctx.strokeStyle = 'white';
+      ctx.strokeRect(xPos, yPos, size, size);
 
-        // Draw the power image if it exists
-        if (arr[i].image) ctx.drawImage(arr[i].image, xPos, yPos, size, size);
+      // Draw the power image if it exists
+      if (arr[i].image) ctx.drawImage(arr[i].image, xPos, yPos, size, size);
 
-        // If the power is active, draw the cooldown effect
-        if (arr[i].active) {
-            const filled = (arr[i].timer / arr[i].duration) * size;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.fillRect(xPos, yPos, size, size);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.fillRect(xPos, yPos + filled, size, size - filled);
-        }
+      // If the power is active, draw the cooldown effect
+      if (arr[i].active) {
+        const filled = (arr[i].timer / arr[i].duration) * size;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(xPos, yPos, size, size);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(xPos, yPos + filled, size, size - filled);
+      }
     }
 
     // Reset the globalAlpha back to full opacity after drawing
     ctx.globalAlpha = 1;
-}
-
+  }
 
   drawDebug(ctx) {
     ctx.fillStyle = 'white';
@@ -275,7 +274,7 @@ export default class GUI {
     entities += this.game.enemies.enemies.length;
     entities += this.game.wormholes.wormholes.length * 2;
     entities += this.game.arrowIndicators.length;
-    entities += this.game.powerUps.flyingPowerUps.length;
+    entities += this.game.powerUps.powerUps.length;
     entities += this.game.effects.length;
     return entities;
   }

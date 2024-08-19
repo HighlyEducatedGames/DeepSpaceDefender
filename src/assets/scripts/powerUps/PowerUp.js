@@ -52,13 +52,12 @@ class PowerUp {
 }
 
 class BombPowerUp extends PowerUp {
-  static image = document.getElementById('bomb_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 75;
-    this.image = BombPowerUp.image;
+    this.image = document.getElementById('bomb_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
@@ -74,13 +73,12 @@ class BombPowerUp extends PowerUp {
 }
 
 class HomingMissilePowerUp extends PowerUp {
-  static image = document.getElementById('missile_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 75;
-    this.image = HomingMissilePowerUp.image;
+    this.image = document.getElementById('missile_powerup_image');
     super.getOffScreenSpawnPosition();
   }
   update(deltaTime) {
@@ -95,13 +93,12 @@ class HomingMissilePowerUp extends PowerUp {
 }
 
 class ProjectilePowerUp extends PowerUp {
-  static image = document.getElementById('powerup_image');
   constructor(game) {
     super(game);
     this.width = 20;
     this.height = 20;
     this.speed = 75;
-    this.image = ProjectilePowerUp.image;
+    this.image = document.getElementById('powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
@@ -109,7 +106,7 @@ class ProjectilePowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.powerUps.powers.projectile.activate();
+      this.game.getPowers().projectile.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -117,14 +114,13 @@ class ProjectilePowerUp extends PowerUp {
 }
 
 class BoostPowerUp extends PowerUp {
-  static image = document.getElementById('boost_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 100;
     this.duration = 5000;
-    this.image = BoostPowerUp.image;
+    this.image = document.getElementById('boost_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
@@ -132,7 +128,7 @@ class BoostPowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.powerUps.powers.boost.activate();
+      this.game.getPowers().boost.activate();
       // Reset cooldown when you get the powerup so you can use boost right away
       this.game.player.boostCooldownEndTime = this.game.timestamp;
       this.game.cloneSound(this.sound);
@@ -142,13 +138,12 @@ class BoostPowerUp extends PowerUp {
 }
 
 class ShieldPowerUp extends PowerUp {
-  static image = document.getElementById('shield_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 50;
-    this.image = ShieldPowerUp.image;
+    this.image = document.getElementById('shield_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
@@ -156,7 +151,7 @@ class ShieldPowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.powerUps.powers.shield.activate();
+      this.game.getPowers().shield.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -164,13 +159,12 @@ class ShieldPowerUp extends PowerUp {
 }
 
 class ReversePowerUp extends PowerUp {
-  static image = document.getElementById('reverse_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 150;
-    this.image = ReversePowerUp.image;
+    this.image = document.getElementById('reverse_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
@@ -178,7 +172,7 @@ class ReversePowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.powerUps.powers.reverse.activate();
+      this.game.getPowers().reverse.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -186,13 +180,12 @@ class ReversePowerUp extends PowerUp {
 }
 
 class FlameThrowerPowerUp extends PowerUp {
-  static image = document.getElementById('flame_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 100;
-    this.image = FlameThrowerPowerUp.image;
+    this.image = document.getElementById('flame_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
@@ -200,7 +193,7 @@ class FlameThrowerPowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.powerUps.powers.flame.activate();
+      this.game.getPowers().flame.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -208,13 +201,12 @@ class FlameThrowerPowerUp extends PowerUp {
 }
 
 class LaserPowerUp extends PowerUp {
-  static image = document.getElementById('laser_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 100;
-    this.image = LaserPowerUp.image;
+    this.image = document.getElementById('laser_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
@@ -222,7 +214,7 @@ class LaserPowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.powerUps.powers.laser.activate();
+      this.game.getPowers().laser.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -230,13 +222,12 @@ class LaserPowerUp extends PowerUp {
 }
 
 class ParticleBombPowerUp extends PowerUp {
-  static image = document.getElementById('particle_bomb_powerup_image');
   constructor(game) {
     super(game);
     this.width = 30;
     this.height = 30;
     this.speed = 100;
-    this.image = ParticleBombPowerUp.image;
+    this.image = document.getElementById('particle_bomb_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
@@ -244,7 +235,7 @@ class ParticleBombPowerUp extends PowerUp {
     super.update(deltaTime);
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
-      this.game.powerUps.powers.particleBomb.activate();
+      this.game.getPowers().particleBomb.activate();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
@@ -252,13 +243,13 @@ class ParticleBombPowerUp extends PowerUp {
 }
 
 export default {
-  // bomb: BombPowerUp,
-  // missile: HomingMissilePowerUp,
-  // projectile: ProjectilePowerUp,
-  // boost: BoostPowerUp,
-  // shield: ShieldPowerUp,
-  // reverse: ReversePowerUp,
-  // flame: FlameThrowerPowerUp,
+  bomb: BombPowerUp,
+  missile: HomingMissilePowerUp,
+  projectile: ProjectilePowerUp,
+  boost: BoostPowerUp,
+  shield: ShieldPowerUp,
+  reverse: ReversePowerUp,
+  flame: FlameThrowerPowerUp,
   laser: LaserPowerUp,
-  // particleBomb: ParticleBombPowerUp,
+  particleBomb: ParticleBombPowerUp,
 };

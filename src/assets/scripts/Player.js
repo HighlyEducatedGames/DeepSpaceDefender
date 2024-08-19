@@ -4,6 +4,8 @@ import HomingMissile from './projectiles/HomingMissile.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import FlameParticle from './projectiles/Flame.js';
 import Laser from './projectiles/Laser.js';
+import ParticleBomb from './projectiles/ParticleBomb.js';
+import AbilityTimer from './AbilityTimer.js';
 
 export default class Player {
   constructor(game) {
@@ -37,6 +39,16 @@ export default class Player {
     this.missiles = 0;
     this.maxMissiles = 20;
     this.laser = new Laser(this.game);
+    this.particleBomb = new ParticleBomb(this.game);
+    this.abilities = {
+      projectile: new AbilityTimer(this.game, 15000, 'powerup_image'),
+      shield: new AbilityTimer(this.game, 15000, 'shield_powerup_image'),
+      boost: new AbilityTimer(this.game, 10000, 'boost_powerup_image'),
+      reverse: new AbilityTimer(this.game, 10000, 'reverse_powerup_image'),
+      flame: new AbilityTimer(this.game, 10000, 'flame_powerup_image'),
+      laser: new AbilityTimer(this.game, 10000, 'laser_powerup_image'),
+      particleBomb: new AbilityTimer(this.game, 10000, 'particle_bomb_powerup_image'),
+    };
     this.images = {
       idle: document.getElementById('player_image'),
       thrust: document.getElementById('player_thrust_image'),
@@ -132,6 +144,9 @@ export default class Player {
     // Laser
     if (this.laser.active) this.laser.draw(ctx);
 
+    // particle bomb
+    this.particleBomb.draw(ctx);
+
     // DEBUG - Hitbox
     if (this.game.debug) {
       ctx.strokeStyle = 'white';
@@ -143,6 +158,11 @@ export default class Player {
 
   update(deltaTime) {
     const keys = this.game.controls.keys; // Current keys state
+
+    // Update player ability timers
+    for (const key in this.abilities) {
+      this.abilities[key].update(deltaTime);
+    }
 
     // Rotate player
     if (keys.left.isPressed && !keys.right.isPressed) this.rotation -= (this.rotationSpeed * deltaTime) / 1000;
@@ -238,8 +258,15 @@ export default class Player {
     // Laser
     if (this.laser.active) this.laser.update(deltaTime);
 
+    // Particle Bomb
+    this.particleBomb.update(deltaTime);
+
     // Charging projectile mechanic
-    if (this.game.controls.keys.fire.isPressed && !this.game.getPowers().flame.active && !this.game.getPowers().laser.active) {
+    if (
+      this.game.controls.keys.fire.isPressed &&
+      !this.game.getPowers().flame.active &&
+      !this.game.getPowers().laser.active
+    ) {
       if (!this.isCharging) {
         this.isCharging = true;
       }
@@ -253,7 +280,6 @@ export default class Player {
     }
     // Play charging sound after 500ms charge
     if (this.isCharging && keys.fire.pressedDuration > 200 && this.sounds.charging.paused) {
-      this.sounds.charging.loop = true;
       this.sounds.charging.play();
     }
 
@@ -290,12 +316,17 @@ export default class Player {
   checkCollisions() {}
 
   fireProjectile(charged = false) {
+    if (this.game.getPowers().particleBomb.active) {
+      this.particleBomb.activate();
+      return;
+    }
+
     if (this.game.getPowers().flame.active) return;
     if (this.game.getPowers().laser.active) return;
 
     const powers = this.game.getPowers();
-
     const projectilesToFire = powers.projectile.active ? 3 : 1;
+
     for (let i = 0; i < projectilesToFire; i++) {
       const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
       const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
@@ -333,6 +364,13 @@ export default class Player {
       this.laser.sounds.fire.play();
     }
     this.laser.active = true;
+  }
+
+  fireParticleBomb() {
+    if (!this.particleBomb.active) {
+      console.log('Activating Particle Bomb');
+      this.particleBomb.activate();
+    }
   }
 
   useBomb() {
