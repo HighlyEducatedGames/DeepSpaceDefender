@@ -85,17 +85,17 @@
       </div>
       <div id="menu">
         <h2>MENU</h2>
-        <button onclick="showSoundOptions()">Sound Options</button>
         <button onclick="showHowToPlay()">How to Play</button>
         <button onclick="showControls()">Controls</button>
+        <button onclick="showSoundOptions()">Sound Options</button>
         <button onclick="showCredits()">Credits</button>
         <p>
-          Press <span class="action" id="fireText">Space</span> to Restart,
+          Press <span class="action" id="fireText">Space</span> to Start,
           <span class="action" id="menuText">M</span> to Unpause.
         </p>
       </div>
 
-      <div id="soundOptions">
+      <div id="soundOptions" style="display: none;">
         <h2>Sound Options</h2>
         <div class="slider-container">
           <label for="musicVolume">Music Volume</label>
@@ -108,7 +108,7 @@
         <p class="back-button" onclick="menuBack()">Back</p>
       </div>
 
-      <div id="credits">
+      <div id="credits" style="display: none;">
         <p>Made by Task Rok / DBKynd</p>
         <p>Suno AI for the Music</p>
         <p>ElevenLabs for the sound effects</p>
@@ -117,7 +117,7 @@
         <p class="back-button" onclick="menuBack()">Back</p>
       </div>
 
-      <div id="howToPlay">
+      <div id="howToPlay" style="display: none;">
         <h2>How to Play</h2>
         <table id="howToPlayTable">
           <tr>
@@ -126,7 +126,7 @@
           </tr>
           <tr>
             <td><img src="assets/images/player.png" alt="Player" /></td>
-            <td>Use arrow keys to move and spacebar to shoot.</td>
+            <td>This is you. Save the Galaxy from the EVIL EMPIRE.</td>
           </tr>
           <tr>
             <td><img src="assets/images/coin.png" alt="Coin" /></td>
@@ -138,15 +138,15 @@
           </tr>
           <tr>
             <td><img src="assets/images/bombPowerUp.png" alt="Bomb Power Up" /></td>
-            <td>Bomb Power-Up. Use with B Key</td>
+            <td>Bomb Power-Up. Kills enemies in blast radius.</td>
           </tr>
           <tr>
             <td><img src="assets/images/homingMissilePowerUp.png" alt="Homing Missile Power Up" /></td>
-            <td>Homing Missile Power-Up. Use with H Key</td>
+            <td>Homing Missile Power-Up. Kills up to 3 enemies.</td>
           </tr>
           <tr>
             <td><img src="assets/images/shield_powerUp.png" alt="Shield Power Up" /></td>
-            <td>Shield Power-Up. Protects you from damage</td>
+            <td>Shield Power-Up. Protects you from damage.</td>
           </tr>
           <tr>
             <td><img src="assets/images/reversePowerUp.png" alt="Reverse Power Up" /></td>
@@ -172,12 +172,11 @@
             <td><img src="assets/images/stealth_enemy.png" alt="Stealth Enemy" /></td>
             <td>Stealth enemy. Hard to detect.</td>
           </tr>
-          &lt;!&ndash; Add more rows as needed for other assets &ndash;&gt;
         </table>
         <p class="back-button" onclick="menuBack()">Back</p>
       </div>
 
-      <div id="controls">
+      <div id="controls" style="display: none;">
         <h2>Controls</h2>
         <table id="controlsTable">
           <tr>
