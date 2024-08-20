@@ -275,6 +275,7 @@ class InkCloud {
         ctx.closePath();
         ctx.fill();
 
+        ctx.save();
         ctx.strokeStyle = 'grey'; // Grey outline
         ctx.lineWidth = 2; // Thickness of the outline
         ctx.beginPath();
@@ -292,6 +293,7 @@ class InkCloud {
         }
         ctx.closePath();
         ctx.stroke();
+        ctx.restore();
 
         if (this.game.timestamp > this.cloudStartTime + this.cloudDuration) {
           this.cloudActive = false;

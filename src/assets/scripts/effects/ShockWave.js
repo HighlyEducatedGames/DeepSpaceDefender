@@ -101,11 +101,13 @@ class EllipticalShockWave {
 
   draw(ctx) {
     if (this.alpha > 0) {
+      ctx.save();
       ctx.beginPath();
       ctx.ellipse(this.x, this.y, this.radiusX, this.radiusY, 0, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(255, 255, 255, ${this.alpha})`;
       ctx.lineWidth = 3;
       ctx.stroke();
+      ctx.restore();
     }
   }
 
