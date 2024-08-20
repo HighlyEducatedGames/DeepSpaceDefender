@@ -79,6 +79,7 @@ export default class Game {
     this.player = new Player(this);
     this.ally = null;
     this.allySpawnTime = 0;
+    this.effects = [];
     this.startLevel(1);
   }
 
@@ -88,7 +89,6 @@ export default class Game {
     this.levelStartTime = this.timestamp;
     this.levelDuration = 30000;
     this.maxCoins = 5;
-    this.effects = [];
     this.arrowIndicators = [];
     this.crateStars();
 

@@ -1,4 +1,5 @@
 import Explosion from '../effects/Explosion.js';
+import ShockWave from '../effects/ShockWave.js';
 
 export default class Laser {
   constructor(game) {
@@ -81,7 +82,7 @@ class PlayerLaserParticle {
     this.vy = Math.random() * 2 - 1;
     this.distance = 0;
     this.enemyDamage = 0.005;
-    this.bossDamage = 0.0009;
+    this.bossDamage = 0.09;
     this.markedForDeletion = false;
   }
 
@@ -117,7 +118,7 @@ class PlayerLaserParticle {
         this.markedForDeletion = true;
         this.laser.sounds.hit.play();
         if (enemy.markedForDeletion) {
-          this.game.effects.push(new Explosion(this.game, enemy.x, enemy.y));
+          this.game.effects.push(new ShockWave(this.game, enemy.x, enemy.y));
         }
       }
     });

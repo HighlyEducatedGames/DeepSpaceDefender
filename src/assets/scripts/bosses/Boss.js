@@ -1,5 +1,6 @@
 import { getOffScreenRandomSide } from '../utilities.js';
 import Explosion from '../effects/Explosion.js';
+import BossExplosion from '../effects/BossExplosion.js';
 
 export default class Boss {
   constructor(game) {
@@ -106,7 +107,7 @@ export default class Boss {
     this.health -= damage;
     if (this.health <= 0) {
       this.game.addScore(this.score);
-      this.game.effects.push(new Explosion(this.game, this.x, this.y));
+      this.game.effects.push(new BossExplosion(this.game, this.x, this.y));
       this.markedForDeletion = true;
       this.game.nextLevel();
     }

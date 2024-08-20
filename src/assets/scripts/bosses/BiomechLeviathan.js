@@ -1,3 +1,4 @@
+import BossExplosion from '../effects/BossExplosion.js';
 import Explosion from '../effects/Explosion.js';
 import { getOffScreenRandomSide } from '../utilities.js';
 
@@ -142,6 +143,7 @@ export default class BiomechLeviathan {
 
   spawnTractorBeam() {
     if (this.game.timestamp - this.lastTractorBeamTime < this.tractorBeamCooldownempCooldown) return;
+
     this.tractorBeamActive = true;
     const tractorBeam = new TractorBeam(this.game, this);
     this.lastTractorBeamTime = this.game.timestamp;
@@ -155,7 +157,7 @@ export default class BiomechLeviathan {
     this.health -= damage;
     if (this.health <= 0) {
       this.markedForDeletion = true;
-      this.game.effects.push(new Explosion(this.game, this.x, this.y));
+      this.game.effects.push(new BossExplosion(this.game, this.x, this.y));
       this.game.addScore(this.score);
     }
   }
