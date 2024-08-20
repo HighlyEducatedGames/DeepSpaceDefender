@@ -26,7 +26,9 @@ export default class Boss {
     this.image = document.getElementById('boss_image');
     this.music = document.getElementById('boss_music');
 
-    getOffScreenRandomSide(this, 20);
+    const { x, y } = getOffScreenRandomSide(this, 20);
+    this.x = x;
+    this.y = y;
 
     setTimeout(() => {
       this.canShoot = true;
@@ -98,21 +100,6 @@ export default class Boss {
       }
       this.lastAttackTime = Date.now();
     }
-
-    // this.checkCollisions();
-  }
-
-  checkCollisions() {
-    // Check player projectiles to boss projectiles
-    /*this.projectiles.forEach((bossProjectile) => {
-      this.game.player.projectiles.forEach((playerProjectile) => {
-        if (this.game.checkCollision(bossProjectile, playerProjectile)) {
-          bossProjectile.markedForDeletion = true;
-          playerProjectile.markedForDeletion = true;
-          // TODO make larger, charged projectiles, pass through enemy projectiles
-        }
-      });
-    });*/
   }
 
   takeDamage(damage) {
@@ -204,9 +191,19 @@ class BossProjectile {
       this.markedForDeletion = true;
     }
 
+    // Collides with player
     if (this.game.checkCollision(this, this.game.player)) {
       this.game.player.takeDamage(this.damage);
       this.markedForDeletion = true;
     }
+
+    // Collision to other projectiles
+    this.game.projectiles.forEach((projectile) => {
+      if (projectile === this) return;
+      if (this.game.checkCollision(this, projectile)) {
+        this.markedForDeletion = true;
+        projectile.markedForDeletion = true;
+      }
+    });
   }
 }
