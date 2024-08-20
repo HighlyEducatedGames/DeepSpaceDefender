@@ -219,11 +219,11 @@ export default class Player {
     }
 
     // Tractor beam effect on player
-    if (this.game.boss && this.game.boss instanceof BiomechLeviathan && this.game.boss.tractorBeamActive) {
+    if (this.game.boss && this.game.boss instanceof BiomechLeviathan && this.game.boss.tractorBeam) {
       const tractorBeam = this.game.boss.tractorBeam;
       if (tractorBeam) {
-        const dx = tractorBeam.startX - this.x;
-        const dy = tractorBeam.startY - this.y;
+        const dx = tractorBeam.x - this.x;
+        const dy = tractorBeam.y - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance > 0) {

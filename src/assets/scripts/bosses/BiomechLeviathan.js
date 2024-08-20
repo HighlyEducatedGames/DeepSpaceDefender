@@ -29,10 +29,9 @@ export default class BiomechLeviathan {
     this.lastEmpTime = 0;
     this.empCooldown = 5000;
     this.empActive = false;
-    this.lastTractorBeamTime = 0;
     this.tractorBeam = null;
-    this.tractorBeamCooldown = null;
-    this.tractorBeamActive = false;
+    this.tractorBeamTimer = 0;
+    this.tractorBeamCooldown = 5000;
     this.lastCollisionTime = 0;
     this.collisionCooldown = 3000;
     this.markedForDeletion = false;
@@ -64,6 +63,9 @@ export default class BiomechLeviathan {
     ctx.strokeStyle = 'black';
     ctx.strokeRect(this.healthBarX, this.healthBarY, this.healthBarWidth, this.healthBarHeight);
 
+    // Tractor Beam
+    if (this.tractorBeam) this.tractorBeam.draw(ctx);
+
     // DEBUG - Hitbox
     if (this.game.debug) {
       ctx.strokeStyle = 'white';
@@ -87,6 +89,12 @@ export default class BiomechLeviathan {
     this.healthBarX = this.x - this.width * 0.5;
     this.healthBarY = this.y + this.height * 0.5 + 10;
 
+    // Tractor Beam
+    if (this.tractorBeam) {
+      this.tractorBeam.update(deltaTime);
+      if (this.tractorBeam.markedForDeletion) this.tractorBeam = null;
+    }
+
     // Health values to change phases at
     const phases = {
       1: 1.0,
@@ -103,13 +111,13 @@ export default class BiomechLeviathan {
     // Attack logic
     switch (this.phase) {
       case 1:
-        this.spawnTractorBeam();
+        this.spawnTractorBeam(deltaTime);
         break;
       case 2:
-        this.spawnInkCloud();
+        // this.spawnInkCloud();
         break;
       case 3:
-        this.spawnEmpBlast();
+        // this.spawnEmpBlast();
         break;
     }
 
@@ -141,16 +149,14 @@ export default class BiomechLeviathan {
     this.lastEmpTime = this.game.timestamp;
   }
 
-  spawnTractorBeam() {
-    if (this.game.timestamp - this.lastTractorBeamTime < this.tractorBeamCooldownempCooldown) return;
-
-    this.tractorBeamActive = true;
-    const tractorBeam = new TractorBeam(this.game, this);
-    this.lastTractorBeamTime = this.game.timestamp;
-  }
-
-  getTractorBeam() {
-    return this.tractorBeam;
+  spawnTractorBeam(deltaTime) {
+    if (this.tractorBeam) return;
+    if (this.tractorBeamTimer >= this.tractorBeamCooldown) {
+      this.tractorBeamTimer = 0;
+      this.tractorBeam = new TractorBeam(this.game, this);
+    } else {
+      this.tractorBeamTimer += deltaTime;
+    }
   }
 
   takeDamage(damage) {
@@ -170,20 +176,18 @@ class TractorBeam {
     this.beamWidth = 20;
     this.x = this.biomech.x;
     this.y = this.biomech.y;
-    this.cycleDuration = 10000; // Total duration of one cycle (5 seconds active, 5 seconds inactive)
-    this.activeDuration = 5000; // Duration the tractor beam is active
+    this.timer = 0;
+    this.duration = 5000;
+    this.strength = 0.2;
     this.markedForDeletion = false;
   }
 
   draw(ctx) {
-    const gradient = ctx.createLinearGradient(this.game.player.x, this.game.player.y, this.startX, this.startY);
+    const gradient = ctx.createLinearGradient(this.game.player.x, this.game.player.y, this.x, this.y);
     gradient.addColorStop(0, 'rgba(255, 255, 0, 0.5)'); // Yellow at the player end
     gradient.addColorStop(1, 'rgba(255, 255, 0, 0)'); // Transparent at the biomech boss end
 
-    const dx = this.game.player.x - this.x;
-    const dy = this.game.player.y - this.y;
-    const angle = Math.atan2(dy, dx);
-
+    const angle = this.game.player.getAngleToPlayer(this);
     const playerX1 = this.game.player.x + Math.cos(angle + Math.PI * 0.5) * this.beamWidth * 0.5;
     const playerY1 = this.game.player.y + Math.sin(angle + Math.PI * 0.5) * this.beamWidth * 0.5;
     const playerX2 = this.game.player.x + Math.cos(angle - Math.PI * 0.5) * this.beamWidth * 0.5;
@@ -191,23 +195,21 @@ class TractorBeam {
 
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.moveTo(this.startX, this.startY); // Start at biomech boss
+    ctx.moveTo(this.x, this.y); // Start at biomech boss
     ctx.lineTo(playerX1, playerY1); // Draw to one side of the player
     ctx.lineTo(playerX2, playerY2); // Draw to the other side of the player
     ctx.closePath();
     ctx.fill();
   }
 
-  update() {
-    const timeInCycle = this.game.timestamp % this.cycleDuration;
-    if (timeInCycle < this.activeDuration) {
-      this.startX = this.biomech.x;
-      this.startY = this.biomech.y;
-      this.endX = this.game.player.x;
-      this.endY = this.game.player.y;
-      this.biomech.sounds.emp.cloneNode().play();
-    } else {
+  update(deltaTime) {
+    this.x = this.biomech.x;
+    this.y = this.biomech.y;
+
+    if (this.timer >= this.duration) {
       this.markedForDeletion = true;
+    } else {
+      this.timer += deltaTime;
     }
   }
 }
