@@ -40,14 +40,16 @@ function initGame() {
       // Draw title screen
       ctx.drawImage(game.images.title, 0, 0, canvas.width, canvas.height);
 
-      // Draw PAUSED text
-      ctx.fillStyle = 'white';
-      ctx.font = '40px "Press Start 2P", cursive';
-      const text = 'PAUSED';
-      const textWidth = ctx.measureText(text).width;
-      const x = (canvas.width - textWidth) * 0.5;
-      const y = canvas.height / 3;
-      ctx.fillText(text, x, y);
+      if (game.paused) {
+        // Draw PAUSED text
+        ctx.fillStyle = 'white';
+        ctx.font = '40px "Press Start 2P", cursive';
+        const text = 'PAUSED';
+        const textWidth = ctx.measureText(text).width;
+        const x = (canvas.width - textWidth) * 0.5;
+        const y = canvas.height / 3;
+        ctx.fillText(text, x, y);
+      }
 
       if (game.debug) game.GUI.drawDebug(ctx);
     }

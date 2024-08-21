@@ -27,16 +27,18 @@ export default class Menu {
     this.testSound.play();
   }
 
-  showMenu() {
+  showMenu(gameStart = false) {
     this.game.music.pause();
     this.menu.style.display = 'block';
     this.isOpen = true;
+    if (!gameStart) this.game.paused = true;
   }
 
   hideMenu() {
     this.game.music.play();
     this.menu.style.display = 'none';
     this.isOpen = false;
+    this.game.paused = false;
   }
 
   toggleMenu() {

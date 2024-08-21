@@ -53,6 +53,7 @@ export default class Game {
     this.allyInterval = 60000;
     this.arrowIndicators = [];
     this.frame = 0;
+    this.paused = false;
     this.images = {
       title: document.getElementById('title_screen_image'),
     };
@@ -73,7 +74,7 @@ export default class Game {
 
   // Set any properties here that needs to be reset on game over or game reset
   resetGame(showMenu = true) {
-    if (showMenu) this.menu.showMenu();
+    if (showMenu) this.menu.showMenu(true);
     this.isGameOver = false;
     this.score = 0;
     this.player = new Player(this);
