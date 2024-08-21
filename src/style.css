@@ -6,6 +6,7 @@ body {
   background-size: cover;
   font-family: 'Press Start 2P', cursive;
   color: #ffffff;
+  background: #323232;
 }
 
 canvas {
@@ -29,20 +30,15 @@ canvas {
   max-height: 90%;
   overflow-y: auto;
   border-radius: 10px;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  animation: fadeIn 0.5s ease-out;
 }
 
-#menu h2,
-#soundOptions h2, 
-#credits p,
-#howToPlay h2,
-#controls h2 {
-  color: #ffffff;
+#menu-container > div {
+  display: none;
 }
 
 button {
@@ -54,7 +50,9 @@ button {
   padding: 10px 20px;
   cursor: pointer;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    transform 0.3s ease;
   width: 100%;
   max-width: 300px;
   margin: 10px 0;
@@ -110,8 +108,14 @@ button:hover {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Glowing effect for buttons within the menu using drop-shadow */
@@ -122,6 +126,5 @@ button:hover {
 
 /* Intensify the glow on hover with a stronger effect */
 #menu-container button:hover {
-  filter: drop-shadow(0 0 35px rgba(46, 185, 30, 1)) 
-          drop-shadow(0 0 15px rgba(46, 185, 30, 0.7));
+  filter: drop-shadow(0 0 35px rgba(46, 185, 30, 1)) drop-shadow(0 0 15px rgba(46, 185, 30, 0.7));
 }

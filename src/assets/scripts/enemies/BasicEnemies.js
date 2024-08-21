@@ -1,7 +1,6 @@
 import { getRandomInterval } from '../utilities.js';
 import { BehaviorTree, SequenceNode, SelectorNode, ActionNode } from './BehaviorTree.js';
 
-
 class Enemy {
   constructor(game) {
     /** @type {import('../Game.js').default} */
@@ -29,89 +28,85 @@ class Enemy {
 
   createBehaviorTree() {
     return new BehaviorTree(
-        new SelectorNode([
-            new SequenceNode([
-                new ActionNode(this.patrol.bind(this)),
-                new ActionNode(this.checkPlayerDistance.bind(this)),
-                new ActionNode(this.attackPlayer.bind(this)),
-            ]),
-            new ActionNode(this.retreat.bind(this)),
-        ])
+      new SelectorNode([
+        new SequenceNode([
+          new ActionNode(this.patrol.bind(this)),
+          new ActionNode(this.checkPlayerDistance.bind(this)),
+          new ActionNode(this.attackPlayer.bind(this)),
+        ]),
+        new ActionNode(this.retreat.bind(this)),
+      ]),
     );
-}
-
-patrol(enemy, ticks) {
-  if (!this.patrolTarget) {
-      this.patrolTarget = this.getNewPatrolPoint();
   }
 
-  const distanceToTarget = Math.hypot(this.patrolTarget.x - this.x, this.patrolTarget.y - this.y);
+  patrol(enemy, ticks) {
+    if (!this.patrolTarget) {
+      this.patrolTarget = this.getNewPatrolPoint();
+    }
 
-  // Move towards the patrol target
-  if (distanceToTarget > 5) {
+    const distanceToTarget = Math.hypot(this.patrolTarget.x - this.x, this.patrolTarget.y - this.y);
+
+    // Move towards the patrol target
+    if (distanceToTarget > 5) {
       const angleToTarget = Math.atan2(this.patrolTarget.y - this.y, this.patrolTarget.x - this.x);
       this.vx = Math.cos(angleToTarget);
       this.vy = Math.sin(angleToTarget);
-      this.x += this.speed * this.vx * ticks / 1000;
-      this.y += this.speed * this.vy * ticks / 1000;
-  } else {
+      this.x += (this.speed * this.vx * ticks) / 1000;
+      this.y += (this.speed * this.vy * ticks) / 1000;
+    } else {
       this.patrolTarget = this.getNewPatrolPoint();
+    }
+
+    // Return true to keep patrolling
+    return true;
   }
 
-  // Return true to keep patrolling
-  return true;
-}
+  getNewPatrolPoint() {
+    const patrolAreaWidth = this.game.width * 0.6;
+    const patrolAreaHeight = this.game.height * 0.6;
+    const patrolX = Math.random() * patrolAreaWidth + (this.game.width - patrolAreaWidth) / 2;
+    const patrolY = Math.random() * patrolAreaHeight + (this.game.height - patrolAreaHeight) / 2;
+    return { x: patrolX, y: patrolY };
+  }
 
+  checkPlayerDistance(enemy) {
+    const distance = Math.hypot(this.x - this.game.player.x, this.y - this.game.player.y);
 
-getNewPatrolPoint() {
-  const patrolAreaWidth = this.game.width * 0.6;
-  const patrolAreaHeight = this.game.height * 0.6;
-  const patrolX = Math.random() * patrolAreaWidth + (this.game.width - patrolAreaWidth) / 2;
-  const patrolY = Math.random() * patrolAreaHeight + (this.game.height - patrolAreaHeight) / 2;
-  return { x: patrolX, y: patrolY };
-}
+    // Example: if the enemy is a stealth type, they might have a smaller detection range
+    const detectionRange = this instanceof StealthEnemy ? 150 : 200;
 
+    // Only attack if within detection range
+    return distance < detectionRange;
+  }
 
-checkPlayerDistance(enemy) {
-  const distance = Math.hypot(this.x - this.game.player.x, this.y - this.game.player.y);
-  
-  // Example: if the enemy is a stealth type, they might have a smaller detection range
-  const detectionRange = this instanceof StealthEnemy ? 150 : 200;
+  attackPlayer(enemy, ticks) {
+    // Predict player's position based on their velocity
+    const playerFutureX = this.game.player.x + this.game.player.vx * 0.5;
+    const playerFutureY = this.game.player.y + this.game.player.vy * 0.5;
+    const angleToPlayer = Math.atan2(playerFutureY - this.y, playerFutureX - this.x);
 
-  // Only attack if within detection range
-  return distance < detectionRange;
-}
+    const cooldown = 700; // Cooldown period in milliseconds
 
-
-attackPlayer(enemy, ticks) {
-  // Predict player's position based on their velocity
-  const playerFutureX = this.game.player.x + this.game.player.vx * 0.5;
-  const playerFutureY = this.game.player.y + this.game.player.vy * 0.5;
-  const angleToPlayer = Math.atan2(playerFutureY - this.y, playerFutureX - this.x);
-
-  const cooldown = 700; // Cooldown period in milliseconds
-
-  if (this.canShoot && (this.game.timestamp - this.lastAttackTime >= cooldown)) {
+    if (this.canShoot && this.game.timestamp - this.lastAttackTime >= cooldown) {
       this.fireProjectile(angleToPlayer);
       this.lastAttackTime = this.game.timestamp;
       return true;
+    }
+    return false;
   }
-  return false;
-}
 
-fireProjectile(angle) {
-  this.game.projectiles.push(new EnemyProjectile(this.game, this.x, this.y, angle));
-}
+  fireProjectile(angle) {
+    this.game.projectiles.push(new EnemyProjectile(this.game, this.x, this.y, angle));
+  }
 
-
-retreat(enemy, ticks) {
-  if (!this.retreatTarget) {
+  retreat(enemy, ticks) {
+    if (!this.retreatTarget) {
       this.retreatTarget = this.getRetreatPoint();
-  }
+    }
 
-  const distanceToTarget = Math.hypot(this.retreatTarget.x - this.x, this.retreatTarget.y - this.y);
+    const distanceToTarget = Math.hypot(this.retreatTarget.x - this.x, this.retreatTarget.y - this.y);
 
-  if (distanceToTarget > 5) {
+    if (distanceToTarget > 5) {
       const angleToTarget = Math.atan2(this.retreatTarget.y - this.y, this.retreatTarget.x - this.x);
 
       // Calculate acceleration towards the target
@@ -124,31 +119,28 @@ retreat(enemy, ticks) {
       const currentSpeed = Math.hypot(this.vx, this.vy);
 
       if (currentSpeed > maxRetreatSpeed) {
-          // Normalize velocity and apply max speed
-          this.vx = (this.vx / currentSpeed) * maxRetreatSpeed;
-          this.vy = (this.vy / currentSpeed) * maxRetreatSpeed;
+        // Normalize velocity and apply max speed
+        this.vx = (this.vx / currentSpeed) * maxRetreatSpeed;
+        this.vy = (this.vy / currentSpeed) * maxRetreatSpeed;
       }
 
       // Update position
-      this.x += this.vx * ticks / 1000;
-      this.y += this.vy * ticks / 1000;
-  } else {
+      this.x += (this.vx * ticks) / 1000;
+      this.y += (this.vy * ticks) / 1000;
+    } else {
       // Recalculate the retreat target if the entity reaches the target point
       this.retreatTarget = this.getRetreatPoint();
+    }
+
+    return true;
   }
 
-  return true;
-}
-
-
-
-
-getRetreatPoint() {
-  // Move towards the edge of the screen furthest from the player
-  const furthestX = this.x < this.game.width / 2 ? this.game.width : 0;
-  const furthestY = this.y < this.game.height / 2 ? this.game.height : 0;
-  return { x: furthestX, y: furthestY };
-}
+  getRetreatPoint() {
+    // Move towards the edge of the screen furthest from the player
+    const furthestX = this.x < this.game.width / 2 ? this.game.width : 0;
+    const furthestY = this.y < this.game.height / 2 ? this.game.height : 0;
+    return { x: furthestX, y: furthestY };
+  }
 
   draw(ctx) {
     // Enemy
@@ -175,7 +167,7 @@ getRetreatPoint() {
     if (this.canShoot && this.game.timestamp - this.lastAttackTime >= this.attackInterval) {
       this.fireProjectile();
     }
-    
+
     // Update the behavior tree
     this.behaviorTree.tick(this, deltaTime);
     this.checkCollisions();

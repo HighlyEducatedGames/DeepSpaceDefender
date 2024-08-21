@@ -1,59 +1,59 @@
 class BehaviorTree {
   constructor(rootNode) {
-      this.rootNode = rootNode;
+    this.rootNode = rootNode;
   }
 
   tick(enemy, deltaTime) {
-      this.rootNode.execute(enemy, deltaTime);
+    this.rootNode.execute(enemy, deltaTime);
   }
 }
 
 class Node {
   execute(enemy, deltaTime) {
-      throw new Error("execute method not implemented");
+    throw new Error('execute method not implemented');
   }
 }
 
 class SequenceNode extends Node {
   constructor(children) {
-      super();
-      this.children = children;
+    super();
+    this.children = children;
   }
 
   execute(enemy, deltaTime) {
-      for (let child of this.children) {
-          if (!child.execute(enemy, deltaTime)) {
-              return false;
-          }
+    for (let child of this.children) {
+      if (!child.execute(enemy, deltaTime)) {
+        return false;
       }
-      return true;
+    }
+    return true;
   }
 }
 
 class SelectorNode extends Node {
   constructor(children) {
-      super();
-      this.children = children;
+    super();
+    this.children = children;
   }
 
   execute(enemy, deltaTime) {
-      for (let child of this.children) {
-          if (child.execute(enemy, deltaTime)) {
-              return true;
-          }
+    for (let child of this.children) {
+      if (child.execute(enemy, deltaTime)) {
+        return true;
       }
-      return false;
+    }
+    return false;
   }
 }
 
 class ActionNode extends Node {
   constructor(action) {
-      super();
-      this.action = action;
+    super();
+    this.action = action;
   }
 
   execute(enemy, deltaTime) {
-      return this.action(enemy, deltaTime);
+    return this.action(enemy, deltaTime);
   }
 }
 

@@ -1,8 +1,19 @@
 /* global loaded */
 import Game from './assets/scripts/Game.js';
 
+// Show the loading page for a period of time before initializing the game
+// Either all the assets load in this time and we wait out the duration, or the loading time is longer and we switch once ready
+const initTime = performance.now();
+const wait = 1000;
 window.addEventListener('load', () => {
-  loaded();
+  const diff = performance.now() - initTime;
+  setTimeout(() => {
+    loaded();
+    initGame();
+  }, wait - diff);
+});
+
+function initGame() {
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
   canvas.width = 1280;
@@ -48,4 +59,4 @@ window.addEventListener('load', () => {
   }
 
   animate();
-});
+}
