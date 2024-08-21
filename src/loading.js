@@ -84,4 +84,5 @@ function loaded() {
   document.getElementById('gameCanvas').style.display = 'block';
   document.getElementById('menu-container').style.display = 'flex';
   document.getElementById('menu').style.display = 'block';
+  document.getElementById('controller').style.display = 'block';
 }

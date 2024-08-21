@@ -80,7 +80,7 @@
     </div>
 
     <div id="menu-container">
-      <div class="controller">
+      <div id="controller">
         <img src="assets/images/keyboard.png" id="controller-image" />
       </div>
       <div id="menu">
@@ -243,21 +243,25 @@
       function showCredits() {
         document.getElementById('credits').style.display = 'block';
         document.getElementById('menu').style.display = 'none';
+        document.getElementById('menu-container').style.top = '50%';
       }
 
       function showHowToPlay() {
         document.getElementById('howToPlay').style.display = 'block';
         document.getElementById('menu').style.display = 'none';
+        document.getElementById('menu-container').style.top = '50%';
       }
 
       function showSoundOptions() {
         document.getElementById('soundOptions').style.display = 'block';
         document.getElementById('menu').style.display = 'none';
+        document.getElementById('menu-container').style.top = '50%';
       }
 
       function showControls() {
         document.getElementById('controls').style.display = 'block';
         document.getElementById('menu').style.display = 'none';
+        document.getElementById('menu-container').style.top = '50%';
       }
 
       function menuBack() {
@@ -267,6 +271,7 @@
         document.getElementById('controls').style.display = 'none';
 
         document.getElementById('menu').style.display = 'block';
+        document.getElementById('menu-container').style.top = '60%';
       }
 
       function updateMenuText(usingGamepad) {
