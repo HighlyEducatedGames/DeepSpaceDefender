@@ -6,6 +6,7 @@ import FlameParticle from './projectiles/Flame.js';
 import Laser from './projectiles/Laser.js';
 import ParticleBomb from './projectiles/ParticleBomb.js';
 import AbilityTimer from './AbilityTimer.js';
+import inputHandler, { Actions } from './controls/InputHandler.js';
 
 export default class Player {
   constructor(game) {
@@ -65,6 +66,16 @@ export default class Player {
       boost: document.getElementById('boost_sound'),
       lostLife: document.getElementById('lifelost_sound'),
     };
+
+    this.init();
+  }
+
+  init() {
+    inputHandler.onActionPress(Actions.FIRE, () => this.fireProjectile());
+    inputHandler.onActionPress(Actions.BOMB, () => this.useBomb());
+    inputHandler.onActionPress(Actions.MISSILE, () => this.useMissile());
+
+    inputHandler.onActionRelease(Actions.FIRE, () => this.fireChargedProjectile());
   }
 
   draw(ctx) {
@@ -282,8 +293,6 @@ export default class Player {
 
     // Player inputs
     if (!this.game.menu.isOpen && !this.game.isGameOver) {
-      if (keys.fire.justPressed()) this.fireProjectile();
-      if (keys.bomb.justPressed()) this.useBomb();
       if (keys.boost.justPressed()) this.useBoost();
       if (keys.missile.justPressed()) this.useMissile();
 
@@ -346,6 +355,8 @@ export default class Player {
     //   return; // Prevent firing if EMP effect is active
     // }
   }
+
+  fireChargedProjectile() {}
 
   fireFlame() {
     if (this.sounds.flame.paused) {

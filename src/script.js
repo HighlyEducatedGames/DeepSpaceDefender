@@ -31,7 +31,6 @@ function initGame() {
 
     // Update player inputs
     game.controls.update();
-    game.handleGameControls();
 
     if (!game.menu.isOpen) {
       // Playing the game

@@ -15,6 +15,8 @@ import TemporalSerpent from './bosses/TemporalSerpent.js';
 import CyberDragon from './bosses/CyberDragon.js';
 import { Wormholes } from './hazards/Wormhole.js';
 import { ArrowIndicator } from './HUD.js';
+import inputHandler from './controls/InputHandler.js';
+import { Actions } from './controls/InputHandler.js';
 
 export default class Game {
   constructor(canvas) {
@@ -68,6 +70,14 @@ export default class Game {
     this.doWormholes = false;
     this.doPowerUps = true;
 
+    this.init();
+  }
+
+  init() {
+    inputHandler.onActionPress(Actions.DEBUG, () => this.toggleDebug());
+    inputHandler.onActionPress(Actions.PAUSE, () => this.menu.toggleMenu());
+    inputHandler.onActionPress(Actions.BACK, () => menuBack());
+    inputHandler.onActionPress(Actions.RESTART, () => this.resetGame(false));
     this.crateStars();
     this.resetGame();
   }
@@ -128,29 +138,11 @@ export default class Game {
     this.arrowIndicators.push(new ArrowIndicator(this, target));
   }
 
-  handleGameControls() {
-    // Toggle debug mode
-    if (this.controls.keys.debug.justPressed()) {
-      this.debug = !this.debug;
-      this.controls.codes.invincibility.enabled = this.debug;
-      this.controls.codes.unlimitedAmmo.enabled = this.debug;
-      this.controls.codes.unlimitedBoost.enabled = this.debug;
-    }
-
-    // Toggle pause menu
-    if (this.controls.keys.pause.justPressed()) {
-      this.menu.toggleMenu();
-    }
-
-    // Back out of a menu option to main menu with Escape
-    if (this.controls.keys.esc.justPressed() && this.menu.isOpen) {
-      menuBack();
-    }
-
-    // Restart game
-    if (this.controls.keys.restart.justPressed() || (this.isGameOver && this.controls.keys.bomb.justPressed())) {
-      this.resetGame(false);
-    }
+  toggleDebug() {
+    this.debug = !this.debug;
+    this.controls.codes.invincibility.enabled = this.debug;
+    this.controls.codes.unlimitedAmmo.enabled = this.debug;
+    this.controls.codes.unlimitedBoost.enabled = this.debug;
   }
 
   crateStars() {
