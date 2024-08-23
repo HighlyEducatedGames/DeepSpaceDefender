@@ -14,7 +14,7 @@ export const Actions = Object.freeze({
 });
 
 const Directions = Object.freeze({
-  NEUTRAL: 'neautral',
+  NEUTRAL: 'neutral',
   POSITIVE: 'positive',
   NEGATIVE: 'negative',
 });
@@ -23,7 +23,7 @@ class InputHandler {
   constructor() {
     this.keys = {};
     this.actions = {};
-    this.gamepads = {};
+    this.gamepadIndex = null;
     this.gamepadButtons = {};
     this.gamepadAxes = {};
     this.init();
@@ -54,37 +54,35 @@ class InputHandler {
   }
 
   handleGamepadConnected({ gamepad }) {
-    this.gamepads[gamepad.index] = gamepad;
+    this.gamepadIndex = gamepad.index;
+    this.playHaptic(200);
   }
 
   handleGamepadDisconnected({ gamepad }) {
-    delete this.gamepads[gamepad.index];
+    if (this.gamepadIndex === gamepad.index) {
+      this.gamepadIndex = null;
+      this.gamepadButtons = {};
+      this.gamepadAxes = {};
+    }
   }
 
   pollGamepads() {
     const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const gamepad = gamepads[this.gamepadIndex];
 
-    for (let i = 0; i < gamepads.length; i++) {
-      const gamepad = gamepads[i];
+    if (gamepad) {
+      gamepad.buttons.forEach((button, index) => {
+        this.handleGamepadButton(index, button);
+      });
 
-      if (gamepad) {
-        if (!this.gamepads[gamepad.index]) {
-          this.handleGamepadConnected({ gamepad });
-        }
-
-        gamepad.buttonIndexes.forEach((button, index) => {
-          this.handleGamepadButton(gamepad, index, button);
-        });
-
-        gamepad.axes.forEach((axisValue, axisIndex) => {
-          this.handleGamepadAxis(gamepad, axisIndex, axisValue);
-        });
-      }
+      gamepad.axes.forEach((axisValue, axisIndex) => {
+        this.handleGamepadAxis(axisIndex, axisValue);
+      });
     }
   }
 
-  handleGamepadButton(gamepad, buttonIndex, button) {
-    const key = `gamepad${gamepad.index}_button${buttonIndex}`;
+  handleGamepadButton(buttonIndex, button) {
+    const key = `gamepad_button${buttonIndex}`;
 
     if (button.pressed) {
       if (!this.gamepadButtons[key]) {
@@ -100,9 +98,9 @@ class InputHandler {
     }
   }
 
-  handleGamepadAxis(gamepad, axisIndex, axisValue) {
+  handleGamepadAxis(axisIndex, axisValue) {
     const threshold = 0.1; // Sensitivity threshold for detecting axis movement
-    const key = `gamepad${gamepad.index}_axis${axisIndex}`;
+    const key = `gamepad_axis${axisIndex}`;
     const direction =
       axisValue < -threshold ? Directions.NEGATIVE : axisValue > threshold ? Directions.POSITIVE : Directions.NEUTRAL;
 
@@ -144,32 +142,26 @@ class InputHandler {
 
   bindActionToButtons(actionName, ...buttonIndexes) {
     this.initAction(actionName);
-    const gamepadIndex = 0;
     buttonIndexes.forEach((buttonIndex) => {
       for (let action in this.actions) {
-        if (gamepadIndex !== null && buttonIndex !== null) {
-          const gamepadKey = `gamepad${gamepadIndex}_button${buttonIndex}`;
-          if (this.actions[action].gamepadButtons.includes(gamepadKey)) {
-            throw new Error(`Gamepad button ${gamepadKey} is already bound to action ${action}.`);
-          }
+        const gamepadKey = `gamepad_button${buttonIndex}`;
+        if (this.actions[action].gamepadButtons.includes(gamepadKey)) {
+          throw new Error(`Gamepad button ${gamepadKey} is already bound to action ${action}.`);
         }
       }
-      this.actions[actionName].gamepadButtons.push(`gamepad${gamepadIndex}_button${buttonIndex}`);
+      this.actions[actionName].gamepadButtons.push(`gamepad_button${buttonIndex}`);
     });
   }
 
   bindActionToAxis(actionName, axisIndex, axisDirection) {
     this.initAction(actionName);
-    const gamepadIndex = 0;
+    const gamepadAxis = `gamepad_axis${axisIndex}_${axisDirection}`;
     for (let action in this.actions) {
-      if (gamepadIndex !== null && axisIndex !== null) {
-        const gamepadAxis = `gamepad${gamepadIndex}_axis${axisIndex}_${axisDirection}`;
-        if (this.actions[action].gamepadAxes.includes(gamepadAxis)) {
-          throw new Error(`Gamepad axis ${gamepadAxis} is already bound to action ${action}.`);
-        }
+      if (this.actions[action].gamepadAxes.includes(gamepadAxis)) {
+        throw new Error(`Gamepad axis ${gamepadAxis} is already bound to action ${action}.`);
       }
     }
-    this.actions[actionName].gamepadAxes.push(`gamepad${gamepadIndex}_axis${axisIndex}_${axisDirection}`);
+    this.actions[actionName].gamepadAxes.push(gamepadAxis);
   }
 
   triggerActionPress(key, axisDirection = null) {
@@ -233,6 +225,23 @@ class InputHandler {
   onActionRelease(actionName, callback) {
     if (!this.actions[actionName]) return;
     this.actions[actionName].onRelease = callback;
+  }
+
+  // Controller rumble if available
+  playHaptic(duration, magnitude = 1) {
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const gamepad = gamepads[this.gamepadIndex];
+    if (!gamepad || !gamepad.vibrationActuator) return;
+    if (!gamepad.vibrationActuator.effects.includes('dual-rumble')) return;
+
+    gamepad.vibrationActuator
+      .playEffect('dual-rumble', {
+        startDelay: 0,
+        duration,
+        weakMagnitude: Math.min(magnitude, 1),
+        strongMagnitude: Math.min(magnitude, 1),
+      })
+      .catch(() => {});
   }
 }
 
