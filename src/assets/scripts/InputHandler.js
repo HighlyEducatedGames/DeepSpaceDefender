@@ -365,11 +365,11 @@ inputHandler.bindButtons(Action.MOVE_BACKWARD, 6, 13); // Left Trigger - Dpad DO
 
 inputHandler.bindKeys(Action.MOVE_LEFT, 'ArrowLeft', 'a', 'A');
 inputHandler.bindButtons(Action.MOVE_LEFT, 14); // Dpad LEFT
-inputHandler.bindAxis(Action.MOVE_LEFT, 0, Direction.NEGATIVE);
+inputHandler.bindAxis(Action.MOVE_LEFT, 0, Direction.NEGATIVE); // Left Joystick - Left
 
 inputHandler.bindKeys(Action.MOVE_RIGHT, 'ArrowRight', 'd', 'D');
 inputHandler.bindButtons(Action.MOVE_RIGHT, 15); // Dpad RIGHT
-inputHandler.bindAxis(Action.MOVE_RIGHT, 0, Direction.POSITIVE);
+inputHandler.bindAxis(Action.MOVE_RIGHT, 0, Direction.POSITIVE); // Left Joystick - Right
 
 // Map inputs only after binding all keys, buttons, and axis
 inputHandler.mapInputs();
