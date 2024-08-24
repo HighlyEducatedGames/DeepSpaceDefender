@@ -43,7 +43,6 @@ class ActionKey {
 
   hold(deltaTime) {
     if (this.isPressed) {
-      if (this.heldDuration > 0) this.justPressed = false;
       this.heldDuration += deltaTime;
     }
   }
@@ -57,6 +56,7 @@ class ActionKey {
 
   update(deltaTime) {
     if (this.justReleased) this.justReleased = false;
+    if (this.justPressed && this.heldDuration > 0) this.justPressed = false;
     if (this.isPressed) this.hold(deltaTime);
   }
 }
