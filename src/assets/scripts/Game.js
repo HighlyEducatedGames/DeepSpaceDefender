@@ -91,7 +91,6 @@ export default class Game {
     this.levelDuration = 30000;
     this.maxCoins = 5;
     this.arrowIndicators = [];
-    this.crateStars();
 
     // Add new coins to this level
     this.coins = [];

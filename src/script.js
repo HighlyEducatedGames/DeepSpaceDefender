@@ -20,8 +20,10 @@ function initGame() {
   canvas.height = 720;
 
   const game = new Game(canvas);
+  let isFocused = true;
 
   function animate(timestamp = 0) {
+    if (!isFocused) return; // Stop the animation if the tab is not focused
     const start = performance.now();
     const deltaTime = timestamp - game.timestamp;
     game.timestamp = timestamp;
@@ -30,6 +32,21 @@ function initGame() {
     requestAnimationFrame(animate);
     game.tickMs = performance.now() - start;
   }
+
+  function handleVisibilityChange() {
+    if (document.hidden) {
+      isFocused = false;
+      game.music.pause();
+      game.music.stopAllFx();
+    } else {
+      game.timestamp = performance.now(); // Reset timestamp to prevent large deltaTime
+      isFocused = true;
+      game.music.play();
+      requestAnimationFrame(animate); // Restart the animation loop
+    }
+  }
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
   animate();
 }

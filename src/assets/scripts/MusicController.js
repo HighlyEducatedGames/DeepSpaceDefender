@@ -61,4 +61,13 @@ export default class MusicController {
     const filtered = Array.from(elements).filter((x) => x.getAttribute('id').includes('sound'));
     filtered.forEach((audio) => (audio.volume = value));
   }
+
+  stopAllFx() {
+    const elements = document.getElementById('audio-sources').children;
+    const filtered = Array.from(elements).filter((x) => x.getAttribute('id').includes('sound'));
+    filtered.forEach((audio) => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+  }
 }
