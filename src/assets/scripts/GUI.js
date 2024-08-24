@@ -39,7 +39,6 @@ export default class GUI {
     this.drawShieldBar(ctx);
     this.drawInventories(ctx);
     this.drawPowerCooldowns(ctx);
-    if (this.game.debug) this.drawDebug(ctx);
   }
 
   drawText(ctx) {

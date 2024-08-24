@@ -22,43 +22,43 @@ function initGame() {
   const game = new Game(canvas);
 
   function animate(timestamp = 0) {
+    const start = performance.now();
     const deltaTime = timestamp - game.timestamp;
     game.timestamp = timestamp;
-
-    // Clear the entire canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Update player inputs
-    game.inputs.update(deltaTime);
-    game.handleGameControls();
-
-    if (!game.paused) {
-      // Playing the game
-      game.frame++;
-      game.render(ctx, deltaTime);
-    } else {
-      // Draw title screen
-      ctx.drawImage(game.images.title, 0, 0, canvas.width, canvas.height);
-
-      if (game.frame > 0) {
-        // Draw PAUSED text
-        ctx.fillStyle = 'white';
-        ctx.font = '40px "Press Start 2P", cursive';
-        const text = 'PAUSED';
-        const textWidth = ctx.measureText(text).width;
-        const x = (canvas.width - textWidth) * 0.5;
-        const y = canvas.height / 3;
-        ctx.fillText(text, x, y);
-      }
-
-      if (game.debug) game.GUI.drawDebug(ctx);
-    }
-
+    updateGame(game, ctx, deltaTime);
     requestAnimationFrame(animate);
-
-    // Store the tick time for debug text
-    game.tickMs = performance.now() - game.timestamp;
+    game.tickMs = performance.now() - start;
   }
 
   animate();
+}
+
+function updateGame(game, ctx, deltaTime) {
+  // Update current user inputs
+  game.inputs.update(deltaTime);
+  game.handleGameControls();
+
+  if (game.paused) {
+    drawPausedScreen(game, ctx);
+  } else {
+    game.frame++;
+    game.render(ctx, deltaTime);
+  }
+
+  if (game.debug) game.GUI.drawDebug(ctx);
+}
+
+function drawPausedScreen(game, ctx) {
+  ctx.drawImage(game.images.title, 0, 0, game.width, game.height);
+
+  if (game.frame > 0) {
+    ctx.fillStyle = 'white';
+    ctx.font = '40px "Press Start 2P", cursive';
+    const text = 'PAUSED';
+    const textWidth = ctx.measureText(text).width;
+    const x = (ctx.canvas.width - textWidth) * 0.5;
+    const y = ctx.canvas.height / 3;
+    ctx.fillText(text, x, y);
+  }
 }
