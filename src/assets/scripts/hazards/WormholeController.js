@@ -216,23 +216,23 @@ export default class Wormhole {
 }
 
 // function updateWormholes(timestamp) {
-//   if (!wormholeActive && performance.now() - wormholeSpawnTime > WORMHOLE_COOLDOWN) {
+//   if (!wormholeActive && this.game.timestamp - wormholeSpawnTime > WORMHOLE_COOLDOWN) {
 //     initWormholes(level); // Respawn wormholes
-//   } else if (wormholeActive && performance.now() - wormholeSpawnTime > WORMHOLE_LIFETIME) {
+//   } else if (wormholeActive && this.game.timestamp - wormholeSpawnTime > WORMHOLE_LIFETIME) {
 //     wormholeActive = false;
-//     wormholeSpawnTime = performance.now();
+//     wormholeSpawnTime = this.game.timestamp;
 //     wormholes = [];
 //   }
 
 //   // Handle fade in/out
 //   wormholes.forEach((wormhole) => {
-//     const timeSinceSpawn = performance.now() - wormholeSpawnTime;
+//     const timeSinceSpawn = this.game.timestamp - wormholeSpawnTime;
 //     if (timeSinceSpawn < WORMHOLE_FADE_DURATION) {
 //       wormhole.entry.opacity = timeSinceSpawn / WORMHOLE_FADE_DURATION;
 //       wormhole.exit.opacity = timeSinceSpawn / WORMHOLE_FADE_DURATION;
-//     } else if (performance.now() - wormholeSpawnTime > WORMHOLE_LIFETIME - WORMHOLE_FADE_DURATION) {
-//       wormhole.entry.opacity = (WORMHOLE_LIFETIME - (performance.now() - wormholeSpawnTime)) / WORMHOLE_FADE_DURATION;
-//       wormhole.exit.opacity = (WORMHOLE_LIFETIME - (performance.now() - wormholeSpawnTime)) / WORMHOLE_FADE_DURATION;
+//     } else if (this.game.timestamp - wormholeSpawnTime > WORMHOLE_LIFETIME - WORMHOLE_FADE_DURATION) {
+//       wormhole.entry.opacity = (WORMHOLE_LIFETIME - (this.game.timestamp - wormholeSpawnTime)) / WORMHOLE_FADE_DURATION;
+//       wormhole.exit.opacity = (WORMHOLE_LIFETIME - (this.game.timestamp - wormholeSpawnTime)) / WORMHOLE_FADE_DURATION;
 //     } else {
 //       wormhole.entry.opacity = 1;
 //       wormhole.exit.opacity = 1;
@@ -243,7 +243,7 @@ export default class Wormhole {
 // const PROJECTILE_TELEPORT_COOLDOWN = 500; // Cooldown period in milliseconds
 
 // function handleWormholeTeleportation() {
-//   const currentTime = performance.now();
+//   const currentTime = this.game.timestamp;
 //   const teleportSound = document.getElementById('teleportSound');
 
 //   // Check player entry

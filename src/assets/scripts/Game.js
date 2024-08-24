@@ -26,7 +26,7 @@ export default class Game {
   effects = [];
   targetFPS = 60;
   targetFrameDuration = 1000 / this.targetFPS;
-  timestamp = 0;
+  timestamp = 0; // TODO remove all uses in favor of deltaTime
   tickMs = null;
   numStars = 50;
   parallaxLayers = 3;

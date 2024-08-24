@@ -1,7 +1,6 @@
 export default class AbilityTimer {
   active = false;
   timer = 0;
-  startTime = 0;
 
   constructor(game, duration, image) {
     /** @type {import('./Game.js').default} */
@@ -13,7 +12,6 @@ export default class AbilityTimer {
   activate() {
     this.active = true;
     this.timer = 0;
-    this.startTime = this.game.timestamp;
   }
 
   update(deltaTime) {

@@ -31,8 +31,8 @@ export default class TemporalSerpent {
     this.hazardZones = [];
     this.directionChangeInterval = 1500;
     this.followPlayerInterval = 2500;
-    this.lastDirectionChangeTime = performance.now();
-    this.lastFollowPlayerTime = performance.now();
+    this.lastDirectionChangeTime = this.game.timestamp;
+    this.lastFollowPlayerTime = this.game.timestamp;
     this.images = {
       base: document.getElementById('temporal_serpent_image'),
       head: document.getElementById('temporal_serpent_head_image'),
@@ -244,7 +244,7 @@ export default class TemporalSerpent {
 
     //       if (segment.travelDistance <= 0) {
     //         segment.explode = true;
-    //         segment.explosionTime = performance.now();
+    //         segment.explosionTime = this.game.timestamp;
     //         delete segment.travelDirection; // Remove travelDirection to stop further movement
     //       }
     //     }
@@ -306,7 +306,7 @@ export default class TemporalSerpent {
     //   segment.startX = segment.x;
     //   segment.startY = segment.y;
     //   segment.explode = true;
-    //   segment.explosionTime = performance.now() + newTravelDuration; // Update explosion time based on new travel duration
+    //   segment.explosionTime = this.game.timestamp + newTravelDuration; // Update explosion time based on new travel duration
     //   // Add the detached segment to a global array for detached segments
     //   detachedSegments.push(segment);
     // });
@@ -335,7 +335,7 @@ export default class TemporalSerpent {
     //   const explosionDelay = stayDuration + 1500; // Time in milliseconds before the segment explodes
     //   // Mark the segment for explosion
     //   segment.explode = true;
-    //   segment.explosionTime = performance.now() + explosionDelay;
+    //   segment.explosionTime = this.game.timestamp + explosionDelay;
     //   // Add the detached segment to a global array for detached segments
     //   detachedSegments.push(segment);
     // });
@@ -557,15 +557,15 @@ class EnergyBarrier {
 }
 
 // function activateEnergyBarrier() {
-//   if (performance.now() >= energyBarrierCooldownEndTime) {
+//   if (this.game.timestamp >= energyBarrierCooldownEndTime) {
 //     energyBarrierActive = true;
-//     energyBarrierEndTime = performance.now() + energyBarrierDuration;
-//     energyBarrierCooldownEndTime = performance.now() + energyBarrierCooldown;
+//     energyBarrierEndTime = this.game.timestamp + energyBarrierDuration;
+//     energyBarrierCooldownEndTime = this.game.timestamp + energyBarrierCooldown;
 //   }
 // }
 
 // function updateEnergyBarrier() {
-//   if (energyBarrierActive && performance.now() >= energyBarrierEndTime) {
+//   if (energyBarrierActive && this.game.timestamp >= energyBarrierEndTime) {
 //     energyBarrierActive = false;
 //   }
 // }
