@@ -1,12 +1,13 @@
 export default class Star {
+  radius = Math.random() * 0.7 + 0.3;
+  directionX = -1;
+  directionY = 0;
+
   constructor(game) {
     /** @type {import('./Game.js').default} */
     this.game = game;
     this.x = Math.random() * this.game.width;
     this.y = Math.random() * this.game.height;
-    this.radius = Math.random() * 0.7 + 0.3;
-    this.directionX = -1;
-    this.directionY = 0;
     this.layer = Math.floor(Math.random() * this.game.parallaxLayers);
     this.speed = (this.layer + 1) * 90;
   }

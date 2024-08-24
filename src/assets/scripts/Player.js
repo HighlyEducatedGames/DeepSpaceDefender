@@ -1,45 +1,61 @@
-import { PlayerProjectile, ChargedProjectile } from './projectiles/PlayerProjectile.js';
+import { PlayerProjectile } from './projectiles/PlayerProjectile.js';
 import Bomb from './projectiles/Bomb.js';
-import HomingMissile from './projectiles/HomingMissile.js';
+import Missile from './projectiles/Missile.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
-import FlameParticle from './projectiles/Flame.js';
+import Flame from './projectiles/Flame.js';
 import Laser from './projectiles/Laser.js';
 import ParticleBomb from './projectiles/ParticleBomb.js';
 import AbilityTimer from './AbilityTimer.js';
-import inputHandler, { Actions } from './controls/InputHandler.js';
+import { Action } from './InputHandler.js';
 
 export default class Player {
+  width = 50;
+  height = 50;
+  offset = 4;
+  speed = 200;
+  maxSpeed = 300;
+  rotation = -Math.PI * 0.5;
+  rotationSpeed = 4;
+  velocity = { x: 0, y: 0 };
+  thrust = 0;
+  acceleration = 300;
+  deceleration = 0.98;
+  maxLives = 9999;
+  lives = 3;
+  maxHealth = 30;
+  health = this.maxHealth;
+  nextLifeScore = 1500;
+  isCharging = false;
+  isBoosting = false;
+  boostSpeed = 600;
+  boostEndTime = 0;
+  boostCooldownEndTime = 0;
+  bomb = null;
+  bombs = 0;
+  maxBombs = 20;
+  missiles = 0;
+  maxMissiles = 20;
+  images = {
+    idle: document.getElementById('player_image'),
+    thrust: document.getElementById('player_thrust_image'),
+    reverse: document.getElementById('player_reverse_image'),
+  };
+  sounds = {
+    acceleration: document.getElementById('acceleration_sound'),
+    reverse: document.getElementById('reverse_sound'),
+    fire: document.getElementById('fire_sound'),
+    charging: document.getElementById('charging_sound'),
+    torchedEnemy: document.getElementById('torch_sound'),
+    boost: document.getElementById('boost_sound'),
+    lostLife: document.getElementById('lifelost_sound'),
+  };
+
   constructor(game) {
     /** @type {import('./Game.js').default} */
     this.game = game;
     this.x = this.game.width * 0.5;
     this.y = this.game.height * 0.5 + this.game.topMargin * 0.5;
-    this.width = 50;
-    this.height = 50;
-    this.offset = 4;
-    this.speed = 200;
-    this.maxSpeed = 300;
-    this.rotation = -Math.PI * 0.5;
-    this.rotationSpeed = 4;
-    this.velocity = { x: 0, y: 0 };
-    this.thrust = 0;
-    this.acceleration = 300;
-    this.deceleration = 0.98;
-    this.maxLives = 9999;
-    this.lives = 3;
-    this.maxHealth = 30;
-    this.health = this.maxHealth;
-    this.nextLifeScore = 1500;
-    this.isCharging = false;
-    this.isBoosting = false;
-    this.boostSpeed = 600;
-    this.boostEndTime = 0;
-    this.boostCooldownEndTime = 0;
-    this.bomb = null;
-    this.bombs = 0;
-    this.maxBombs = 20;
-    this.missiles = 0;
-    this.maxMissiles = 20;
+    this.flame = new Flame(this.game);
     this.laser = new Laser(this.game);
     this.particleBomb = new ParticleBomb(this.game);
     this.abilities = {
@@ -51,44 +67,17 @@ export default class Player {
       laser: new AbilityTimer(this.game, 10000, 'laser_powerup_image'),
       particleBomb: new AbilityTimer(this.game, 10000, 'particle_bomb_powerup_image'),
     };
-    this.images = {
-      idle: document.getElementById('player_image'),
-      thrust: document.getElementById('player_thrust_image'),
-      reverse: document.getElementById('player_reverse_image'),
-    };
-    this.sounds = {
-      acceleration: document.getElementById('acceleration_sound'),
-      reverse: document.getElementById('reverse_sound'),
-      fire: document.getElementById('fire_sound'),
-      charging: document.getElementById('charging_sound'),
-      flame: document.getElementById('flame_sound'),
-      torchedEnemy: document.getElementById('torch_sound'),
-      boost: document.getElementById('boost_sound'),
-      lostLife: document.getElementById('lifelost_sound'),
-    };
-
-    this.init();
-  }
-
-  init() {
-    inputHandler.onActionPress(Actions.FIRE, () => this.fireProjectile());
-    inputHandler.onActionPress(Actions.BOMB, () => this.useBomb());
-    inputHandler.onActionPress(Actions.MISSILE, () => this.useMissile());
-
-    inputHandler.onActionRelease(Actions.FIRE, () => this.fireChargedProjectile());
   }
 
   draw(ctx) {
-    const keys = this.game.controls.keys;
-
     // Draw player
     const xAdjustPos = Math.cos(this.rotation) * this.offset;
     const yAdjustPos = Math.sin(this.rotation) * this.offset;
 
     let image;
-    if (keys.up.isPressed) {
+    if (this.game.inputs.actions[Action.MOVE_FORWARD].isPressed) {
       image = this.images.thrust;
-    } else if (keys.down.isPressed) {
+    } else if (this.game.inputs.actions[Action.MOVE_BACKWARD].isPressed) {
       image = this.images.reverse;
     } else {
       image = this.images.idle;
@@ -101,7 +90,7 @@ export default class Player {
     ctx.restore();
 
     // Invincibility Shield
-    if (this.game.controls.codes.invincibility.enabled) {
+    if (this.game.inputs.codes.invincibility.enabled) {
       const gradient = ctx.createRadialGradient(this.x, this.y, this.width * 0.5, this.x, this.y, this.width);
       gradient.addColorStop(0, 'rgba(255, 69, 0, 0.5)');
       gradient.addColorStop(0.7, 'rgba(255, 140, 0, 0.2)');
@@ -126,8 +115,8 @@ export default class Player {
 
     // Shield Effect
     if (this.abilities.shield.active) {
-      const shieldPower = this.abilities.shield;
-      const remainingTime = shieldPower.duration - shieldPower.timer;
+      const shieldAbility = this.abilities.shield;
+      const remainingTime = shieldAbility.duration - shieldAbility.timer;
 
       let drawShield = true;
 
@@ -157,7 +146,7 @@ export default class Player {
     if (this.laser.active) this.laser.draw(ctx);
 
     // particle bomb
-    this.particleBomb.draw(ctx);
+    // this.particleBomb.draw(ctx);
 
     // DEBUG - Hitbox
     if (this.game.debug) {
@@ -169,7 +158,8 @@ export default class Player {
   }
 
   update(deltaTime) {
-    const keys = this.game.controls.keys; // Current keys state
+    const isPressed = this.game.inputs.isPressed.bind(this.game.inputs);
+    const justPressed = this.game.inputs.justPressed.bind(this.game.inputs);
 
     // Update player ability timers
     for (const key in this.abilities) {
@@ -177,14 +167,16 @@ export default class Player {
     }
 
     // Rotate player
-    if (keys.left.isPressed && !keys.right.isPressed) this.rotation -= (this.rotationSpeed * deltaTime) / 1000;
-    if (keys.right.isPressed && !keys.left.isPressed) this.rotation += (this.rotationSpeed * deltaTime) / 1000;
+    if (isPressed(Action.MOVE_LEFT) && !isPressed(Action.MOVE_RIGHT))
+      this.rotation -= (this.rotationSpeed * deltaTime) / 1000;
+    if (isPressed(Action.MOVE_RIGHT) && !isPressed(Action.MOVE_LEFT))
+      this.rotation += (this.rotationSpeed * deltaTime) / 1000;
 
     // Forward and reverse
-    if (keys.up.isPressed) {
+    if (isPressed(Action.MOVE_FORWARD)) {
       this.thrust = this.acceleration;
       if (this.sounds.acceleration.paused) this.sounds.acceleration.play();
-    } else if (keys.down.isPressed) {
+    } else if (isPressed(Action.MOVE_BACKWARD)) {
       this.thrust = -this.acceleration;
       if (this.sounds.reverse.paused) this.sounds.reverse.play();
     } else {
@@ -192,13 +184,13 @@ export default class Player {
     }
 
     // Stop acceleration sound if no longer pressing ArrowUp
-    if (!keys.up.isPressed && !this.sounds.acceleration.paused) {
+    if (!isPressed(Action.MOVE_FORWARD) && !this.sounds.acceleration.paused) {
       this.sounds.acceleration.pause();
       this.sounds.acceleration.currentTime = 0;
     }
 
     // Stop reverse sound is no longer pressing ArrowDown or if ArrowUp IS pressed
-    if ((!keys.down.isPressed || keys.up.isPressed) && !this.sounds.reverse.paused) {
+    if ((!isPressed(Action.MOVE_BACKWARD) || isPressed(Action.MOVE_FORWARD)) && !this.sounds.reverse.paused) {
       this.sounds.reverse.pause();
       this.sounds.reverse.currentTime = 0;
     }
@@ -224,7 +216,7 @@ export default class Player {
     }
 
     // Deceleration
-    if (!keys.up.isPressed && !keys.down.isPressed) {
+    if (!isPressed(Action.MOVE_FORWARD) && !isPressed(Action.MOVE_BACKWARD)) {
       this.velocity.x *= this.deceleration;
       this.velocity.y *= this.deceleration;
     }
@@ -267,86 +259,63 @@ export default class Player {
       if (this.bomb.markedForDeletion) this.bomb = null;
     }
 
+    // Flame
+    this.flame.update(deltaTime);
+
     // Laser
-    if (this.laser.active) this.laser.update(deltaTime);
+    this.laser.update(deltaTime);
 
-    // Particle Bomb
-    this.particleBomb.update(deltaTime);
+    // // Charging projectile mechanic
+    // if (this.game.controls.keys.fire.isPressed && !this.abilities.flame.active && !this.abilities.laser.active) {
+    //   if (!this.isCharging) {
+    //     this.isCharging = true;
+    //   }
+    // } else {
+    //   if (this.isCharging) {
+    //     this.isCharging = false;
+    //     this.sounds.charging.pause();
+    //     this.sounds.charging.currentTime = 0;
+    //     if (keys.fire.pressedDuration > 1000) this.fireProjectile(true);
+    //   }
+    // }
+    // // Play charging sound after 500ms charge
+    // if (this.isCharging && keys.fire.pressedDuration > 200 && this.sounds.charging.paused) {
+    //   this.sounds.charging.play();
+    // }
 
-    // Charging projectile mechanic
-    if (this.game.controls.keys.fire.isPressed && !this.abilities.flame.active && !this.abilities.laser.active) {
-      if (!this.isCharging) {
-        this.isCharging = true;
+    // // Player inputs
+    if (!this.game.isGameOver) {
+      // Actions which only trigger on initial input
+      if (justPressed(Action.FIRE)) this.handleActionFire();
+      if (justPressed(Action.BOOST)) this.handleActionBoost();
+      if (justPressed(Action.BOMB)) this.handleActionBomb();
+      if (justPressed(Action.MISSILE)) this.handleActionMissile();
+
+      // Actions which trigger on a held input
+      this.flame.active = false;
+      this.laser.active = false;
+      if (isPressed(Action.FIRE)) {
+        if (this.abilities.flame.active) this.flame.active = true;
+        if (this.abilities.laser.active) this.laser.active = true;
       }
-    } else {
-      if (this.isCharging) {
-        this.isCharging = false;
-        this.sounds.charging.pause();
-        this.sounds.charging.currentTime = 0;
-        if (keys.fire.pressedDuration > 1000) this.fireProjectile(true);
-      }
     }
-    // Play charging sound after 500ms charge
-    if (this.isCharging && keys.fire.pressedDuration > 200 && this.sounds.charging.paused) {
-      this.sounds.charging.play();
-    }
-
-    // Player inputs
-    if (!this.game.menu.isOpen && !this.game.isGameOver) {
-      if (keys.boost.justPressed()) this.useBoost();
-      if (keys.missile.justPressed()) this.useMissile();
-
-      if (keys.fire.isPressed) {
-        if (this.abilities.laser.active) this.fireLaser();
-        else if (this.abilities.flame.active) this.fireFlame();
-      } else {
-        this.laser.active = false;
-      }
-    }
-
-    // Turn off flame sound if still playing and no longer firing
-    if ((!this.abilities.flame.active || !keys.fire.isPressed) && !this.sounds.flame.paused) {
-      this.sounds.flame.pause();
-      this.sounds.flame.currentTime = 0;
-    }
-
-    // Turn off laser sound if still playing and no longer firing
-    if ((!this.abilities.laser.active || !keys.fire.isPressed) && !this.laser.sounds.fire.paused) {
-      this.laser.sounds.fire.pause();
-      this.laser.sounds.fire.currentTime = 0;
-    }
-
-    this.checkCollisions();
   }
 
-  checkCollisions() {}
+  checkCollisions() {
+    if (this.bomb) this.bomb.checkCollisions();
+  }
 
-  fireProjectile(charged = false) {
+  handleActionFire() {
     if (this.abilities.particleBomb.active) {
-      this.fireParticleBomb();
+      this.particleBomb.fire();
       return;
     }
 
+    // Don't do long hold attacks here
     if (this.abilities.flame.active) return;
     if (this.abilities.laser.active) return;
 
-    const powers = this.abilities;
-    const projectilesToFire = powers.projectile.active ? 3 : 1;
-
-    for (let i = 0; i < projectilesToFire; i++) {
-      const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
-      const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
-      this.game.projectiles.push(projectile);
-    }
-    this.game.cloneSound(this.sounds.fire);
-
-    if (powers.reverse.active) {
-      for (let i = 0; i < 3; i++) {
-        const angle = (i - 1) * (Math.PI / 18) + Math.PI;
-        const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
-        this.game.projectiles.push(projectile);
-      }
-    }
+    this.fireProjectile();
 
     // if (empDisableFire) {
     //   const nofireSoundClone = nofireSound.cloneNode();
@@ -356,35 +325,27 @@ export default class Player {
     // }
   }
 
+  fireProjectile() {
+    const powers = this.abilities;
+    const projectilesToFire = powers.projectile.active ? 3 : 1;
+
+    for (let i = 0; i < projectilesToFire; i++) {
+      const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
+      this.game.projectiles.push(new PlayerProjectile(this.game, angle));
+    }
+    this.game.cloneSound(this.sounds.fire);
+
+    if (powers.reverse.active) {
+      for (let i = 0; i < 3; i++) {
+        const angle = (i - 1) * (Math.PI / 18) + Math.PI;
+        this.game.projectiles.push(new PlayerProjectile(this.game, angle));
+      }
+    }
+  }
+
   fireChargedProjectile() {}
 
-  fireFlame() {
-    if (this.sounds.flame.paused) {
-      this.sounds.flame.loop = true;
-      this.sounds.flame.play();
-    }
-    this.game.particles.push(new FlameParticle(this.game));
-  }
-
-  fireLaser() {
-    if (this.laser.sounds.fire.paused) {
-      this.laser.sounds.fire.loop = true;
-      this.laser.sounds.fire.play();
-    }
-    this.laser.active = true;
-  }
-
-  fireParticleBomb() {
-    this.particleBomb.activate();
-  }
-
-  useBomb() {
-    if (this.bomb || this.bombs <= 0) return;
-    this.bombs--;
-    this.bomb = new Bomb(this.game);
-  }
-
-  useBoost() {
+  handleActionBoost() {
     if (!this.isBoostReady()) return;
     this.isBoosting = true;
     this.boostEndTime = this.game.timestamp + 500;
@@ -393,14 +354,13 @@ export default class Player {
     this.sounds.boost.play();
   }
 
-  isBoostReady() {
-    return (
-      !this.isBoosting &&
-      (this.game.controls.codes.unlimitedBoost.enabled || this.game.timestamp >= this.boostCooldownEndTime)
-    );
+  handleActionBomb() {
+    if (this.bomb || this.bombs <= 0) return;
+    this.bombs--;
+    this.bomb = new Bomb(this.game);
   }
 
-  useMissile() {
+  handleActionMissile() {
     if (this.missiles <= 0) return;
     const enemies = this.game.enemies.enemies.slice();
     this.missiles--;
@@ -410,7 +370,7 @@ export default class Player {
         const randomIndex = Math.floor(Math.random() * enemies.length);
         const target = enemies[randomIndex];
         if (target) {
-          const missile = new HomingMissile(this.game, target);
+          const missile = new Missile(this.game, target);
           // Only play the missile sound on the first spawned missile
           if (i === 0) this.game.cloneSound(missile.sound);
           this.game.projectiles.push(missile);
@@ -418,13 +378,30 @@ export default class Player {
         }
       }
     } else {
-      this.game.projectiles.push(new HomingMissile(this.game, this.game.boss));
+      this.game.projectiles.push(new Missile(this.game, this.game.boss));
     }
+
+    //   // TODO: make sure its the head trageted with the serpent head
+    //   // projectileCollisionRadius: 125, // 250 diameter / 2 is set in cyberdragon creation
+    //   // if (this.target) {
+    //   //   if (this.target instanceof CyberDragon) this.collisionRadius = cyberDragon.projectileCollisionRadius;
+    //   //   else if (this.target instanceof BiomechLeviathan)
+    //   //     this.collisionRadius = biomechLeviathan.projectileCollisionRadius;
+    //   //   else if (this.target instanceof TemporalSerpent) this.collisionRadius = temporalSerpent.playerCollisionRadius;
+    //   //   else this.collisionRadius = Math.max(this.target.width, this.target.height) / 2;
+    //   // }
+  }
+
+  isBoostReady() {
+    return (
+      !this.isBoosting &&
+      (this.game.inputs.codes.unlimitedBoost.enabled || this.game.timestamp >= this.boostCooldownEndTime)
+    );
   }
 
   takeDamage(amount) {
-    this.game.controls.playHaptic(100, 0.25);
-    if (this.game.controls.codes.invincibility.enabled) return;
+    this.game.inputs.playHaptic(100, 0.25);
+    if (this.game.inputs.codes.invincibility.enabled) return;
     if (this.isBoosting) return;
     if (this.abilities.shield.active) return;
 

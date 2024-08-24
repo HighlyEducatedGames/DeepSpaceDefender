@@ -1,4 +1,4 @@
-export class Wormholes {
+export class WormholeController {
   constructor(game) {
     /** @type {import('../Game.js').default} */
     this.game = game;

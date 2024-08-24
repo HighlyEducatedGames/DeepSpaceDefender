@@ -1,30 +1,30 @@
-import Explosion from '../effects/Explosion.js';
 import ShockWave from '../effects/ShockWave.js';
 
 export default class Laser {
+  active = false;
+  startX = 0;
+  startY = 0;
+  endX = 0;
+  endY = 0;
+  width = 3;
+  length = 300;
+  particlesPerTick = 50;
+  sounds = {
+    hit: document.getElementById('laser_hit_sound'),
+    fire: document.getElementById('laser_fire_sound'),
+    charge: document.getElementById('laser_charge_sound'),
+  };
+
   constructor(game) {
     /** @type {import('../Game.js').default} */
     this.game = game;
-    this.startX = 0;
-    this.startY = 0;
-    this.endX = 0;
-    this.endY = 0;
-    this.width = 5;
-    this.length = 300;
-    this.active = false;
-
-    this.sounds = {
-      hit: document.getElementById('laser_hit_sound'),
-      fire: document.getElementById('laser_fire_sound'),
-      charge: document.getElementById('laser_charge_sound'),
-    };
   }
 
   draw(ctx) {
-    if (!this.active) return;
-
     // DEBUG - Laser region
     if (this.game.debug) {
+      // Update position of the laser so that the laser is drawn correctly on initial fire
+      this.updatePosition();
       ctx.save();
       ctx.strokeStyle = `white`;
       ctx.lineWidth = this.width;
@@ -42,9 +42,19 @@ export default class Laser {
   }
 
   update() {
-    this.updatePosition();
-    if (!this.active) return;
-    this.generateParticles();
+    if (this.active) {
+      if (this.sounds.fire.paused) {
+        this.sounds.fire.loop = true;
+        this.sounds.fire.play();
+      }
+      this.updatePosition();
+      this.createParticles();
+    } else {
+      if (!this.sounds.fire.paused) {
+        this.sounds.fire.pause();
+        this.sounds.fire.currentTime = 0;
+      }
+    }
   }
 
   updatePosition() {
@@ -55,18 +65,28 @@ export default class Laser {
     this.endY = player.y + Math.sin(player.rotation) * (player.height * 0.5 + this.length);
   }
 
-  generateParticles() {
-    const numParticles = 50;
-    for (let i = 0; i < numParticles; i++) {
-      const t = i / (numParticles - 1);
+  createParticles() {
+    for (let i = 0; i < this.particlesPerTick; i++) {
+      const t = i / (this.particlesPerTick - 1);
       const x = this.startX + t * (this.endX - this.startX);
       const y = this.startY + t * (this.endY - this.startY);
-      this.game.particles.push(new PlayerLaserParticle(this.game, this, x, y));
+      this.game.particles.push(new LaserParticle(this.game, this, x, y));
     }
   }
 }
 
-class PlayerLaserParticle {
+class LaserParticle {
+  speed = 5;
+  radius = 1;
+  maxLife = 30;
+  life = this.maxLife;
+  vx = Math.random() * 2 - 1;
+  vy = Math.random() * 2 - 1;
+  distance = 0;
+  enemyDamage = 0.005;
+  bossDamage = 0.09;
+  markedForDeletion = false;
+
   constructor(game, laser, x, y) {
     this.game = game;
     this.laser = laser;
@@ -74,16 +94,6 @@ class PlayerLaserParticle {
     this.startY = y;
     this.x = x;
     this.y = y;
-    this.speed = 5;
-    this.radius = 1;
-    this.maxLife = 30;
-    this.life = this.maxLife;
-    this.vx = Math.random() * 2 - 1;
-    this.vy = Math.random() * 2 - 1;
-    this.distance = 0;
-    this.enemyDamage = 0.005;
-    this.bossDamage = 0.09;
-    this.markedForDeletion = false;
   }
 
   draw(ctx) {
@@ -106,12 +116,10 @@ class PlayerLaserParticle {
     if (this.x > this.game.width) this.x = 0;
     if (this.y < 0) this.y = this.game.height;
     if (this.y > this.game.height) this.y = 0;
-
-    this.checkEnemyCollisions();
-    this.checkBossCollisions();
   }
 
-  checkEnemyCollisions() {
+  checkCollisions() {
+    // Enemies
     this.game.enemies.enemies.forEach((enemy) => {
       if (this.game.checkCollision(this, enemy)) {
         enemy.takeDamage(this.enemyDamage);
@@ -122,13 +130,11 @@ class PlayerLaserParticle {
         }
       }
     });
-  }
 
-  checkBossCollisions() {
-    const boss = this.game.boss;
-    if (boss) {
-      if (this.game.checkCollision(this, boss)) {
-        boss.takeDamage(this.bossDamage);
+    // Boss
+    if (this.game.boss) {
+      if (this.game.checkCollision(this, this.game.boss)) {
+        this.game.boss.takeDamage(this.bossDamage);
         this.markedForDeletion = true;
         this.laser.sounds.hit.play();
       }

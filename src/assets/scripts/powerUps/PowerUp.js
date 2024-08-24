@@ -1,18 +1,19 @@
 class PowerUp {
+  x = null;
+  y = null;
+  width = 0;
+  height = 0;
+  speed = 0;
+  dx = 0;
+  dy = 0;
+  margin = 50;
+  image = null;
+  sound = document.getElementById('powerup_sound');
+  markedForDeletion = false;
+
   constructor(game) {
     /** @type {import('../Game.js').default} */
     this.game = game;
-    this.x = null;
-    this.y = null;
-    this.width = null;
-    this.height = null;
-    this.speed = null;
-    this.dx = null;
-    this.dy = null;
-    this.margin = 50;
-    this.zigZagSpeed = 100;
-    this.sound = document.getElementById('powerup_sound');
-    this.markedForDeletion = false;
   }
 
   draw(ctx) {
@@ -41,6 +42,10 @@ class PowerUp {
     if (this.game.outOfBounds(this, this.width)) this.markedForDeletion = true;
   }
 
+  checkCollisions() {
+    throw new Error('You forgot to override a checkCollisions method in a PowerUp sub class.');
+  }
+
   getOffScreenSpawnPosition() {
     const side = Math.random() < 0.5 ? 'left' : 'right';
     this.x = side === 'left' ? -this.width * 0.5 : this.game.width + this.width * 0.5;
@@ -51,17 +56,17 @@ class PowerUp {
 }
 
 class BombPowerUp extends PowerUp {
+  width = 30;
+  height = 30;
+  speed = 75;
+  image = document.getElementById('bomb_powerup_image');
+
   constructor(game) {
     super(game);
-    this.width = 30;
-    this.height = 30;
-    this.speed = 75;
-    this.image = document.getElementById('bomb_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
-  update(deltaTime) {
-    super.update(deltaTime);
+  checkCollisions() {
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
       this.game.player.addBomb(1);
@@ -72,16 +77,17 @@ class BombPowerUp extends PowerUp {
 }
 
 class HomingMissilePowerUp extends PowerUp {
+  width = 30;
+  height = 30;
+  speed = 75;
+  image = document.getElementById('missile_powerup_image');
+
   constructor(game) {
     super(game);
-    this.width = 30;
-    this.height = 30;
-    this.speed = 75;
-    this.image = document.getElementById('missile_powerup_image');
     super.getOffScreenSpawnPosition();
   }
-  update(deltaTime) {
-    super.update(deltaTime);
+
+  checkCollisions() {
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
       this.game.player.addMissile(1);
@@ -92,17 +98,17 @@ class HomingMissilePowerUp extends PowerUp {
 }
 
 class ProjectilePowerUp extends PowerUp {
+  width = 20;
+  height = 20;
+  speed = 75;
+  image = document.getElementById('powerup_image');
+
   constructor(game) {
     super(game);
-    this.width = 20;
-    this.height = 20;
-    this.speed = 75;
-    this.image = document.getElementById('powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
-  update(deltaTime) {
-    super.update(deltaTime);
+  checkCollisions() {
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
       this.game.player.abilities.projectile.activate();
@@ -113,22 +119,21 @@ class ProjectilePowerUp extends PowerUp {
 }
 
 class BoostPowerUp extends PowerUp {
+  width = 30;
+  height = 30;
+  speed = 100;
+  image = document.getElementById('boost_powerup_image');
+
   constructor(game) {
     super(game);
-    this.width = 30;
-    this.height = 30;
-    this.speed = 100;
-    this.duration = 5000;
-    this.image = document.getElementById('boost_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
-  update(deltaTime) {
-    super.update(deltaTime);
+  checkCollisions() {
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
       this.game.player.abilities.boost.activate();
-      // Reset cooldown when you get the powerup so you can use boost right away
+      // Reset cooldown when you get the powerup, so you can use boost right away
       this.game.player.boostCooldownEndTime = this.game.timestamp;
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
@@ -137,17 +142,17 @@ class BoostPowerUp extends PowerUp {
 }
 
 class ShieldPowerUp extends PowerUp {
+  width = 30;
+  height = 30;
+  speed = 50;
+  image = document.getElementById('shield_powerup_image');
+
   constructor(game) {
     super(game);
-    this.width = 30;
-    this.height = 30;
-    this.speed = 50;
-    this.image = document.getElementById('shield_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
-  update(deltaTime) {
-    super.update(deltaTime);
+  checkCollisions() {
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
       this.game.player.abilities.shield.activate();
@@ -158,17 +163,17 @@ class ShieldPowerUp extends PowerUp {
 }
 
 class ReversePowerUp extends PowerUp {
+  width = 30;
+  height = 30;
+  speed = 150;
+  image = document.getElementById('reverse_powerup_image');
+
   constructor(game) {
     super(game);
-    this.width = 30;
-    this.height = 30;
-    this.speed = 150;
-    this.image = document.getElementById('reverse_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
-  update(deltaTime) {
-    super.update(deltaTime);
+  checkCollisions() {
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
       this.game.player.abilities.reverse.activate();
@@ -179,17 +184,17 @@ class ReversePowerUp extends PowerUp {
 }
 
 class FlameThrowerPowerUp extends PowerUp {
+  width = 30;
+  height = 30;
+  speed = 100;
+  image = document.getElementById('flame_powerup_image');
+
   constructor(game) {
     super(game);
-    this.width = 30;
-    this.height = 30;
-    this.speed = 100;
-    this.image = document.getElementById('flame_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
-  update(deltaTime) {
-    super.update(deltaTime);
+  checkCollisions() {
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
       this.game.player.abilities.flame.activate();
@@ -200,17 +205,17 @@ class FlameThrowerPowerUp extends PowerUp {
 }
 
 class LaserPowerUp extends PowerUp {
+  width = 30;
+  height = 30;
+  speed = 100;
+  image = document.getElementById('laser_powerup_image');
+
   constructor(game) {
     super(game);
-    this.width = 30;
-    this.height = 30;
-    this.speed = 100;
-    this.image = document.getElementById('laser_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
-  update(deltaTime) {
-    super.update(deltaTime);
+  checkCollisions() {
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
       this.game.player.abilities.laser.activate();
@@ -221,17 +226,17 @@ class LaserPowerUp extends PowerUp {
 }
 
 class ParticleBombPowerUp extends PowerUp {
+  width = 30;
+  height = 30;
+  speed = 100;
+  image = document.getElementById('particle_bomb_powerup_image');
+
   constructor(game) {
     super(game);
-    this.width = 30;
-    this.height = 30;
-    this.speed = 100;
-    this.image = document.getElementById('particle_bomb_powerup_image');
     super.getOffScreenSpawnPosition();
   }
 
-  update(deltaTime) {
-    super.update(deltaTime);
+  checkCollisions() {
     // Player Collision
     if (this.game.checkCollision(this, this.game.player)) {
       this.game.player.abilities.particleBomb.activate();

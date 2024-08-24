@@ -1,9 +1,8 @@
 /* global menuBack */
-import Controls from './controls/Controls.js';
 import GUI from './GUI.js';
 import Menu from './Menu.js';
 import MusicController from './MusicController.js';
-import PowerUpManager from './powerUps/PowerUpController.js';
+import PowerUpController from './powerUps/PowerUpController.js';
 import EnemyController from './enemies/EnemyController.js';
 import Player from './Player.js';
 import Coin from './Coin.js';
@@ -13,78 +12,69 @@ import Boss from './bosses/Boss.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import TemporalSerpent from './bosses/TemporalSerpent.js';
 import CyberDragon from './bosses/CyberDragon.js';
-import { Wormholes } from './hazards/Wormhole.js';
+import { WormholeController } from './hazards/WormholeController.js';
 import { ArrowIndicator } from './HUD.js';
-import inputHandler from './controls/InputHandler.js';
-import { Actions } from './controls/InputHandler.js';
+import inputHandler, { Action } from './InputHandler.js';
 
 export default class Game {
+  debug = false;
+  topMargin = 90;
+  inputs = inputHandler;
+  player = null;
+  projectiles = [];
+  particles = [];
+  effects = [];
+  targetFPS = 60;
+  targetFrameDuration = 1000 / this.targetFPS;
+  timestamp = 0;
+  tickMs = null;
+  numStars = 50;
+  parallaxLayers = 3;
+  stars = [];
+  boss = null;
+  level = 0;
+  score = 0;
+  isGameOver = false;
+  levelStartTime = 0;
+  levelDuration = 30000;
+  maxCoins = 5;
+  ally = null;
+  allySpawnTime = 0;
+  allyInterval = 60000;
+  arrowIndicators = [];
+  frame = 0;
+  paused = true;
+  images = {
+    title: document.getElementById('title_screen_image'),
+  };
+  sounds = {
+    collision: document.getElementById('collision_sound'),
+  };
+
+  // DEBUG FLAGS
+  doEnemies = true;
+  doPowerUps = true;
+  doAlly = true;
+  doBoss = false;
+  doWormholes = false;
+
   constructor(canvas) {
-    this.debug = false;
     this.canvas = canvas;
     this.width = this.canvas.width;
     this.height = this.canvas.height;
-    this.topMargin = 90;
-    this.controls = new Controls(this);
-    this.player = new Player(this);
     this.music = new MusicController(this);
     this.menu = new Menu(this);
     this.GUI = new GUI(this);
-    this.powerUps = new PowerUpManager(this);
+    this.powerUps = new PowerUpController(this);
     this.enemies = new EnemyController(this);
-    this.wormholes = new Wormholes(this);
-    this.projectiles = [];
-    this.particles = [];
-    this.effects = [];
-    this.targetFPS = 60;
-    this.targetFrameDuration = 1000 / this.targetFPS;
-    this.timestamp = 0;
-    this.tickMs = null;
-    this.numStars = 50;
-    this.parallaxLayers = 3;
-    this.stars = [];
-    this.boss = null;
-    this.level = 0;
-    this.score = 0;
-    this.isGameOver = false;
-    this.levelStartTime = 0;
-    this.levelDuration = 30000;
-    this.maxCoins = 5;
-    this.ally = null;
-    this.allySpawnTime = 0;
-    this.allyInterval = 60000;
-    this.arrowIndicators = [];
-    this.frame = 0;
-    this.paused = false;
-    this.images = {
-      title: document.getElementById('title_screen_image'),
-    };
-    this.sounds = {
-      collision: document.getElementById('collision_sound'),
-    };
+    this.wormholes = new WormholeController(this);
 
-    // DEBUG FLAGS
-    this.doAlly = true;
-    this.doEnemies = true;
-    this.doBoss = true;
-    this.doWormholes = false;
-    this.doPowerUps = true;
-
-    this.init();
-  }
-
-  init() {
-    inputHandler.onActionPress(Actions.DEBUG, () => this.toggleDebug());
-    inputHandler.onActionPress(Actions.PAUSE, () => this.menu.toggleMenu());
-    inputHandler.onActionPress(Actions.BACK, () => menuBack());
-    inputHandler.onActionPress(Actions.RESTART, () => this.resetGame(false));
     this.crateStars();
     this.resetGame();
   }
 
   // Set any properties here that needs to be reset on game over or game reset
-  resetGame(showMenu = true) {
-    if (showMenu) this.menu.showMenu(true);
+  resetGame() {
     this.isGameOver = false;
     this.score = 0;
     this.player = new Player(this);
@@ -134,24 +124,6 @@ export default class Game {
     this.countdown = this.boss ? Infinity : this.levelDuration / 1000;
   }
 
-  addArrowIndicator(target) {
-    this.arrowIndicators.push(new ArrowIndicator(this, target));
-  }
-
-  toggleDebug() {
-    this.debug = !this.debug;
-    this.controls.codes.invincibility.enabled = this.debug;
-    this.controls.codes.unlimitedAmmo.enabled = this.debug;
-    this.controls.codes.unlimitedBoost.enabled = this.debug;
-  }
-
-  crateStars() {
-    this.stars = [];
-    for (let i = 0; i < this.numStars; i++) {
-      this.stars.push(new Star(this));
-    }
-  }
-
   // Main game loop
   render(ctx, deltaTime) {
     this.update(deltaTime);
@@ -181,6 +153,10 @@ export default class Game {
 
   checkCollisions() {
     this.coins.forEach((coin) => coin.checkCollisions());
+    this.player.checkCollisions();
+    this.projectiles.forEach((projectile) => projectile.checkCollisions());
+    this.particles.forEach((particle) => particle.checkCollisions());
+    this.powerUps.powerUps.forEach((powerUp) => powerUp.checkCollisions());
   }
 
   cleanup() {
@@ -237,6 +213,39 @@ export default class Game {
     }
   }
 
+  handleGameControls() {
+    // Toggle debug mode
+    if (this.inputs.justPressed(Action.DEBUG)) {
+      this.debug = !this.debug;
+      this.inputs.codes.invincibility.enabled = this.debug;
+      this.inputs.codes.unlimitedAmmo.enabled = this.debug;
+      this.inputs.codes.unlimitedBoost.enabled = this.debug;
+    }
+
+    // Toggle game paused
+    if (this.inputs.justPressed(Action.PAUSE)) {
+      this.paused = !this.paused;
+      this.paused ? this.menu.showMenu() : this.menu.hideMenu();
+    }
+
+    // Back to main menu in pause menu
+    if (this.inputs.justPressed(Action.BACK)) {
+      if (this.paused) menuBack();
+    }
+
+    // Reset game
+    if (this.inputs.justPressed(Action.RESET)) {
+      this.resetGame();
+    }
+  }
+
+  crateStars() {
+    this.stars = [];
+    for (let i = 0; i < this.numStars; i++) {
+      this.stars.push(new Star(this));
+    }
+  }
+
   checkCollision(object1, object2) {
     const dx = object1.x - object2.x;
     const dy = object1.y - object2.y;
@@ -261,7 +270,7 @@ export default class Game {
     if (!this.boss) {
       // Countdown if not a boss level
       const elapsedTime = this.timestamp - this.levelStartTime;
-      this.countdown = Math.max(0, (this.levelDuration - elapsedTime) / 1000).toFixed(1);
+      this.countdown = Math.max(0, (this.levelDuration - elapsedTime) / 1000);
 
       // Advance to next level if time over
       if (elapsedTime >= this.levelDuration) {
@@ -319,5 +328,9 @@ export default class Game {
 
   getRandomY(margin = 0) {
     return Math.random() * (this.height - this.topMargin - margin * 2) + this.topMargin + margin;
+  }
+
+  addArrowIndicator(target) {
+    this.arrowIndicators.push(new ArrowIndicator(this, target));
   }
 }

@@ -2,9 +2,9 @@
 import Game from './assets/scripts/Game.js';
 
 // Show the loading page for a period of time before initializing the game
-// Either all the assets load in this time and we wait out the duration, or the loading time is longer and we switch once ready
+// Either all the assets load in this time, and we wait out the duration, or the loading time is longer and we switch once ready
 const initTime = performance.now();
-const wait = 1000;
+const wait = 0; // TODO: Set to 2000
 window.addEventListener('load', () => {
   const diff = performance.now() - initTime;
   setTimeout(() => {
@@ -24,22 +24,23 @@ function initGame() {
   function animate(timestamp = 0) {
     const deltaTime = timestamp - game.timestamp;
     game.timestamp = timestamp;
-    game.frame++;
 
     // Clear the entire canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Update player inputs
-    game.controls.update();
+    game.inputs.update(deltaTime);
+    game.handleGameControls();
 
-    if (!game.menu.isOpen) {
+    if (!game.paused) {
       // Playing the game
+      game.frame++;
       game.render(ctx, deltaTime);
     } else {
       // Draw title screen
       ctx.drawImage(game.images.title, 0, 0, canvas.width, canvas.height);
 
-      if (game.paused) {
+      if (game.frame > 0) {
         // Draw PAUSED text
         ctx.fillStyle = 'white';
         ctx.font = '40px "Press Start 2P", cursive';

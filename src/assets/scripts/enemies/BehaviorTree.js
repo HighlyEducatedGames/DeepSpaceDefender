@@ -9,7 +9,7 @@ class BehaviorTree {
 }
 
 class Node {
-  execute(enemy, deltaTime) {
+  execute() {
     throw new Error('execute method not implemented');
   }
 }

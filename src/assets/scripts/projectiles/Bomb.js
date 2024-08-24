@@ -1,19 +1,20 @@
 export default class Bomb {
+  radius = 300;
+  damage = 150;
+  timer = 0;
+  duration = 1000;
+  flashTimer = 0;
+  flashPeriod = 200;
+  flashDuration = 100;
+  hitBoss = false;
+  markedForDeletion = false;
+  sound = document.getElementById('bomb_sound');
+
   constructor(game) {
     /** @type {import('../Game.js').default} */
     this.game = game;
     this.x = this.game.player.x;
     this.y = this.game.player.y;
-    this.radius = 300;
-    this.damage = 150;
-    this.timer = 0;
-    this.duration = 1000;
-    this.flashTimer = 0;
-    this.flashPeriod = 200;
-    this.flashDuration = 100;
-    this.hitBoss = false;
-    this.markedForDeletion = false;
-    this.sound = document.getElementById('bomb_sound');
 
     // Play bomb sound as soon as it is spawned
     this.sound.play();
@@ -54,8 +55,6 @@ export default class Bomb {
     // Follow the player
     this.x = this.game.player.x;
     this.y = this.game.player.y;
-
-    this.checkCollisions();
   }
 
   checkCollisions() {

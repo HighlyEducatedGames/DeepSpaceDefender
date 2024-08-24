@@ -1,12 +1,13 @@
 export default class AbilityTimer {
+  active = false;
+  timer = 0;
+  startTime = 0;
+
   constructor(game, duration, image) {
     /** @type {import('./Game.js').default} */
     this.game = game;
     this.duration = duration;
     this.image = document.getElementById(image);
-    this.active = false;
-    this.timer = 0;
-    this.startTime = 0;
   }
 
   activate() {

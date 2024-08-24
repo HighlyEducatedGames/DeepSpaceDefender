@@ -1,33 +1,34 @@
 import { RegularEnemy, StealthEnemy, TankEnemy } from './BasicEnemies.js';
 
 export default class EnemyController {
+  enemies = [];
+  types = {
+    regular: {
+      max: 6,
+      numToSpawn: 0,
+      spawnTime: 0,
+      interval: 7000,
+      obj: RegularEnemy,
+    },
+    tank: {
+      max: 3,
+      numToSpawn: 0,
+      spawnTime: 0,
+      interval: 5000,
+      obj: TankEnemy,
+    },
+    stealth: {
+      max: 4,
+      numToSpawn: 0,
+      spawnTime: 0,
+      interval: 7000,
+      obj: StealthEnemy,
+    },
+  };
+
   constructor(game) {
     /** @type {import('../Game.js').default} */
     this.game = game;
-    this.enemies = [];
-    this.types = {
-      regular: {
-        max: 6,
-        numToSpawn: 0,
-        spawnTime: 0,
-        interval: 7000,
-        obj: RegularEnemy,
-      },
-      tank: {
-        max: 3,
-        numToSpawn: 0,
-        spawnTime: 0,
-        interval: 5000,
-        obj: TankEnemy,
-      },
-      stealth: {
-        max: 4,
-        numToSpawn: 0,
-        spawnTime: 0,
-        interval: 7000,
-        obj: StealthEnemy,
-      },
-    };
   }
 
   draw(ctx) {

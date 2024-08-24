@@ -1,19 +1,22 @@
+import { Action } from '../InputHandler.js';
+
 export class PlayerProjectile {
+  width = 5;
+  height = 5;
+  speed = 500;
+  damage = 10;
+  traveledDistance = 0;
+  maxDistance = 800;
+  markedForDeletion = false;
+
   constructor(game, angle) {
     /** @type {import('../Game.js').default} */
     this.game = game;
     this.angle = angle;
     this.x = this.game.player.x + Math.cos(this.game.player.rotation + angle) * (this.game.player.width * 0.5);
     this.y = this.game.player.y + Math.sin(this.game.player.rotation + angle) * (this.game.player.height * 0.5);
-    this.width = 5;
-    this.height = 5;
-    this.speed = 500;
     this.directionX = Math.cos(this.game.player.rotation + angle);
     this.directionY = Math.sin(this.game.player.rotation + angle);
-    this.damage = 10;
-    this.traveledDistance = 0;
-    this.maxDistance = 800;
-    this.markedForDeletion = false;
   }
 
   draw(ctx) {
@@ -38,8 +41,6 @@ export class PlayerProjectile {
     if (this.x > this.game.width) this.x = 0;
     if (this.y < 0) this.y = this.game.height;
     if (this.y > this.game.height) this.y = 0;
-
-    this.checkCollisions();
   }
 
   checkCollisions() {
@@ -65,16 +66,17 @@ export class PlayerProjectile {
 }
 
 export class ChargedProjectile extends PlayerProjectile {
+  partialDamage = 50;
+  fullDamage = 150;
+  splitDistance = 300;
+
   constructor(game, angle) {
     super(game, angle);
-    this.partialDamage = 50;
-    this.fullDamage = 150;
-    this.isFull = this.game.controls.keys.fire.pressedDuration > 2000;
+    this.isFull = this.game.inputs.actions[Action.FIRE].heldDuration > 2000;
     this.damage = this.isFull ? this.fullDamage : this.partialDamage;
     this.speed = this.isFull ? 300 : 400;
     this.width = this.isFull ? 30 : 20;
     this.height = this.isFull ? 30 : 20;
-    this.splitDistance = 300;
   }
 
   update(deltaTime) {
@@ -97,16 +99,17 @@ export class ChargedProjectile extends PlayerProjectile {
 }
 
 class SplitChargedProjectile extends PlayerProjectile {
+  damage = 25;
+  width = 5;
+  height = 5;
+  speed = 500;
+
   constructor(source, angle) {
     super(source.game, angle);
     this.source = source;
-    this.damage = 25;
     this.x = this.source.x;
     this.y = this.source.y;
     this.directionX = Math.cos(angle);
     this.directionY = Math.sin(angle);
-    this.width = 5;
-    this.height = 5;
-    this.speed = 500;
   }
 }

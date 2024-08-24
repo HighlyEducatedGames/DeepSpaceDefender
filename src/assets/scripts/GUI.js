@@ -1,4 +1,11 @@
+import { Action } from './InputHandler.js';
+
 export default class GUI {
+  images = {
+    bomb: document.getElementById('bomb_powerup_image'),
+    missile: document.getElementById('missile_powerup_image'),
+  };
+
   constructor(game) {
     /** @type {import('./Game.js').default} */
     this.game = game;
@@ -22,11 +29,6 @@ export default class GUI {
     this.shieldBarHeight = 20;
     this.shieldBarX = this.chargeBarX;
     this.shieldBarY = this.chargeBarY + this.chargeBarHeight + 5;
-
-    this.images = {
-      bomb: document.getElementById('bomb_powerup_image'),
-      missile: document.getElementById('missile_powerup_image'),
-    };
   }
 
   draw(ctx) {
@@ -43,11 +45,11 @@ export default class GUI {
   drawText(ctx) {
     ctx.fillStyle = 'white';
     ctx.font = '15px "Press Start 2P", cursive';
-    ctx.fillText('Score: ' + this.game.score, 10, 20);
+    ctx.fillText('Score: ' + this.game.score, 10, 25);
     ctx.fillText('Level: ' + this.game.level, 10, 50);
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.fillText('Time: ' + Math.floor(this.game.countdown), this.game.width * 0.5, 20);
+    ctx.fillText('Time: ' + Math.floor(this.game.countdown), this.game.width * 0.5, 25);
     ctx.restore();
 
     ctx.font = '10px "Press Start 2P", cursive';
@@ -101,7 +103,7 @@ export default class GUI {
 
   drawChargeBar(ctx) {
     const isCharging = this.game.player.isCharging;
-    const spacebarHeldTime = this.game.controls.keys.fire.pressedDuration;
+    const spacebarHeldTime = this.game.inputs.actions[Action.FIRE].heldDuration;
     const flamethrowerActive = false; // TODO get from flamethrower class??
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
@@ -266,10 +268,11 @@ export default class GUI {
   }
 
   getEntities() {
-    let entities = 1;
+    let entities = 1; // Include player
     entities += this.game.coins.length;
     if (this.game.ally) entities++;
     if (this.game.boss) entities++;
+    if (this.game.player.bomb) entities++;
     entities += this.game.enemies.enemies.length;
     entities += this.game.wormholes.wormholes.length * 2;
     entities += this.game.arrowIndicators.length;
