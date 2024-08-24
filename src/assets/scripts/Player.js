@@ -1,4 +1,4 @@
-import { PlayerProjectile } from './projectiles/PlayerProjectile.js';
+import { PlayerProjectile, ChargedProjectile } from './projectiles/PlayerProjectile.js';
 import Bomb from './projectiles/Bomb.js';
 import Missile from './projectiles/Missile.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
@@ -145,9 +145,6 @@ export default class Player {
     // Laser
     if (this.laser.active) this.laser.draw(ctx);
 
-    // particle bomb
-    // this.particleBomb.draw(ctx);
-
     // DEBUG - Hitbox
     if (this.game.debug) {
       ctx.strokeStyle = 'white';
@@ -160,6 +157,7 @@ export default class Player {
   update(deltaTime) {
     const isPressed = this.game.inputs.isPressed.bind(this.game.inputs);
     const justPressed = this.game.inputs.justPressed.bind(this.game.inputs);
+    const justReleased = this.game.inputs.justReleased.bind(this.game.inputs);
 
     // Update player ability timers
     for (const key in this.abilities) {
@@ -295,9 +293,13 @@ export default class Player {
       this.flame.active = false;
       this.laser.active = false;
       if (isPressed(Action.FIRE)) {
+        // TODO: only use the ability from the last gained powerup here...
         if (this.abilities.flame.active) this.flame.active = true;
-        if (this.abilities.laser.active) this.laser.active = true;
+        else if (this.abilities.laser.active) this.laser.active = true;
+        this.handleCharging();
       }
+
+      if (justReleased(Action.FIRE)) this.handleActionChargedFire();
     }
   }
 
@@ -311,39 +313,51 @@ export default class Player {
       return;
     }
 
-    // Don't do long hold attacks here
+    // Don't fire if certain powerUps are active
     if (this.abilities.flame.active) return;
     if (this.abilities.laser.active) return;
 
     this.fireProjectile();
-
-    // if (empDisableFire) {
-    //   const nofireSoundClone = nofireSound.cloneNode();
-    //   nofireSoundClone.volume = nofireSound.volume; // Ensure the cloned sound has the same volume
-    //   nofireSoundClone.play(); // Play the cloned sound
-    //   return; // Prevent firing if EMP effect is active
-    // }
   }
 
-  fireProjectile() {
+  handleCharging() {
+    // Don't charge if certain powerUps are active
+    if (this.abilities.flame.active) return;
+    if (this.abilities.laser.active) return;
+
+    if (!this.isCharging) {
+      this.isCharging = true;
+      this.sounds.charging.play();
+    }
+  }
+
+  handleActionChargedFire() {
+    if (!this.isCharging) return;
+    this.isCharging = false;
+    this.sounds.charging.pause();
+    this.sounds.charging.currentTime = 0;
+    if (this.game.inputs.actions[Action.FIRE].heldDuration >= 1000) this.fireProjectile(true);
+  }
+
+  fireProjectile(charged = false) {
     const powers = this.abilities;
     const projectilesToFire = powers.projectile.active ? 3 : 1;
 
     for (let i = 0; i < projectilesToFire; i++) {
       const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
-      this.game.projectiles.push(new PlayerProjectile(this.game, angle));
+      const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
+      this.game.projectiles.push(projectile);
     }
     this.game.cloneSound(this.sounds.fire);
 
     if (powers.reverse.active) {
       for (let i = 0; i < 3; i++) {
         const angle = (i - 1) * (Math.PI / 18) + Math.PI;
-        this.game.projectiles.push(new PlayerProjectile(this.game, angle));
+        const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
+        this.game.projectiles.push(projectile);
       }
     }
   }
-
-  fireChargedProjectile() {}
 
   handleActionBoost() {
     if (!this.isBoostReady()) return;

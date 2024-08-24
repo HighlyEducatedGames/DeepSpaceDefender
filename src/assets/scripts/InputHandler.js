@@ -27,6 +27,7 @@ class ActionKey {
   justPressed = false;
   heldDuration = 0;
   justReleased = false;
+  _justReleasedFlag = false;
 
   constructor(actionName) {
     this.name = actionName;
@@ -37,6 +38,7 @@ class ActionKey {
       this.isPressed = true;
       this.justPressed = true;
       this.justReleased = false;
+      this._justReleasedFlag = false;
       this.heldDuration = 0;
     }
   }
@@ -51,12 +53,20 @@ class ActionKey {
     if (this.isPressed) {
       this.isPressed = false;
       this.justReleased = true;
+      this._justReleasedFlag = true;
     }
   }
 
   update(deltaTime) {
-    if (this.justReleased) this.justReleased = false;
     if (this.justPressed && this.heldDuration > 0) this.justPressed = false;
+
+    // Ensure justReleased has been seen for at least one game tick by using a flag
+    if (this.justReleased && !this._justReleasedFlag) {
+      this.justReleased = false;
+    } else if (this.justReleased) {
+      this._justReleasedFlag = false;
+    }
+
     if (this.isPressed) this.hold(deltaTime);
   }
 }
