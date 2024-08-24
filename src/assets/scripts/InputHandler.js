@@ -68,6 +68,10 @@ class InputHandler {
   gamepadButtons = {};
   gamepadAxes = {};
   gamepadAxesThreshold = 0.5;
+  mapped = false;
+  keyMap = {};
+  buttonMap = {};
+  axisMap = {};
   codes = {
     invincibility: {
       code: ['i', 'd', 'd', 'q', 'd'],
@@ -89,8 +93,31 @@ class InputHandler {
   constructor() {
     for (const action in Action) {
       this.actions[Action[action]] = new ActionKey(action);
+      this.actions[Action[action]].keys.forEach((key) => {
+        this.keyMap[key] = this.actions[Action[action]];
+      });
     }
     this.addListeners();
+  }
+
+  // After all binds have been made, map the keys, buttons, and axis for easy lookups,
+  // so we don't have to loop over the this.actions object in the triggerAction() method
+  mapInputs() {
+    for (const action in Action) {
+      this.actions[Action[action]].keys.forEach((key) => {
+        this.keyMap[key] = this.actions[Action[action]];
+      });
+
+      this.actions[Action[action]].gamepadButtons.forEach((button) => {
+        this.buttonMap[button] = this.actions[Action[action]];
+      });
+
+      this.actions[Action[action]].gamepadAxes.forEach((axis) => {
+        this.axisMap[axis] = this.actions[Action[action]];
+      });
+    }
+
+    this.mapped = true;
   }
 
   addListeners() {
@@ -185,6 +212,7 @@ class InputHandler {
   }
 
   bindKeys(actionName, ...keys) {
+    if (this.mapped) throw new Error('Binding keys is not allowed after the mapInputs() method has run.');
     if (!this.actions[actionName]) return;
     keys.forEach((key) => {
       for (let action in this.actions) {
@@ -197,6 +225,7 @@ class InputHandler {
   }
 
   bindButtons(actionName, ...buttonIndexes) {
+    if (this.mapped) throw new Error('Binding buttons is not allowed after the mapInputs() method has run.');
     if (!this.actions[actionName]) return;
     buttonIndexes.forEach((buttonIndex) => {
       const gamepadKey = `gamepad_button_${buttonIndex}`;
@@ -210,6 +239,7 @@ class InputHandler {
   }
 
   bindAxis(actionName, axisIndex, axisDirection) {
+    if (this.mapped) throw new Error('Binding axis is not allowed after the mapInputs() method has run.');
     if (!this.actions[actionName]) return;
     const gamepadAxis = `gamepad_axis_${axisIndex}_${axisDirection}`;
     for (let action in this.actions) {
@@ -221,23 +251,19 @@ class InputHandler {
   }
 
   triggerAction(actionType, key) {
-    for (const actionName in this.actions) {
-      const action = this.actions[actionName];
-      if (!action) continue;
+    const boundKey = this.keyMap[key];
+    const boundButton = this.buttonMap[key];
+    const boundAxis = this.axisMap[key];
+    const action = boundKey || boundButton || boundAxis;
 
-      const isKeyBound = action.keys.includes(key);
-      const isButtonBound = action.gamepadButtons.includes(key);
-      const isAxisBound = action.gamepadAxes.includes(key);
-
-      if (isKeyBound || isButtonBound || isAxisBound) {
-        switch (actionType) {
-          case 'press':
-            action.press();
-            break;
-          case 'release':
-            action.release();
-            break;
-        }
+    if (action) {
+      switch (actionType) {
+        case 'press':
+          action.press();
+          break;
+        case 'release':
+          action.release();
+          break;
       }
     }
   }
@@ -345,6 +371,8 @@ inputHandler.bindKeys(Action.MOVE_RIGHT, 'ArrowRight', 'd', 'D');
 inputHandler.bindButtons(Action.MOVE_RIGHT, 15); // Dpad RIGHT
 inputHandler.bindAxis(Action.MOVE_RIGHT, 0, Direction.POSITIVE);
 
+// Map inputs only after binding all keys, buttons, and axis
+inputHandler.mapInputs();
 export default inputHandler;
 
 // X-Box Controller Buttons
