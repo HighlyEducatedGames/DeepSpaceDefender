@@ -26,6 +26,7 @@ export default class Player {
   health = this.maxHealth;
   nextLifeScore = 1500;
   isCharging = false;
+  chargingTriggerThreshold = 200;
   isBoosting = false;
   boostSpeed = 600;
   boostEndTime = 0;
@@ -325,7 +326,7 @@ export default class Player {
     if (this.abilities.flame.active) return;
     if (this.abilities.laser.active) return;
 
-    if (!this.isCharging) {
+    if (!this.isCharging && this.game.inputs.actions[Action.FIRE].heldDuration >= this.chargingTriggerThreshold) {
       this.isCharging = true;
       this.sounds.charging.play();
     }
