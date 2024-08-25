@@ -14,7 +14,7 @@ import TemporalSerpent from './bosses/TemporalSerpent.js';
 import CyberDragon from './bosses/CyberDragon.js';
 import { WormholeController } from './hazards/WormholeController.js';
 import { ArrowIndicator } from './HUD.js';
-import inputHandler, { Action } from './InputHandler.js';
+import InputHandler, { Action } from './InputHandler.js';
 
 export default class Game {
   debug = false;
@@ -62,6 +62,7 @@ export default class Game {
     this.canvas = canvas;
     this.width = this.canvas.width;
     this.height = this.canvas.height;
+    this.inputs = new InputHandler(this);
     this.music = new MusicController(this);
     this.menu = new Menu(this);
     this.GUI = new GUI(this);

@@ -1,3 +1,5 @@
+/* global updateMenuText */
+
 export const Action = Object.freeze({
   DEBUG: 0,
   PAUSE: 1,
@@ -71,7 +73,7 @@ class ActionKey {
   }
 }
 
-class InputHandler {
+export default class InputHandler {
   keys = {};
   actions = {};
   gamepadIndex = null;
@@ -99,14 +101,30 @@ class InputHandler {
       enabled: false,
     },
   };
+  usingGamepad = {
+    _value: false,
+    get value() {
+      return this._value;
+    },
+    set value(newValue) {
+      if (this._value !== newValue) {
+        this._value = newValue;
+        updateMenuText(newValue);
+      }
+    },
+  };
 
-  constructor() {
+  constructor(game) {
+    /** @type {import('./Game.js').default} */
+    this.game = game;
     for (const action in Action) {
       this.actions[Action[action]] = new ActionKey(action);
       this.actions[Action[action]].keys.forEach((key) => {
         this.keyMap[key] = this.actions[Action[action]];
       });
     }
+    updateMenuText(this.usingGamepad.value);
+    this.bindPlayerInputs();
     this.addListeners();
   }
 
@@ -138,11 +156,21 @@ class InputHandler {
   }
 
   handleKeyDown({ key }) {
+    this.usingGamepad.value = false;
     if (!this.keys[key]) {
       this.keys[key] = true;
       this.triggerAction('press', key);
-      this.handleCodes(key);
     }
+    this.handleCodes(key);
+    this.handleDebugMode(key);
+  }
+
+  handleDebugMode(key) {
+    // Boss selector 1-9
+    if (this.game.debug && /[1-9]/.test(key)) this.game.startLevel(parseInt(key) * 5);
+    // Change level with PGUP/PGDOWN;
+    if (this.game.debug && key === 'PageUp') this.game.nextLevel();
+    if (this.game.debug && key === 'PageDown') this.game.prevLevel();
   }
 
   handleKeyUp({ key }) {
@@ -153,12 +181,14 @@ class InputHandler {
   }
 
   handleGamepadConnected({ gamepad }) {
+    this.usingGamepad.value = true;
     this.gamepadIndex = gamepad.index;
     this.playHaptic(200);
   }
 
   handleGamepadDisconnected({ gamepad }) {
     if (this.gamepadIndex === gamepad.index) {
+      this.usingGamepad.value = false;
       this.gamepadIndex = null;
       this.gamepadButtons = {};
       this.gamepadAxes = {};
@@ -189,6 +219,7 @@ class InputHandler {
     if (button.pressed) {
       if (!this.gamepadButtons[key]) {
         this.gamepadButtons[key] = true;
+        this.usingGamepad.value = true;
         this.triggerAction('press', key);
       }
     } else if (this.gamepadButtons[key]) {
@@ -210,6 +241,7 @@ class InputHandler {
 
     if (direction !== previousDirection) {
       if (direction === Direction.NEGATIVE || direction === Direction.POSITIVE) {
+        this.usingGamepad.value = true;
         this.triggerAction('press', `gamepad_axis_${index}_${direction}`);
       } else {
         this.triggerAction('release', `gamepad_axis_${index}_${previousDirection}`);
@@ -340,50 +372,49 @@ class InputHandler {
       }
     }
   }
+
+  bindPlayerInputs() {
+    this.bindKeys(Action.BACK, 'Escape');
+
+    this.bindKeys(Action.DEBUG, 'Delete');
+    this.bindButtons(Action.DEBUG, 16); // X-Box Button
+
+    this.bindKeys(Action.PAUSE, 'Pause');
+    this.bindButtons(Action.PAUSE, 9); // Start
+
+    this.bindKeys(Action.RESET, 'r', 'R');
+    this.bindButtons(Action.RESET, 8); // Menu
+
+    this.bindKeys(Action.FIRE, ' ');
+    this.bindButtons(Action.FIRE, 0); // A
+
+    this.bindKeys(Action.BOOST, 'x', 'X');
+    this.bindButtons(Action.BOOST, 2); // X
+
+    this.bindKeys(Action.BOMB, 'b', 'B');
+    this.bindButtons(Action.BOMB, 1, 4); // B - Left Bumper
+
+    this.bindKeys(Action.MISSILE, 'm', 'M');
+    this.bindButtons(Action.MISSILE, 3, 5); // Y - Right Bumper
+
+    this.bindKeys(Action.MOVE_FORWARD, 'ArrowUp', 'w', 'W');
+    this.bindButtons(Action.MOVE_FORWARD, 7, 12); // Right Trigger - Dpad UP
+
+    this.bindKeys(Action.MOVE_BACKWARD, 'ArrowDown', 's', 'S');
+    this.bindButtons(Action.MOVE_BACKWARD, 6, 13); // Left Trigger - Dpad DOWN
+
+    this.bindKeys(Action.MOVE_LEFT, 'ArrowLeft', 'a', 'A');
+    this.bindButtons(Action.MOVE_LEFT, 14); // Dpad LEFT
+    this.bindAxis(Action.MOVE_LEFT, 0, Direction.NEGATIVE); // Left Joystick - Left
+
+    this.bindKeys(Action.MOVE_RIGHT, 'ArrowRight', 'd', 'D');
+    this.bindButtons(Action.MOVE_RIGHT, 15); // Dpad RIGHT
+    this.bindAxis(Action.MOVE_RIGHT, 0, Direction.POSITIVE); // Left Joystick - Right
+
+    // Map inputs only after binding all keys, buttons, and axis
+    this.mapInputs();
+  }
 }
-
-const inputHandler = new InputHandler();
-
-inputHandler.bindKeys(Action.BACK, 'Escape');
-
-inputHandler.bindKeys(Action.DEBUG, 'Delete');
-inputHandler.bindButtons(Action.DEBUG, 16); // X-Box Button
-
-inputHandler.bindKeys(Action.PAUSE, 'Pause');
-inputHandler.bindButtons(Action.PAUSE, 9); // Start
-
-inputHandler.bindKeys(Action.RESET, 'r', 'R');
-inputHandler.bindButtons(Action.RESET, 8); // Menu
-
-inputHandler.bindKeys(Action.FIRE, ' ');
-inputHandler.bindButtons(Action.FIRE, 0); // A
-
-inputHandler.bindKeys(Action.BOOST, 'x', 'X');
-inputHandler.bindButtons(Action.BOOST, 2); // X
-
-inputHandler.bindKeys(Action.BOMB, 'b', 'B');
-inputHandler.bindButtons(Action.BOMB, 1, 4); // B - Left Bumper
-
-inputHandler.bindKeys(Action.MISSILE, 'm', 'M');
-inputHandler.bindButtons(Action.MISSILE, 3, 5); // Y - Right Bumper
-
-inputHandler.bindKeys(Action.MOVE_FORWARD, 'ArrowUp', 'w', 'W');
-inputHandler.bindButtons(Action.MOVE_FORWARD, 7, 12); // Right Trigger - Dpad UP
-
-inputHandler.bindKeys(Action.MOVE_BACKWARD, 'ArrowDown', 's', 'S');
-inputHandler.bindButtons(Action.MOVE_BACKWARD, 6, 13); // Left Trigger - Dpad DOWN
-
-inputHandler.bindKeys(Action.MOVE_LEFT, 'ArrowLeft', 'a', 'A');
-inputHandler.bindButtons(Action.MOVE_LEFT, 14); // Dpad LEFT
-inputHandler.bindAxis(Action.MOVE_LEFT, 0, Direction.NEGATIVE); // Left Joystick - Left
-
-inputHandler.bindKeys(Action.MOVE_RIGHT, 'ArrowRight', 'd', 'D');
-inputHandler.bindButtons(Action.MOVE_RIGHT, 15); // Dpad RIGHT
-inputHandler.bindAxis(Action.MOVE_RIGHT, 0, Direction.POSITIVE); // Left Joystick - Right
-
-// Map inputs only after binding all keys, buttons, and axis
-inputHandler.mapInputs();
-export default inputHandler;
 
 // X-Box Controller Buttons
 
