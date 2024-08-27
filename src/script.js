@@ -1,10 +1,10 @@
 /* global loaded */
-import Game from './assets/scripts/Game.js';
+import Game from './Game.js';
 
 // Show the loading page for a period of time before initializing the game
 // Either all the assets load in this time, and we wait out the duration, or the loading time is longer and we switch once ready
 const initTime = performance.now();
-const wait = 0; // TODO: Set to 2000
+const wait = 2000;
 window.addEventListener('load', () => {
   const diff = performance.now() - initTime;
   setTimeout(() => {
