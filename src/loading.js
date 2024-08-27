@@ -82,6 +82,7 @@ function loaded() {
   PAGE_LOADING = false;
   document.getElementById('loadingCanvas').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
-  document.getElementById('menu-container').style.display = 'block';
+  document.getElementById('menu-container').style.display = 'flex';
   document.getElementById('menu').style.display = 'block';
+  document.getElementById('controller').style.display = 'block';
 }

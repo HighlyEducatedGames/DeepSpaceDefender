@@ -1,15 +1,19 @@
 export default class Menu {
+  menu = document.getElementById('menu-container');
+  musicVolumeSlider = document.getElementById('musicVolume');
+  fxVolumeSlider = document.getElementById('fxVolume');
+  testSound = document.getElementById('fire_sound');
+  isOpen = true;
+
   constructor(game) {
     /** @type {import('./Game.js').default} */
     this.game = game;
-    this.menu = document.getElementById('menu-container');
-    this.musicVolumeSlider = document.getElementById('musicVolume');
-    this.fxVolumeSlider = document.getElementById('fxVolume');
-    this.testSound = document.getElementById('fire_sound');
-    this.isOpen = true;
     this.musicVolumeSlider.value = this.game.music.musicVol;
     this.fxVolumeSlider.value = this.game.music.fxVol;
+    this.init();
+  }
 
+  init() {
     this.musicVolumeSlider.addEventListener('input', () => {
       this.game.music.setMusicVolume(this.musicVolumeSlider.value);
     });
@@ -37,9 +41,5 @@ export default class Menu {
     this.game.music.play();
     this.menu.style.display = 'none';
     this.isOpen = false;
-  }
-
-  toggleMenu() {
-    this.isOpen ? this.hideMenu() : this.showMenu();
   }
 }

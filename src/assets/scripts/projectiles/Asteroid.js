@@ -1,21 +1,22 @@
 export default class Asteroid {
+  sizes = [
+    { width: 75, height: 75 },
+    { width: 50, height: 50 },
+    { width: 30, height: 30 },
+  ];
+  y = -this.sizes[0].height;
+  size = this.sizes[Math.floor(Math.random() * this.sizes.length)];
+  width = this.size.width;
+  height = this.size.height;
+  damage = 10;
+  speed = 200;
+  markedForDeletion = false;
+  image = document.getElementById('asteroid_image');
+
   constructor(game) {
     /** @type {import('../Game.js').default} */
     this.game = game;
-    this.sizes = [
-      { width: 75, height: 75 },
-      { width: 50, height: 50 },
-      { width: 30, height: 30 },
-    ];
     this.x = Math.random() * this.game.width;
-    this.y = -this.sizes[0].height;
-    this.size = this.sizes[Math.floor(Math.random() * this.sizes.length)];
-    this.width = this.size.width;
-    this.height = this.size.height;
-    this.damage = 10;
-    this.speed = 200;
-    this.markedForDeletion = false;
-    this.image = document.getElementById('asteroid_image');
   }
 
   draw(ctx) {
@@ -47,8 +48,6 @@ export default class Asteroid {
 
     // Remove asteroids that go off-screen
     if (this.y + this.height * 0.5 > this.game.height + 100) this.markedForDeletion = true;
-
-    this.checkCollisions();
   }
 
   checkCollisions() {

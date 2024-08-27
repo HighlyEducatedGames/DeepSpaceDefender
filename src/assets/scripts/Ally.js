@@ -1,46 +1,47 @@
 import { getOffScreenRandomSide } from './utilities.js';
 
 export default class Ally {
+  x = null;
+  y = null;
+  width = 50;
+  height = 50;
+  enteringSide = null;
+  exitingSide = Math.floor(Math.random() * 4);
+  offset = 4;
+  speed = 150;
+  rotation = 0;
+  warning = true;
+  warningDuration = 3000;
+  entryDistance = 50;
+  pattern = this.selectedPattern();
+  orbitRadius = 100;
+  orbitFullRotationDuration = 5000;
+  orbitRotationDirection = Math.random() < 0.5 ? -1 : 1;
+  entering = true;
+  movedToPlayer = false;
+  arrivedAtTarget = false;
+  exiting = false;
+  exitTime = 0;
+  exitDuration = 15000;
+  nextAttackTime = 0;
+  attackInterval = 200;
+  targetX = null;
+  targetY = null;
+  followMargin = 15;
+  targetSpeedMultiplier = 1;
+  targetSnapDistance = 10;
+  markedForDeletion = false;
+  image = document.getElementById('ally_image');
+  sounds = {
+    warning: document.getElementById('ally_sound'),
+    overAndOut: document.getElementById('ally_over_sound'),
+    circularOrbit: document.getElementById('ally_circular_orbit_sound'),
+    followPlayer: document.getElementById('ally_follow_player_sound'),
+  };
+
   constructor(game) {
     /** @type {import('./Game.js').default} */
     this.game = game;
-    this.x = null;
-    this.y = null;
-    this.width = 50;
-    this.height = 50;
-    this.enteringSide = null;
-    this.exitingSide = Math.floor(Math.random() * 4);
-    this.offset = 4;
-    this.speed = 150;
-    this.rotation = 0;
-    this.warning = true;
-    this.warningDuration = 3000;
-    this.entryDistance = 50;
-    this.pattern = this.selectedPattern();
-    this.orbitRadius = 100;
-    this.orbitFullRotationDuration = 5000;
-    this.orbitRotationDirecton = Math.random() < 0.5 ? -1 : 1;
-    this.entering = true;
-    this.movedToPlayer = false;
-    this.arrivedAtTarget = false;
-    this.exiting = false;
-    this.exitTime = 0;
-    this.exitDuration = 15000;
-    this.nextAttackTime = 0;
-    this.attackInterval = 200;
-    this.targetX = null;
-    this.targetY = null;
-    this.followMargin = 15;
-    this.targetSpeedMultiplier = 1;
-    this.targetSnapDistance = 10;
-    this.markedForDeletion = false;
-    this.image = document.getElementById('ally_image');
-    this.sounds = {
-      warning: document.getElementById('ally_sound'),
-      overAndOut: document.getElementById('ally_over_sound'),
-      circularOrbit: document.getElementById('ally_circular_orbit_sound'),
-      followPlayer: document.getElementById('ally_follow_player_sound'),
-    };
 
     // Get spawning location and side
     const { x, y, side } = getOffScreenRandomSide(this);
@@ -161,7 +162,7 @@ export default class Ally {
       // Employ movement patten once ally has made it to the player
       switch (this.pattern) {
         case 'circularOrbit':
-          this.rotation += ((Math.PI * 2 * deltaTime) / this.orbitFullRotationDuration) * this.orbitRotationDirecton;
+          this.rotation += ((Math.PI * 2 * deltaTime) / this.orbitFullRotationDuration) * this.orbitRotationDirection;
           this.x = this.game.player.x + Math.cos(this.rotation) * this.orbitRadius;
           this.y = this.game.player.y + Math.sin(this.rotation) * this.orbitRadius;
           break;
@@ -231,6 +232,12 @@ export default class Ally {
 }
 
 class AllyProjectile {
+  speed = 250;
+  width = 5;
+  height = 5;
+  damage = 25;
+  markedForDeletion = false;
+
   constructor(ally) {
     this.ally = ally;
     this.game = this.ally.game;
@@ -238,13 +245,8 @@ class AllyProjectile {
     this.angle = this.ally.rotation;
     this.x = this.ally.x + Math.cos(this.angle) * this.offset;
     this.y = this.ally.y + Math.sin(this.angle) * this.offset;
-    this.speed = 250;
-    this.width = 5;
-    this.height = 5;
     this.directionX = Math.cos(this.angle);
     this.directionY = Math.sin(this.angle);
-    this.damage = 25;
-    this.markedForDeletion = false;
   }
 
   draw(ctx) {
@@ -261,8 +263,6 @@ class AllyProjectile {
 
     // Delete if out of bounds
     if (this.game.outOfBounds(this)) this.markedForDeletion = true;
-
-    this.checkCollisions();
   }
 
   checkCollisions() {

@@ -317,7 +317,7 @@ class InkCloud {
       this.cloudX = this.game.player.x;
       this.cloudY = this.game.player.y;
       this.cloudRadius = 150; // Radius of the cloud obscuring vision
-      this.cloudStartTime = performance.now();
+      this.cloudStartTime = this.game.timestamp;
       this.active = false;
       if (!this.game.player.shieldActive) {
         // Check if the shield is not active
