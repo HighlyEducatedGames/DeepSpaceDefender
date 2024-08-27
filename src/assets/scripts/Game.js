@@ -19,7 +19,6 @@ import InputHandler, { Action } from './InputHandler.js';
 export default class Game {
   debug = false;
   topMargin = 90;
-  inputs = inputHandler;
   player = null;
   projectiles = [];
   particles = [];
