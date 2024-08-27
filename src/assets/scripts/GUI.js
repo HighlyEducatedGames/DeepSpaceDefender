@@ -62,15 +62,15 @@ export default class GUI {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(this.boostBarX, this.boostBarY, this.boostBarWidth, this.boostBarHeight);
 
-    const currentTime = this.game.timestamp;
     const boostPowerUpActive = this.game.player.abilities.boost.active;
 
     let boostProgress;
-    if (this.game.player.isBoostReady()) {
+    if (this.game.player.isBoostReady() || this.game.inputs.codes.unlimitedBoost.enabled) {
       boostProgress = 1;
     } else {
       const cooldown = boostPowerUpActive ? 500 : 7000;
-      boostProgress = Math.max(0, (currentTime - this.game.player.boostCooldownEndTime + cooldown) / cooldown);
+      const elapsedCooldown = Math.max(0, cooldown - this.game.player.boostCooldownTimer);
+      boostProgress = elapsedCooldown / cooldown;
     }
 
     ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';

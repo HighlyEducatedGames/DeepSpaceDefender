@@ -103,7 +103,7 @@ class BoostPowerUp extends PowerUp {
   onPlayerCollision() {
     this.game.player.abilities.boost.activate();
     // Reset cooldown when you get the powerup, so you can use boost right away
-    this.game.player.boostCooldownEndTime = this.game.timestamp;
+    this.game.player.boostCooldownTimer = 0;
   }
 }
 

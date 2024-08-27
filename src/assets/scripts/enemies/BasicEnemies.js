@@ -7,6 +7,7 @@ class Enemy {
   width = null;
   height = null;
   speed = null;
+  attackTimer = 0;
   attackInterval = null;
   damage = null;
   score = null;
@@ -14,7 +15,6 @@ class Enemy {
   offScreenMargin = 100;
   vx = this.side === 'left' ? 1 : -1;
   canShoot = true;
-  lastAttackTime = 0;
   maxHealth = null;
   health = this.maxHealth;
   margin = 50;
@@ -82,11 +82,9 @@ class Enemy {
   }
 
   attackPlayer() {
-    const cooldown = this.attackInterval;
-
-    if (this.canShoot && this.game.timestamp - this.lastAttackTime >= cooldown) {
+    if (this.canShoot && this.attackTimer >= this.attackInterval) {
+      this.attackTimer = 0;
       this.fireProjectile();
-      this.lastAttackTime = this.game.timestamp;
       return true;
     }
     return false;
@@ -156,6 +154,9 @@ class Enemy {
     if (this.x < this.width * 0.5 && this.vx < 0) this.vx = 1;
     if (this.x > this.game.width - this.width * 0.5 && this.vx > 0) this.vx = -1;
 
+    // Acrue deltaTime for attacks
+    this.attackTimer += deltaTime;
+
     // Update the behavior tree
     this.behaviorTree.tick(this, deltaTime);
 
@@ -194,7 +195,6 @@ class Enemy {
     const angleToPlayer = Math.atan2(playerFutureY - this.y, playerFutureX - this.x);
 
     this.game.projectiles.push(new EnemyProjectile(this.game, this.x, this.y, angleToPlayer));
-    this.lastAttackTime = this.game.timestamp;
   }
 
   takeDamage(damage) {
@@ -246,10 +246,10 @@ export class StealthEnemy extends Enemy {
   image = document.getElementById('stealth_enemy_image');
   // Stealth only properties
   visible = false;
-  visibleStartTime = this.game.timestamp;
-  opacity = 0;
+  visibleTimer = 0;
   visibleDuration = 3000;
   invisibleDuration = 3000;
+  opacity = 0;
 
   constructor(game) {
     super(game);
@@ -280,27 +280,27 @@ export class StealthEnemy extends Enemy {
 
   update(deltaTime) {
     super.update(deltaTime);
-    const currentTime = this.game.timestamp;
-    const elapsedTime = currentTime - this.visibleStartTime;
+
+    this.visibleTimer += deltaTime;
 
     if (this.visible) {
-      if (elapsedTime < 1000) {
-        this.opacity = elapsedTime / 1000;
-      } else if (elapsedTime < this.visibleDuration) {
+      if (this.visibleTimer < 1000) {
+        this.opacity = this.visibleTimer / 1000;
+      } else if (this.visibleTimer < this.visibleDuration) {
         this.opacity = 1;
-      } else if (elapsedTime >= this.visibleDuration) {
+      } else if (this.visibleTimer >= this.visibleDuration) {
         this.visible = false;
-        this.visibleStartTime = currentTime;
+        this.visibleTimer = 0;
         this.opacity = 1;
       }
     } else {
-      if (elapsedTime < 1000) {
-        this.opacity = 1 - elapsedTime / 1000;
-      } else if (elapsedTime < this.invisibleDuration) {
+      if (this.visibleTimer < 1000) {
+        this.opacity = 1 - this.visibleTimer / 1000;
+      } else if (this.visibleTimer < this.invisibleDuration) {
         this.opacity = 0;
-      } else if (elapsedTime >= this.invisibleDuration) {
+      } else if (this.visibleTimer >= this.invisibleDuration) {
         this.visible = true;
-        this.visibleStartTime = currentTime;
+        this.visibleTimer = 0;
         this.opacity = 0;
       }
     }

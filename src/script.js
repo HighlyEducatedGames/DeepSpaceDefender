@@ -21,12 +21,13 @@ function initGame() {
 
   const game = new Game(canvas);
   let isFocused = true;
+  let lastTimestamp = 0;
 
   function animate(timestamp = 0) {
     if (!isFocused) return; // Stop the animation if the tab is not focused
     const start = performance.now();
-    const deltaTime = timestamp - game.timestamp;
-    game.timestamp = timestamp;
+    const deltaTime = timestamp - lastTimestamp;
+    lastTimestamp = timestamp;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     updateGame(game, ctx, deltaTime);
     requestAnimationFrame(animate);
@@ -39,7 +40,7 @@ function initGame() {
       game.music.pause();
       game.music.stopAllFx();
     } else {
-      game.timestamp = performance.now(); // Reset timestamp to prevent large deltaTime
+      lastTimestamp = performance.now(); // Reset timestamp to prevent large deltaTime
       isFocused = true;
       game.music.play();
       requestAnimationFrame(animate); // Restart the animation loop

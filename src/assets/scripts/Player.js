@@ -29,8 +29,9 @@ export default class Player {
   chargingTriggerThreshold = 200;
   isBoosting = false;
   boostSpeed = 600;
-  boostEndTime = 0;
-  boostCooldownEndTime = 0;
+  boostTimer = 0;
+  boostDuration = 500;
+  boostCooldownTimer = 0;
   bomb = null;
   bombs = 0;
   maxBombs = 20;
@@ -202,12 +203,13 @@ export default class Player {
     }
 
     // Boost handling
+    if (this.boostCooldownTimer > 0) this.boostCooldownTimer -= deltaTime;
     if (this.isBoosting) {
       this.velocity.x = Math.cos(this.rotation) * this.boostSpeed;
       this.velocity.y = Math.sin(this.rotation) * this.boostSpeed;
 
-      // Check if the boost duration has ended
-      if (this.game.timestamp >= this.boostEndTime) this.isBoosting = false;
+      this.boostTimer -= deltaTime;
+      if (this.boostTimer <= 0) this.isBoosting = false;
     } else {
       // Basic movement
       this.velocity.x += (Math.cos(this.rotation) * this.thrust * deltaTime) / 1000;
@@ -263,24 +265,6 @@ export default class Player {
 
     // Laser
     this.laser.update(deltaTime);
-
-    // // Charging projectile mechanic
-    // if (this.game.controls.keys.fire.isPressed && !this.abilities.flame.active && !this.abilities.laser.active) {
-    //   if (!this.isCharging) {
-    //     this.isCharging = true;
-    //   }
-    // } else {
-    //   if (this.isCharging) {
-    //     this.isCharging = false;
-    //     this.sounds.charging.pause();
-    //     this.sounds.charging.currentTime = 0;
-    //     if (keys.fire.pressedDuration > 1000) this.fireProjectile(true);
-    //   }
-    // }
-    // // Play charging sound after 500ms charge
-    // if (this.isCharging && keys.fire.pressedDuration > 200 && this.sounds.charging.paused) {
-    //   this.sounds.charging.play();
-    // }
 
     // // Player inputs
     if (!this.game.isGameOver) {
@@ -363,9 +347,9 @@ export default class Player {
   handleActionBoost() {
     if (!this.isBoostReady()) return;
     this.isBoosting = true;
-    this.boostEndTime = this.game.timestamp + 500;
+    this.boostTimer = this.boostDuration;
     // Reduced cooldown if boost power-up is active
-    this.boostCooldownEndTime = this.game.timestamp + (this.abilities.boost.active ? 500 : 7000);
+    this.boostCooldownTimer = this.abilities.boost.active ? 500 : 7000;
     this.sounds.boost.play();
   }
 
@@ -395,23 +379,10 @@ export default class Player {
     } else {
       this.game.projectiles.push(new Missile(this.game, this.game.boss));
     }
-
-    //   // TODO: make sure its the head trageted with the serpent head
-    //   // projectileCollisionRadius: 125, // 250 diameter / 2 is set in cyberdragon creation
-    //   // if (this.target) {
-    //   //   if (this.target instanceof CyberDragon) this.collisionRadius = cyberDragon.projectileCollisionRadius;
-    //   //   else if (this.target instanceof BiomechLeviathan)
-    //   //     this.collisionRadius = biomechLeviathan.projectileCollisionRadius;
-    //   //   else if (this.target instanceof TemporalSerpent) this.collisionRadius = temporalSerpent.playerCollisionRadius;
-    //   //   else this.collisionRadius = Math.max(this.target.width, this.target.height) / 2;
-    //   // }
   }
 
   isBoostReady() {
-    return (
-      !this.isBoosting &&
-      (this.game.inputs.codes.unlimitedBoost.enabled || this.game.timestamp >= this.boostCooldownEndTime)
-    );
+    return !this.isBoosting && (this.game.inputs.codes.unlimitedBoost.enabled || this.boostCooldownTimer <= 0);
   }
 
   takeDamage(amount) {

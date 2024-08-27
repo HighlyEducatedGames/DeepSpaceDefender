@@ -25,7 +25,6 @@ export default class Game {
   effects = [];
   targetFPS = 60;
   targetFrameDuration = 1000 / this.targetFPS;
-  timestamp = 0; // TODO remove all uses in favor of deltaTime
   tickMs = null;
   numStars = 50;
   parallaxLayers = 3;
@@ -34,11 +33,11 @@ export default class Game {
   level = 0;
   score = 0;
   isGameOver = false;
-  levelStartTime = 0;
+  levelTimer = 0;
   levelDuration = 30000;
   maxCoins = 5;
   ally = null;
-  allySpawnTime = 0;
+  allySpawnTimer = 0;
   allyInterval = 60000;
   arrowIndicators = [];
   frame = 0;
@@ -79,7 +78,7 @@ export default class Game {
     this.score = 0;
     this.player = new Player(this);
     this.ally = null;
-    this.allySpawnTime = 0;
+    this.allySpawnTimer = 0;
     this.effects = [];
     this.startLevel(1);
   }
@@ -87,7 +86,7 @@ export default class Game {
   // Set any properties here that change on a new level
   startLevel(level) {
     this.level = level;
-    this.levelStartTime = this.timestamp;
+    this.levelTimer = 0;
     this.levelDuration = 30000;
     this.maxCoins = 5;
     this.arrowIndicators = [];
@@ -166,7 +165,7 @@ export default class Game {
     if (this.boss && this.boss.markedForDeletion) this.boss = null;
     if (this.ally && this.ally.markedForDeletion) {
       this.ally = null;
-      this.allySpawnTime = 0;
+      this.allySpawnTimer = 0;
     }
     this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
     this.arrowIndicators = this.arrowIndicators.filter((arrow) => !arrow.markedForDeletion);
@@ -268,11 +267,11 @@ export default class Game {
   levelUpdate(deltaTime) {
     if (!this.boss) {
       // Countdown if not a boss level
-      const elapsedTime = this.timestamp - this.levelStartTime;
-      this.countdown = Math.max(0, (this.levelDuration - elapsedTime) / 1000);
+      this.levelTimer += deltaTime;
+      this.countdown = Math.max(0, (this.levelDuration - this.levelTimer) / 1000);
 
       // Advance to next level if time over
-      if (elapsedTime >= this.levelDuration) {
+      if (this.levelTimer >= this.levelDuration) {
         this.nextLevel();
         return;
       }
@@ -287,11 +286,10 @@ export default class Game {
     }
 
     // Ally Spawning
-    if (this.allySpawnTime > this.allyInterval) {
-      this.allySpawnTime = 0;
+    this.allySpawnTimer += deltaTime;
+    if (this.allySpawnTimer >= this.allyInterval) {
+      this.allySpawnTimer = 0;
       this.spawnAlly();
-    } else {
-      this.allySpawnTime += deltaTime;
     }
   }
 
