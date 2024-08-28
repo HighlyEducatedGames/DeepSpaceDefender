@@ -278,11 +278,11 @@ export default class GUI {
     if (this.game.ally) entities++;
     if (this.game.boss) entities++;
     if (this.game.player.bomb) entities++;
-    entities += this.game.enemies.enemies.length;
-    entities += this.game.wormholes.wormholes.length * 2;
-    entities += this.game.arrowIndicators.length;
     entities += this.game.powerUps.powerUps.length;
-    entities += this.game.effects.length;
+    entities += this.game.enemies.enemies.length;
+    entities += this.game.enemies.arrowIndicators.length;
+    // entities += this.game.wormholes.wormholes.length * 2;
+    // entities += this.game.effects.length;
     return entities;
   }
 }

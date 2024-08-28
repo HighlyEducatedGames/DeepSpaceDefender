@@ -1,4 +1,9 @@
+import { GameObject } from '../GameObject';
+import { Enemy } from '../enemies/BasicEnemies';
+
 export class ArrowIndicator {
+  game: Game;
+  target: Enemy;
   size = 20;
   circleRadius = 25;
   imageSize = 25;
@@ -10,19 +15,13 @@ export class ArrowIndicator {
   flashSpeed = 500;
   markedForDeletion = false;
 
-  constructor(game, target) {
-    /** @type {import('./Game.js').default} */
+  constructor(game: Game, target: Enemy) {
     this.game = game;
     this.target = target;
   }
 
-  draw(ctx) {
-    // Determine if the target is offscreen
-    const isOffScreen = this.game.outOfBounds(this.target);
-    if (!isOffScreen) return;
-
-    // Update the bobbing effect
-    this.bobOffset = Math.sin(Date.now() * 0.002 * this.bobSpeed) * this.bobAmplitude;
+  draw(ctx: CTX) {
+    if (!this.game.outOfBounds(this.target)) return;
 
     // Determine the position for the arrow
     let arrowX = this.target.x;
@@ -53,8 +52,8 @@ export class ArrowIndicator {
 
     // Draw the stroked circle behind the arrow
     ctx.save();
-    ctx.strokeStyle = this.color; // Use the arrow's color for the circle stroke
-    ctx.lineWidth = 2; // Set the stroke width
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(circleX, circleY, this.circleRadius, 0, Math.PI * 2);
     ctx.stroke();
@@ -70,7 +69,6 @@ export class ArrowIndicator {
 
     // Flashing effect: only draw the arrow if the current time modulo flashSpeed is less than half flashSpeed
     if (Date.now() % this.flashSpeed < this.flashSpeed / 2) {
-      // Draw the arrow on top, positioned correctly relative to the circle
       ctx.translate(arrowX, arrowY);
       ctx.rotate(angle);
       ctx.fillStyle = this.color;
@@ -86,10 +84,10 @@ export class ArrowIndicator {
   }
 
   update() {
-    // Check if the target is on screen
-    const targetOnScreen = !this.game.outOfBounds(this.target);
+    // Bobbing effect
+    this.bobOffset = Math.sin(Date.now() * 0.002 * this.bobSpeed) * this.bobAmplitude;
 
-    // Check if the target is marked for deletion or if the target no longer exists
+    const targetOnScreen = !this.game.outOfBounds(this.target);
     const targetKilled = !this.target || this.target.markedForDeletion;
 
     // Remove the arrow if the target is on screen, marked for deletion, or doesn't exist

@@ -1,6 +1,6 @@
 import GUI from './GUI';
-import Menu from './Menu.js';
-import MusicController from './MusicController.js';
+import Menu from './Menu';
+import MusicController from './MusicController';
 import PowerUpController from './powerUps/PowerUpController';
 import EnemyController from './enemies/EnemyController';
 import Player from './Player';
@@ -12,9 +12,9 @@ import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import TemporalSerpent from './bosses/TemporalSerpent.js';
 import CyberDragon from './bosses/CyberDragon.js';
 import { WormholeController } from './hazards/WormholeController.js';
-import { ArrowIndicator } from './HUD.js';
 import InputHandler, { Action } from './InputHandler';
 import { GameObject, Projectile } from './GameObject';
+import { Enemy } from './enemies/BasicEnemies';
 
 export default class Game {
   canvas: HTMLCanvasElement;
@@ -51,7 +51,6 @@ export default class Game {
   ally: Ally | null = null;
   allySpawnTimer = 0;
   allyInterval = 60000;
-  arrowIndicators: ArrowIndicator[] = [];
   frame = 0;
   paused = true;
   images = { title: this.getImage('title_screen_image') };
@@ -98,7 +97,6 @@ export default class Game {
     this.levelTimer = 0;
     this.levelDuration = 30000;
     this.maxCoins = 5;
-    this.arrowIndicators = [];
 
     // Add new coins to this level
     this.coins = [];
@@ -153,7 +151,6 @@ export default class Game {
       // if (this.boss) this.boss.update(deltaTime);
       // this.effects.forEach((effect) => effect.update(deltaTime));
       // if (this.ally) this.ally.update(deltaTime);
-      // this.arrowIndicators.forEach((arrow) => arrow.update(deltaTime));
     }
   }
 
@@ -179,7 +176,6 @@ export default class Game {
     // this.allySpawnTimer = 0;
     // }
     // this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
-    // this.arrowIndicators = this.arrowIndicators.filter((arrow) => !arrow.markedForDeletion);
   }
 
   draw(ctx: CTX) {
@@ -195,7 +191,6 @@ export default class Game {
     // if (this.boss) this.boss.draw(ctx);
     // this.effects.forEach((effect) => effect.draw(ctx));
     // if (this.ally) this.ally.draw(ctx);
-    // this.arrowIndicators.forEach((arrow) => arrow.draw(ctx));
 
     // Game over text
     if (this.isGameOver) {
@@ -335,10 +330,6 @@ export default class Game {
 
   getRandomY(margin = 0) {
     return Math.random() * (this.height - this.topMargin - margin * 2) + this.topMargin + margin;
-  }
-
-  addArrowIndicator(target: GameObject) {
-    this.arrowIndicators.push(new ArrowIndicator(this, target));
   }
 
   getRandomDirection() {

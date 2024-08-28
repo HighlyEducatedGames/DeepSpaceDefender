@@ -1,5 +1,6 @@
-import { RegularEnemy, StealthEnemy, TankEnemy } from './BasicEnemies';
+import { Enemy, RegularEnemy, StealthEnemy, TankEnemy } from './BasicEnemies';
 import { GameObject } from '../GameObject';
+import { ArrowIndicator } from '../hud/ArrowIndicator';
 
 type EnemyType = {
   max: number;
@@ -12,6 +13,7 @@ type EnemyType = {
 export default class EnemyController {
   game: Game;
   enemies: Enemies[] = [];
+  arrowIndicators: ArrowIndicator[] = [];
   types: Record<string, EnemyType> = {
     regular: {
       max: 6,
@@ -42,6 +44,7 @@ export default class EnemyController {
 
   draw(ctx: CTX) {
     this.enemies.forEach((enemy) => enemy.draw(ctx));
+    this.arrowIndicators.forEach((arrow) => arrow.draw(ctx));
   }
 
   update(deltaTime: number) {
@@ -60,6 +63,9 @@ export default class EnemyController {
         this.spawnEnemy(type);
       }
     }
+
+    // Update arrow indicators
+    this.arrowIndicators.forEach((arrow) => arrow.update());
   }
 
   checkCollisions() {
@@ -68,10 +74,12 @@ export default class EnemyController {
 
   cleanup() {
     this.enemies = this.enemies.filter((enemy) => !enemy.markedForDeletion);
+    this.arrowIndicators = this.arrowIndicators.filter((arrow) => !arrow.markedForDeletion);
   }
 
   reset() {
     this.enemies = [];
+    this.arrowIndicators = [];
   }
 
   init() {
@@ -94,6 +102,10 @@ export default class EnemyController {
     const currentEnemies = this.enemies.filter((enemy) => enemy instanceof type.obj).length;
     if (currentEnemies >= type.numToSpawn) return;
     this.enemies.push(new type.obj(this.game));
+  }
+
+  addArrowIndicator(target: Enemy) {
+    this.arrowIndicators.push(new ArrowIndicator(this.game, target));
   }
 
   getLength() {

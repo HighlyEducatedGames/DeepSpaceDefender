@@ -162,7 +162,7 @@ export abstract class Enemy extends GameObject {
     // Arrow Indicator Logic
     const offscreen = this.game.outOfBounds(this);
     if (offscreen && !this.arrowAdded) {
-      this.game.addArrowIndicator(this);
+      this.game.enemies.addArrowIndicator(this);
       this.arrowAdded = true; // Prevent adding multiple arrows
     }
   }
@@ -173,7 +173,6 @@ export abstract class Enemy extends GameObject {
         ? -this.width * 0.5 - this.offScreenMargin
         : this.game.width + this.width * 0.5 + this.offScreenMargin;
     this.y = this.game.getRandomY(this.margin);
-    console.log(this.x, this.y);
   }
 
   checkCollisions() {
