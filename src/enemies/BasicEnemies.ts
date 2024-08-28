@@ -1,30 +1,30 @@
-import { BehaviorTree, SequenceNode, SelectorNode, ActionNode } from './BehaviorTree.js';
+import { BehaviorTree, SequenceNode, SelectorNode, ActionNode } from './BehaviorTree';
+import { EnemyProjectile, GameObject } from '../GameObject';
 
-class Enemy {
-  x = null;
-  y = null;
-  width = null;
-  height = null;
-  speed = null;
+export abstract class Enemy extends GameObject {
+  x = 0;
+  y = 0;
+  abstract speed: number;
+  abstract maxHealth: number;
+  abstract health: number;
+  abstract damage: number;
+  abstract score: number;
+  patrolTarget = { x: 0, y: 0 };
+  retreatTarget = { x: 0, y: 0 };
   attackTimer = 0;
-  attackInterval = null;
-  damage = null;
-  score = null;
+  abstract attackInterval: number;
   side = Math.random() < 0.5 ? 'left' : 'right';
   offScreenMargin = 100;
   vx = this.side === 'left' ? 1 : -1;
+  vy = 0;
   canShoot = true;
-  maxHealth = null;
-  health = this.maxHealth;
   margin = 50;
-  markedForDeletion = false;
-  image = null;
-  behaviorTree = this.createBehaviorTree();
   arrowAdded = false;
+  abstract image: HTMLImageElement;
+  behaviorTree = this.createBehaviorTree();
 
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
-    this.game = game;
+  constructor(game: Game) {
+    super(game);
   }
 
   createBehaviorTree() {
@@ -40,7 +40,7 @@ class Enemy {
     );
   }
 
-  patrol(enemy, ticks) {
+  patrol(enemy: GameObject, deltaTime: number) {
     if (!this.patrolTarget) {
       this.patrolTarget = this.getNewPatrolPoint();
     }
@@ -52,8 +52,8 @@ class Enemy {
       const angleToTarget = Math.atan2(this.patrolTarget.y - this.y, this.patrolTarget.x - this.x);
       this.vx = Math.cos(angleToTarget);
       this.vy = Math.sin(angleToTarget);
-      this.x += (this.speed * this.vx * ticks) / 1000;
-      this.y += (this.speed * this.vy * ticks) / 1000;
+      this.x += (this.speed * this.vx * deltaTime) / 1000;
+      this.y += (this.speed * this.vy * deltaTime) / 1000;
     } else {
       this.patrolTarget = this.getNewPatrolPoint();
     }
@@ -89,7 +89,7 @@ class Enemy {
     return false;
   }
 
-  retreat(enemy, ticks) {
+  retreat(enemy: GameObject, deltaTime: number) {
     if (!this.retreatTarget) {
       this.retreatTarget = this.getRetreatPoint();
     }
@@ -115,8 +115,8 @@ class Enemy {
       }
 
       // Update position
-      this.x += (this.vx * ticks) / 1000;
-      this.y += (this.vy * ticks) / 1000;
+      this.x += (this.vx * deltaTime) / 1000;
+      this.y += (this.vy * deltaTime) / 1000;
     } else {
       // Recalculate the retreat target if the entity reaches the target point
       this.retreatTarget = this.getRetreatPoint();
@@ -132,7 +132,7 @@ class Enemy {
     return { x: furthestX, y: furthestY };
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     // Enemy
     ctx.drawImage(this.image, this.x - this.width * 0.5, this.y - this.height * 0.5, this.width, this.height);
 
@@ -145,7 +145,7 @@ class Enemy {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     // Movement
     this.x += (this.speed * this.vx * deltaTime) / 1000;
 
@@ -153,7 +153,7 @@ class Enemy {
     if (this.x < this.width * 0.5 && this.vx < 0) this.vx = 1;
     if (this.x > this.game.width - this.width * 0.5 && this.vx > 0) this.vx = -1;
 
-    // Acrue deltaTime for attacks
+    // Accrue deltaTime for attacks
     this.attackTimer += deltaTime;
 
     // Update the behavior tree
@@ -173,6 +173,7 @@ class Enemy {
         ? -this.width * 0.5 - this.offScreenMargin
         : this.game.width + this.width * 0.5 + this.offScreenMargin;
     this.y = this.game.getRandomY(this.margin);
+    console.log(this.x, this.y);
   }
 
   checkCollisions() {
@@ -193,10 +194,10 @@ class Enemy {
     const playerFutureY = this.game.player.y + this.game.player.velocity.y * 0.5;
     const angleToPlayer = Math.atan2(playerFutureY - this.y, playerFutureX - this.x);
 
-    this.game.projectiles.push(new EnemyProjectile(this.game, this.x, this.y, angleToPlayer));
+    this.game.projectiles.push(new Projectile(this.game, this.x, this.y, angleToPlayer));
   }
 
-  takeDamage(damage) {
+  takeDamage(damage: number) {
     this.health -= damage;
     if (this.health <= 0) this.markedForDeletion = true;
   }
@@ -207,12 +208,14 @@ export class RegularEnemy extends Enemy {
   height = 50;
   speed = 60;
   maxHealth = 10;
+  health = this.maxHealth;
   damage = 10;
   score = this.maxHealth;
   attackInterval = this.game.getRandomInterval(3000, 5000);
-  image = document.getElementById('enemy_image');
+  image = this.game.getImage('enemy_image');
+  radius = this.width * 0.5;
 
-  constructor(game) {
+  constructor(game: Game) {
     super(game);
     super.getSpawnPosition();
   }
@@ -223,12 +226,14 @@ export class TankEnemy extends Enemy {
   height = 60;
   speed = 40;
   maxHealth = 30;
+  health = this.maxHealth;
   damage = 10;
   score = this.maxHealth;
   attackInterval = this.game.getRandomInterval(2000, 3000);
-  image = document.getElementById('tank_enemy_image');
+  image = this.game.getImage('tank_enemy_image');
+  radius = this.width * 0.5;
 
-  constructor(game) {
+  constructor(game: Game) {
     super(game);
     super.getSpawnPosition();
   }
@@ -239,10 +244,12 @@ export class StealthEnemy extends Enemy {
   height = 50;
   speed = 60;
   maxHealth = 20;
+  health = this.maxHealth;
   damage = 10;
   score = this.maxHealth;
   attackInterval = this.game.getRandomInterval(1000, 2000);
-  image = document.getElementById('stealth_enemy_image');
+  image = this.game.getImage('stealth_enemy_image');
+  radius = this.width * 0.5;
   // Stealth only properties
   visible = false;
   visibleTimer = 0;
@@ -250,12 +257,12 @@ export class StealthEnemy extends Enemy {
   invisibleDuration = 3000;
   opacity = 0;
 
-  constructor(game) {
+  constructor(game: Game) {
     super(game);
     super.getSpawnPosition();
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     if (this.opacity > 0.2) {
       ctx.save();
       ctx.globalAlpha = this.opacity;
@@ -277,7 +284,7 @@ export class StealthEnemy extends Enemy {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     super.update(deltaTime);
 
     this.visibleTimer += deltaTime;
@@ -306,45 +313,36 @@ export class StealthEnemy extends Enemy {
   }
 }
 
-class EnemyProjectile {
+class Projectile extends EnemyProjectile {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
   width = 5;
   height = 5;
   speed = 250;
   damage = 10;
+  radius = this.width * 0.5;
 
-  constructor(game, x, y, angle) {
-    this.game = game;
+  constructor(game: Game, x: number, y: number, angle: number) {
+    super(game);
     this.x = x;
     this.y = y;
     this.vx = Math.cos(angle);
     this.vy = Math.sin(angle);
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     ctx.fillStyle = 'red';
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     this.x += (this.speed * this.vx * deltaTime) / 1000;
     this.y += (this.speed * this.vy * deltaTime) / 1000;
 
     if (this.game.outOfBounds(this)) this.markedForDeletion = true;
-  }
-
-  checkCollisions() {
-    // Collision to player
-    if (this.game.checkCollision(this, this.game.player)) {
-      this.game.playCollision();
-      this.game.player.takeDamage(this.damage);
-      this.markedForDeletion = true;
-    }
-
-    // Collision to player bomb
-    if (this.game.player.bomb && this.game.checkCollision(this, this.game.player.bomb)) {
-      this.markedForDeletion = true;
-    }
   }
 }

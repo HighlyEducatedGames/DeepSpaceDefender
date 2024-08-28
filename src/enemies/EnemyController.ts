@@ -1,8 +1,18 @@
-import { RegularEnemy, StealthEnemy, TankEnemy } from './BasicEnemies.js';
+import { RegularEnemy, StealthEnemy, TankEnemy } from './BasicEnemies';
+import { GameObject } from '../GameObject';
+
+type EnemyType = {
+  max: number;
+  numToSpawn: number;
+  spawnTime: number;
+  interval: number;
+  obj: new (game: Game) => Enemies;
+};
 
 export default class EnemyController {
-  enemies = [];
-  types = {
+  game: Game;
+  enemies: Enemies[] = [];
+  types: Record<string, EnemyType> = {
     regular: {
       max: 6,
       numToSpawn: 0,
@@ -26,22 +36,20 @@ export default class EnemyController {
     },
   };
 
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
+  constructor(game: Game) {
     this.game = game;
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     this.enemies.forEach((enemy) => enemy.draw(ctx));
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     if (!this.game.doEnemies) return;
     if (this.game.boss) return;
 
     // Update existing enemies
     this.enemies.forEach((enemy) => enemy.update(deltaTime));
-    this.enemies = this.enemies.filter((enemy) => !enemy.markedForDeletion);
 
     // Spawn any new enemies on an interval
     for (const key in this.types) {
@@ -52,6 +60,14 @@ export default class EnemyController {
         this.spawnEnemy(type);
       }
     }
+  }
+
+  checkCollisions() {
+    this.enemies.forEach((enemy) => enemy.checkCollisions());
+  }
+
+  cleanup() {
+    this.enemies = this.enemies.filter((enemy) => !enemy.markedForDeletion);
   }
 
   reset() {
@@ -73,7 +89,7 @@ export default class EnemyController {
     this.spawnEnemy(this.types.regular);
   }
 
-  spawnEnemy(type) {
+  spawnEnemy(type: EnemyType) {
     if (this.game.boss) return;
     const currentEnemies = this.enemies.filter((enemy) => enemy instanceof type.obj).length;
     if (currentEnemies >= type.numToSpawn) return;

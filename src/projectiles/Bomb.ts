@@ -61,4 +61,21 @@ export default class Bomb extends FriendlyProjectile {
     this.x = this.game.player.x;
     this.y = this.game.player.y;
   }
+
+  checkCollisions() {
+    // Check collision to all enemies
+    this.game.enemies.enemies.forEach((enemy) => {
+      if (this.game.checkCollision(this, enemy)) {
+        enemy.takeDamage(this.damage);
+      }
+    });
+
+    // Check collision to boss
+    if (this.game.boss && !this.hitBoss) {
+      /*if (this.game.checkCollision(this, this.game.boss)) {
+        this.game.boss.takeDamage(this.damage);
+        this.hitBoss = true;
+      }*/
+    }
+  }
 }

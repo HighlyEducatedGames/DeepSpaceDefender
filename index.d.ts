@@ -5,6 +5,11 @@ declare function loaded(): void;
 declare function menuBack(): void;
 declare function updateMenuText(usingGamepad: boolean): void;
 
+type Enemies =
+  | import('./src/enemies/BasicEnemies').RegularEnemy
+  | import('./src/enemies/BasicEnemies').TankEnemy
+  | import('./src/enemies/BasicEnemies').StealthEnemy;
+
 type Bosses =
   | import('./src/bosses/Boss').default
   | import('./src/bosses/CyberDragon').default
