@@ -1,7 +1,7 @@
 import { PlayerProjectile, ChargedProjectile } from './projectiles/PlayerProjectile';
 import Bomb from './projectiles/Bomb';
 import Missile from './projectiles/Missile';
-import BiomechLeviathan from './bosses/BiomechLeviathan.js';
+import BiomechLeviathan from './bosses/BiomechLeviathan';
 import Flame from './projectiles/Flame';
 import Laser from './projectiles/Laser';
 import ParticleBomb from './projectiles/ParticleBomb';

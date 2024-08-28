@@ -1,53 +1,59 @@
 import BossExplosion from '../effects/BossExplosion';
 import Explosion from '../effects/Explosion.js';
+import { BossCreature } from '../GameObject';
 
-export default class BiomechLeviathan {
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
-    this.game = game;
-    this.x = 250;
-    this.y = 250;
-    this.width = 200;
-    this.height = 200;
-    this.speed = 40;
-    this.maxHealth = 2000;
-    this.health = this.maxHealth;
-    this.score = this.maxHealth;
-    this.lastAttackTime = 0;
-    this.attackInterval = 1500;
-    this.canAttack = true;
-    this.phase = 1;
-    this.playerCollisionRadius = 65;
-    this.projectiles = [];
-    this.healthBarWidth = this.width;
-    this.healthBarHeight = 10;
+export default class BiomechLeviathan extends BossCreature {
+  x: number;
+  y: number;
+  width = 200;
+  height = 200;
+  radius = this.width * 0.5;
+  speed = 40;
+  maxHealth = 2000;
+  health = this.maxHealth;
+  points = this.maxHealth;
+  image: HTMLImageElement;
+  music: HTMLAudioElement;
+  sounds: { [key: string]: HTMLAudioElement };
+  attackTimer = 0;
+  attackInterval = 1500;
+  canAttack = false;
+  phase = 1;
+  healthBarWidth = this.width;
+  healthBarHeight = 10;
+  inkClouds = [];
+  healthBarX: number;
+  healthBarY: number;
+  playerCollisionRadius = 65;
+  empTimer = 0;
+  empCooldown = 5000;
+  empActive = false;
+  tractorBeam: TractorBeam | null = null;
+  tractorBeamTimer = 0;
+  tractorBeamCooldown = 5000;
+  collisionTimer = 0;
+  collisionCooldown = 3000;
+
+  constructor(game: Game) {
+    super(game);
+    this.image = this.game.getImage('biomech_leviathan_image');
+    this.sounds = {
+      tractorBeam: this.game.getAudio('biomech_tractor_beam_sound'),
+      emp: this.game.getAudio('biomech_emp_sound'),
+      eat: this.game.getAudio('biomech_eat_sound'),
+      splat: this.game.getAudio('biomech_splat_sound'),
+      noFire: this.game.getAudio('no_fire_sound'),
+    };
+    this.music = this.game.getAudio('boss_music');
+
+    const { x, y } = this.game.getOffScreenRandomSide(this, 20);
+    this.x = x;
+    this.y = y;
     this.healthBarX = this.x - this.width * 0.5;
     this.healthBarY = this.y + this.height * 0.5 + 10;
-    this.damage = 0.1;
-    this.inkClouds = [];
-    this.lastEmpTime = 0;
-    this.empCooldown = 5000;
-    this.empActive = false;
-    this.tractorBeam = null;
-    this.tractorBeamTimer = 0;
-    this.tractorBeamCooldown = 5000;
-    this.lastCollisionTime = 0;
-    this.collisionCooldown = 3000;
-    this.markedForDeletion = false;
-    this.image = document.getElementById('biomech_leviathan_image');
-    this.sounds = {
-      tractorBeam: document.getElementById('biomech_tractor_beam_sound'),
-      emp: document.getElementById('biomech_emp_sound'),
-      eat: document.getElementById('biomech_eat_sound'),
-      splat: document.getElementById('biomech_splat_sound'),
-      noFire: document.getElementById('no_fire_sound'),
-    };
-    this.music = document.getElementById('boss_music');
-
-    this.game.getOffScreenRandomSide(this, 100);
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     // Leviathan
     ctx.save();
     ctx.translate(this.x, this.y);
@@ -79,7 +85,7 @@ export default class BiomechLeviathan {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     const angleToPlayer = this.game.player.getAngleToPlayer(this);
     this.x += (Math.cos(angleToPlayer) * this.speed * deltaTime) / 1000;
     this.y += (Math.sin(angleToPlayer) * this.speed * deltaTime) / 1000;
@@ -102,7 +108,7 @@ export default class BiomechLeviathan {
     };
 
     // Phase Transitions
-    const nextTransition = phases[this.phase + 1];
+    const nextTransition = phases[(this.phase + 1) as keyof typeof phases];
     if (nextTransition !== undefined && this.health <= this.maxHealth * nextTransition) {
       this.phase++;
     }
@@ -119,11 +125,9 @@ export default class BiomechLeviathan {
         // this.spawnEmpBlast();
         break;
     }
-
-    this.checkCollisions(deltaTime);
   }
 
-  checkCollisions(deltaTime) {
+  /*checkCollisions(deltaTime: number) {
     this.lastCollisionTime += deltaTime;
     if (this.lastCollisionTime >= this.collisionCooldown) {
       // Collision with player
@@ -134,9 +138,9 @@ export default class BiomechLeviathan {
         this.lastCollisionTime = 0;
       }
     }
-  }
+  }*/
 
-  spawnInkCloud() {
+  /*spawnInkCloud() {
     if (this.inkClouds.length >= 3) return;
     this.inkClouds.push(new InkCloud(this.game, this));
   }
@@ -147,46 +151,46 @@ export default class BiomechLeviathan {
     const empBlast = new EmpBlast(this.game, this);
     this.lastEmpTime = this.game.timestamp;
   }
+*/
 
-  spawnTractorBeam(deltaTime) {
+  spawnTractorBeam(deltaTime: number) {
     if (this.tractorBeam) return;
+    this.tractorBeamTimer += deltaTime;
     if (this.tractorBeamTimer >= this.tractorBeamCooldown) {
       this.tractorBeamTimer = 0;
-      this.tractorBeam = new TractorBeam(this.game, this);
-    } else {
-      this.tractorBeamTimer += deltaTime;
+      this.tractorBeam = new TractorBeam(this);
     }
   }
 
-  takeDamage(damage) {
-    this.health -= damage;
-    if (this.health <= 0) {
-      this.markedForDeletion = true;
-      this.game.effects.push(new BossExplosion(this.game, this.x, this.y));
-      this.game.addScore(this.score);
-    }
+  onDeath() {
+    this.game.effects.push(new BossExplosion(this.game, this.x, this.y));
   }
 }
 
 class TractorBeam {
-  constructor(game, biomech) {
-    this.game = game;
+  game: Game;
+  biomech: BiomechLeviathan;
+  x: number;
+  y: number;
+  beamWidth = 20;
+  timer = 0;
+  duration = 5000;
+  strength = 0.2;
+  markedForDeletion = false;
+
+  constructor(biomech: BiomechLeviathan) {
+    this.game = biomech.game;
     this.biomech = biomech;
-    this.beamWidth = 20;
     this.x = this.biomech.x;
     this.y = this.biomech.y;
-    this.timer = 0;
-    this.duration = 5000;
-    this.strength = 0.2;
-    this.markedForDeletion = false;
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     const gradient = ctx.createLinearGradient(this.game.player.x, this.game.player.y, this.x, this.y);
     gradient.addColorStop(0, 'rgba(255, 255, 0, 0.5)'); // Yellow at the player end
     gradient.addColorStop(1, 'rgba(255, 255, 0, 0)'); // Transparent at the biomech boss end
 
-    const angle = this.game.player.getAngleToPlayer(this);
+    const angle = Math.atan2(this.game.player.y - this.y, this.game.player.x - this.x);
     const playerX1 = this.game.player.x + Math.cos(angle + Math.PI * 0.5) * this.beamWidth * 0.5;
     const playerY1 = this.game.player.y + Math.sin(angle + Math.PI * 0.5) * this.beamWidth * 0.5;
     const playerX2 = this.game.player.x + Math.cos(angle - Math.PI * 0.5) * this.beamWidth * 0.5;
@@ -201,19 +205,18 @@ class TractorBeam {
     ctx.fill();
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     this.x = this.biomech.x;
     this.y = this.biomech.y;
 
+    this.timer += deltaTime;
     if (this.timer >= this.duration) {
       this.markedForDeletion = true;
-    } else {
-      this.timer += deltaTime;
     }
   }
 }
 
-class InkCloud {
+/*class InkCloud {
   constructor(game, biomech) {
     this.game = game;
     this.biomech = biomech;
@@ -436,3 +439,4 @@ class EmpSparkParticle {
     if (this.alpha <= 0) this.markedForDeletion = true;
   }
 }
+*/

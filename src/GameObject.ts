@@ -94,7 +94,9 @@ export abstract class BossCreature extends GameObject {
 
   abstract onDeath(): void;
 
-  checkCollisions() {}
+  checkCollisions() {
+    // TODO CHECK COLLISIONS TO PLAYER AND TICK DAMAGE OR USE COLLISION COOLDOWN
+  }
 }
 
 export abstract class Effect {
