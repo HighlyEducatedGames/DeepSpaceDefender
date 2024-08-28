@@ -145,7 +145,7 @@ export default class Game {
       this.player.update(deltaTime);
       this.stars.forEach((star) => star.update(deltaTime));
       this.coins.forEach((coin) => coin.update());
-      // this.projectiles.forEach((projectile) => projectile.update(deltaTime));
+      this.projectiles.forEach((projectile) => projectile.update(deltaTime));
       // this.particles.forEach((particle) => particle.update(deltaTime));
       // this.wormholes.update(deltaTime);
       // if (this.boss) this.boss.update(deltaTime);
@@ -160,14 +160,14 @@ export default class Game {
   checkCollisions() {
     this.player.checkCollisions();
     this.coins.forEach((coin) => coin.checkCollisions());
-    // this.projectiles.forEach((projectile) => projectile.checkCollisions());
+    this.projectiles.forEach((projectile) => projectile.checkCollisions());
     // this.particles.forEach((particle) => particle.checkCollisions());
     // this.powerUps.powerUps.forEach((powerUp) => powerUp.checkCollisions());
   }
 
   cleanup() {
     this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
-    // this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
+    this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
     // this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
     // if (this.boss && this.boss.markedForDeletion) this.boss = null;
     // if (this.ally && this.ally.markedForDeletion) {
@@ -181,8 +181,8 @@ export default class Game {
   draw(ctx: CTX) {
     this.stars.forEach((star) => star.draw(ctx));
     this.coins.forEach((coin) => coin.draw(ctx));
+    this.projectiles.forEach((projectile) => projectile.draw(ctx));
     this.player.draw(ctx);
-    // this.projectiles.forEach((projectile) => projectile.draw(ctx));
     // this.particles.forEach((particle) => particle.draw(ctx));
     // this.wormholes.draw(ctx);
     // if (this.boss) this.boss.draw(ctx);

@@ -1,17 +1,22 @@
 import { Action } from '../InputHandler';
+import { FriendlyProjectile, Projectile } from '../GameObject';
 
-export class PlayerProjectile {
+export class PlayerProjectile extends FriendlyProjectile {
+  x: number;
+  y: number;
   width = 5;
   height = 5;
-  speed = 500;
   damage = 10;
+  speed = 500;
+  radius = this.width * 0.5;
+  angle: number;
+  directionX: number;
+  directionY: number;
   traveledDistance = 0;
   maxDistance = 800;
-  markedForDeletion = false;
 
-  constructor(game, angle) {
-    /** @type {import('../Game.js').default} */
-    this.game = game;
+  constructor(game: Game, angle: number) {
+    super(game);
     this.angle = angle;
     this.x = this.game.player.x + Math.cos(this.game.player.rotation + angle) * (this.game.player.width * 0.5);
     this.y = this.game.player.y + Math.sin(this.game.player.rotation + angle) * (this.game.player.height * 0.5);
@@ -19,14 +24,14 @@ export class PlayerProjectile {
     this.directionY = Math.sin(this.game.player.rotation + angle);
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     ctx.fillStyle = 'blue';
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     this.x += (this.speed * this.directionX * deltaTime) / 1000;
     this.y += (this.speed * this.directionY * deltaTime) / 1000;
     this.traveledDistance += (this.speed * deltaTime) / 1000;
@@ -42,35 +47,15 @@ export class PlayerProjectile {
     if (this.y < 0) this.y = this.game.height;
     if (this.y > this.game.height) this.y = 0;
   }
-
-  checkCollisions() {
-    // Collision with enemies
-    this.game.enemies.enemies.forEach((enemy) => {
-      if (this.game.checkCollision(this, enemy)) {
-        this.game.playCollision();
-        enemy.takeDamage(this.damage);
-        if (enemy.markedForDeletion) this.game.addScore(enemy.score);
-        this.markedForDeletion = true;
-      }
-    });
-
-    // Collision with boss
-    if (this.game.boss) {
-      if (this.game.checkCollision(this, this.game.boss)) {
-        this.game.playCollision();
-        this.game.boss.takeDamage(this.damage);
-        this.markedForDeletion = true;
-      }
-    }
-  }
 }
 
 export class ChargedProjectile extends PlayerProjectile {
+  isFull: boolean;
   partialDamage = 50;
   fullDamage = 150;
   splitDistance = 300;
 
-  constructor(game, angle) {
+  constructor(game: Game, angle: number) {
     super(game, angle);
     this.isFull = this.game.inputs.actions[Action.FIRE].heldDuration >= 2000;
     this.damage = this.isFull ? this.fullDamage : this.partialDamage;
@@ -79,7 +64,7 @@ export class ChargedProjectile extends PlayerProjectile {
     this.height = this.isFull ? 30 : 20;
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     super.update(deltaTime);
     if (this.isFull && this.traveledDistance >= this.splitDistance) {
       this.splitChargedProjectile();
@@ -99,12 +84,13 @@ export class ChargedProjectile extends PlayerProjectile {
 }
 
 class SplitChargedProjectile extends PlayerProjectile {
+  source: Projectile;
   damage = 25;
   width = 5;
   height = 5;
   speed = 500;
 
-  constructor(source, angle) {
+  constructor(source: Projectile, angle: number) {
     super(source.game, angle);
     this.source = source;
     this.x = this.source.x;

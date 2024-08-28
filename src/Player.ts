@@ -1,4 +1,4 @@
-import { PlayerProjectile, ChargedProjectile } from './projectiles/PlayerProjectile.js';
+import { PlayerProjectile, ChargedProjectile } from './projectiles/PlayerProjectile';
 import Bomb from './projectiles/Bomb';
 import Missile from './projectiles/Missile';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
@@ -338,7 +338,7 @@ export default class Player extends GameObject {
     for (let i = 0; i < projectilesToFire; i++) {
       const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
       const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
-      // this.game.projectiles.push(projectile); // TODO
+      this.game.projectiles.push(projectile);
     }
     this.game.cloneSound(this.sounds.fire);
 
@@ -346,7 +346,7 @@ export default class Player extends GameObject {
       for (let i = 0; i < 3; i++) {
         const angle = (i - 1) * (Math.PI / 18) + Math.PI;
         const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
-        // this.game.projectiles.push(projectile); // TODO
+        this.game.projectiles.push(projectile);
       }
     }
   }
