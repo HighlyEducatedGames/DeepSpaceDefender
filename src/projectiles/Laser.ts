@@ -1,6 +1,8 @@
 import ShockWave from '../effects/ShockWave.js';
+import { FriendlyProjectile } from '../GameObject';
 
 export default class Laser {
+  game: Game;
   active = false;
   startX = 0;
   startY = 0;
@@ -9,18 +11,18 @@ export default class Laser {
   width = 3;
   length = 300;
   particlesPerTick = 50;
-  sounds = {
-    hit: document.getElementById('laser_hit_sound'),
-    fire: document.getElementById('laser_fire_sound'),
-    charge: document.getElementById('laser_charge_sound'),
-  };
+  sounds: { [key: string]: HTMLAudioElement };
 
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
+  constructor(game: Game) {
     this.game = game;
+    this.sounds = {
+      hit: this.game.getAudio('laser_hit_sound'),
+      fire: this.game.getAudio('laser_fire_sound'),
+      charge: this.game.getAudio('laser_charge_sound'),
+    };
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     // DEBUG - Laser region
     if (this.game.debug) {
       // Update position of the laser so that the laser is drawn correctly on initial fire
@@ -45,7 +47,7 @@ export default class Laser {
     if (this.active) {
       if (this.sounds.fire.paused) {
         this.sounds.fire.loop = true;
-        this.sounds.fire.play();
+        this.sounds.fire.play().catch(() => {});
       }
       this.updatePosition();
       this.createParticles();
@@ -70,25 +72,31 @@ export default class Laser {
       const t = i / (this.particlesPerTick - 1);
       const x = this.startX + t * (this.endX - this.startX);
       const y = this.startY + t * (this.endY - this.startY);
-      this.game.particles.push(new LaserParticle(this.game, this, x, y));
+      this.game.projectiles.push(new LaserParticle(this, x, y));
     }
   }
 }
 
-class LaserParticle {
+class LaserParticle extends FriendlyProjectile {
+  laser: Laser;
+  startX: number;
+  startY: number;
+  x: number;
+  y: number;
   speed = 5;
   radius = 1;
+  width = this.radius * 2;
+  height = this.radius * 2;
   maxLife = 30;
   life = this.maxLife;
   vx = Math.random() * 2 - 1;
   vy = Math.random() * 2 - 1;
   distance = 0;
-  enemyDamage = 0.005;
-  bossDamage = 0.09;
+  damage = 0.09;
   markedForDeletion = false;
 
-  constructor(game, laser, x, y) {
-    this.game = game;
+  constructor(laser: Laser, x: number, y: number) {
+    super(laser.game);
     this.laser = laser;
     this.startX = x;
     this.startY = y;
@@ -96,14 +104,14 @@ class LaserParticle {
     this.y = y;
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     ctx.fillStyle = `rgba(255, 255, 255, ${this.life / this.maxLife})`;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     this.distance += (this.speed * deltaTime) / 1000;
     this.x += this.vx * this.distance;
     this.y += this.vy * this.distance;
@@ -116,28 +124,5 @@ class LaserParticle {
     if (this.x > this.game.width) this.x = 0;
     if (this.y < 0) this.y = this.game.height;
     if (this.y > this.game.height) this.y = 0;
-  }
-
-  checkCollisions() {
-    // Enemies
-    this.game.enemies.enemies.forEach((enemy) => {
-      if (this.game.checkCollision(this, enemy)) {
-        enemy.takeDamage(this.enemyDamage);
-        this.markedForDeletion = true;
-        this.laser.sounds.hit.play();
-        if (enemy.markedForDeletion) {
-          this.game.effects.push(new ShockWave(this.game, enemy.x, enemy.y));
-        }
-      }
-    });
-
-    // Boss
-    if (this.game.boss) {
-      if (this.game.checkCollision(this, this.game.boss)) {
-        this.game.boss.takeDamage(this.bossDamage);
-        this.markedForDeletion = true;
-        this.laser.sounds.hit.play();
-      }
-    }
   }
 }

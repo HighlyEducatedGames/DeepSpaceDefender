@@ -1,0 +1,63 @@
+import { FriendlyProjectile } from '../GameObject';
+
+export default class ParticleBomb {
+  game: Game;
+  numParticles = 20;
+  sound: HTMLAudioElement;
+
+  constructor(game: Game) {
+    this.game = game;
+    this.sound = this.game.getAudio('particle_bomb_sound');
+  }
+
+  fire() {
+    this.createProjectiles();
+    this.game.cloneSound(this.sound);
+  }
+
+  createProjectiles() {
+    for (let i = 0; i < this.numParticles; i++) {
+      const angle = (i / this.numParticles) * Math.PI * 2;
+      const projectile = new ParticleBombParticle(this.game, angle);
+      this.game.projectiles.push(projectile);
+    }
+  }
+}
+
+class ParticleBombParticle extends FriendlyProjectile {
+  angle: number;
+  x: number;
+  y: number;
+  width = 0;
+  height = 0;
+  directionX: number;
+  directionY: number;
+  radius = 5;
+  speed = 500;
+  alpha = 1;
+  fadeRate = 0.02;
+  damage = 10;
+
+  constructor(game: Game, angle: number) {
+    super(game);
+    this.angle = angle;
+    this.x = this.game.player.x;
+    this.y = this.game.player.y;
+    this.directionX = Math.cos(angle);
+    this.directionY = Math.sin(angle);
+  }
+
+  draw(ctx: CTX) {
+    ctx.fillStyle = `rgba(255, 165, 0, ${this.alpha})`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  update(deltaTime: number) {
+    this.x += (this.speed * this.directionX * deltaTime) / 1000;
+    this.y += (this.speed * this.directionY * deltaTime) / 1000;
+    this.alpha -= this.fadeRate;
+    if (this.alpha <= 0) this.markedForDeletion = true;
+  }
+}

@@ -14,7 +14,7 @@ export default class Asteroid {
   image = document.getElementById('asteroid_image');
 
   constructor(game) {
-    /** @type {import('../Game.js').default} */
+    /** @type {import('../Game.ts').default} */
     this.game = game;
     this.x = Math.random() * this.game.width;
   }

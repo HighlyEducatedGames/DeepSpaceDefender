@@ -1,4 +1,4 @@
-import Asteroid from '../projectiles/Asteroid.js';
+import Asteroid from '../hazards/Asteroid.js';
 import Explosion from '../effects/Explosion.js';
 
 export default class CyberDragon {
