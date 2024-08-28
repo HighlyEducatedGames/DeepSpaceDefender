@@ -59,7 +59,7 @@ export default class Game {
   // DEBUG FLAGS
   doEnemies = true;
   doPowerUps = true;
-  doAlly = false;
+  doAlly = true;
   doBoss = false;
   doWormholes = false;
 
@@ -145,6 +145,7 @@ export default class Game {
       this.coins.forEach((coin) => coin.update());
       this.powerUps.update(deltaTime);
       this.enemies.update(deltaTime);
+      if (this.ally) this.ally.update(deltaTime);
       this.projectiles.forEach((projectile) => projectile.update(deltaTime));
       // this.particles.forEach((particle) => particle.update(deltaTime));
       // this.wormholes.update(deltaTime);
@@ -159,6 +160,7 @@ export default class Game {
     this.coins.forEach((coin) => coin.checkCollisions());
     this.powerUps.checkCollisions();
     this.enemies.checkCollisions();
+    if (this.ally) this.ally.checkCollisions();
     this.projectiles.forEach((projectile) => projectile.checkCollisions());
     // this.particles.forEach((particle) => particle.checkCollisions());
     // this.powerUps.powerUps.forEach((powerUp) => powerUp.checkCollisions());
@@ -168,6 +170,7 @@ export default class Game {
     this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
     this.powerUps.cleanup();
     this.enemies.cleanup();
+    this.cleanupAlly();
     this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
     // this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
     // if (this.boss && this.boss.markedForDeletion) this.boss = null;
@@ -184,6 +187,7 @@ export default class Game {
     this.powerUps.draw(ctx);
     this.projectiles.forEach((projectile) => projectile.draw(ctx));
     this.enemies.draw(ctx);
+    if (this.ally) this.ally.draw(ctx);
     this.player.draw(ctx);
     this.GUI.draw(ctx);
     // this.particles.forEach((particle) => particle.draw(ctx));
@@ -301,6 +305,13 @@ export default class Game {
 
   spawnAlly() {
     if (this.doAlly && !this.ally) this.ally = new Ally(this);
+  }
+
+  cleanupAlly() {
+    if (this.ally && this.ally.markedForDeletion) {
+      this.ally = null;
+      this.allySpawnTimer = 0;
+    }
   }
 
   outOfBounds(object: GameObject, extraMargin = 0) {

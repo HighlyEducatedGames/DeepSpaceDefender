@@ -1,10 +1,13 @@
-export default class Ally {
-  x = null;
-  y = null;
+import { FriendlyProjectile, GameObject } from './GameObject';
+
+export default class Ally extends GameObject {
+  x: number;
+  y: number;
   width = 50;
   height = 50;
-  enteringSide = null;
-  exitingSide = Math.floor(Math.random() * 4);
+  radius = this.width * 0.5;
+  enteringSide: 0 | 1 | 2 | 3;
+  exitingSide = Math.floor(Math.random() * 4) as 0 | 1 | 2 | 3;
   offset = 4;
   speed = 150;
   rotation = 0;
@@ -23,24 +26,23 @@ export default class Ally {
   exitDuration = 15000;
   nextAttackTime = 0;
   attackInterval = 200;
-  targetX = null;
-  targetY = null;
+  targetX = 0;
+  targetY = 0;
   followMargin = 15;
   targetSpeedMultiplier = 1;
   targetSnapDistance = 10;
-  markedForDeletion = false;
-  image = document.getElementById('ally_image');
-  sounds = {
-    warning: document.getElementById('ally_sound'),
-    overAndOut: document.getElementById('ally_over_sound'),
-    circularOrbit: document.getElementById('ally_circular_orbit_sound'),
-    followPlayer: document.getElementById('ally_follow_player_sound'),
-  };
+  image: HTMLImageElement;
+  sounds: { [key: string]: HTMLAudioElement };
 
-  constructor(game) {
-    /** @type {import('./Game.js').default} */
-    this.game = game;
-
+  constructor(game: Game) {
+    super(game);
+    this.image = this.game.getImage('ally_image');
+    this.sounds = {
+      warning: this.game.getAudio('ally_sound'),
+      overAndOut: this.game.getAudio('ally_over_sound'),
+      circularOrbit: this.game.getAudio('ally_circular_orbit_sound'),
+      followPlayer: this.game.getAudio('ally_follow_player_sound'),
+    };
     // Get spawning location and side
     const { x, y, side } = this.game.getOffScreenRandomSide(this);
     this.x = x;
@@ -48,13 +50,13 @@ export default class Ally {
     this.enteringSide = side;
 
     // Play warning sound immediately
-    this.sounds.warning.play();
+    this.sounds.warning.play().catch(() => {});
     setTimeout(() => {
       this.warned();
     }, this.warningDuration);
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     if (!this.warning) {
       // Ally
       const xAdjustPos = Math.cos(this.rotation) * this.offset;
@@ -69,7 +71,7 @@ export default class Ally {
       if (this.game.debug) {
         ctx.strokeStyle = 'white';
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.stroke();
 
         ctx.strokeStyle = 'orange';
@@ -88,7 +90,7 @@ export default class Ally {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     if (this.warning) return;
 
     // Movement
@@ -216,6 +218,10 @@ export default class Ally {
     }
   }
 
+  checkCollisions() {
+    // No collisions to check
+  }
+
   warned() {
     this.warning = false;
     // Play pattern sound once the warning time is over
@@ -229,16 +235,23 @@ export default class Ally {
   }
 }
 
-class AllyProjectile {
+class AllyProjectile extends FriendlyProjectile {
+  ally: Ally;
+  x: number;
+  y: number;
+  angle: number;
   speed = 250;
   width = 5;
   height = 5;
   damage = 25;
-  markedForDeletion = false;
+  radius = this.width * 0.5;
+  offset: number;
+  directionX: number;
+  directionY: number;
 
-  constructor(ally) {
+  constructor(ally: Ally) {
+    super(ally.game);
     this.ally = ally;
-    this.game = this.ally.game;
     this.offset = this.ally.width * 0.5;
     this.angle = this.ally.rotation;
     this.x = this.ally.x + Math.cos(this.angle) * this.offset;
@@ -247,40 +260,19 @@ class AllyProjectile {
     this.directionY = Math.sin(this.angle);
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     ctx.fillStyle = 'green';
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     // Movement
     this.x += (this.directionX * this.speed * deltaTime) / 1000;
     this.y += (this.directionY * this.speed * deltaTime) / 1000;
 
     // Delete if out of bounds
     if (this.game.outOfBounds(this)) this.markedForDeletion = true;
-  }
-
-  checkCollisions() {
-    // Check collision to enemies
-    this.game.enemies.enemies.forEach((enemy) => {
-      if (this.game.checkCollision(this, enemy)) {
-        this.game.playCollision();
-        enemy.takeDamage(this.damage);
-        if (enemy.markedForDeletion) this.game.addScore(enemy.score);
-        this.markedForDeletion = true;
-      }
-    });
-
-    // Check collision to boss
-    if (this.game.boss) {
-      if (this.game.checkCollision(this, this.game.boss)) {
-        this.game.playCollision();
-        this.game.boss.takeDamage(this.damage);
-        this.markedForDeletion = true;
-      }
-    }
   }
 }
