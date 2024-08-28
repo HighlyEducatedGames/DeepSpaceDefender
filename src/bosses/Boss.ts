@@ -15,7 +15,7 @@ export default class Boss extends BossCreature {
   music: HTMLAudioElement;
   attackTimer = 0;
   attackInterval = 2000;
-  canShoot = false;
+  canAttack = false;
   phase = 1;
   phaseTransitioned = [false, false, false];
   healthBarWidth = this.width;
@@ -35,7 +35,7 @@ export default class Boss extends BossCreature {
     this.healthBarY = this.y - this.height * 0.5 + this.height + 5;
 
     setTimeout(() => {
-      this.canShoot = true;
+      this.canAttack = true;
     }, 5000);
   }
 
@@ -91,7 +91,7 @@ export default class Boss extends BossCreature {
 
     // Attack Logic
     this.attackTimer += deltaTime;
-    if (this.canShoot && this.attackTimer >= this.attackInterval) {
+    if (this.canAttack && this.attackTimer >= this.attackInterval) {
       this.attackTimer = 0;
       switch (this.phase) {
         case 1:
