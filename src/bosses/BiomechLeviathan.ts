@@ -22,7 +22,8 @@ export default class BiomechLeviathan extends BossCreature {
   phase = 1;
   healthBarWidth = this.width;
   healthBarHeight = 10;
-  inkClouds = [];
+  maxInkClouds = 3;
+  inkClouds: InkCloud[] = [];
   healthBarX: number;
   healthBarY: number;
   playerCollisionRadius = 65;
@@ -117,7 +118,8 @@ export default class BiomechLeviathan extends BossCreature {
     // Attack logic
     switch (this.phase) {
       case 1:
-        this.spawnTractorBeam(deltaTime);
+        // this.spawnTractorBeam(deltaTime);
+        this.spawnInkCloud();
         break;
       case 2:
         // this.spawnInkCloud();
@@ -137,12 +139,12 @@ export default class BiomechLeviathan extends BossCreature {
     }
   }
 
-  /*spawnInkCloud() {
-    if (this.inkClouds.length >= 3) return;
-    this.inkClouds.push(new InkCloud(this.game, this));
+  spawnInkCloud() {
+    if (this.inkClouds.length >= this.maxInkClouds) return;
+    this.inkClouds.push(new InkCloud(this));
   }
 
-  spawnEmpBlast() {
+  /*spawnEmpBlast() {
     if (this.game.timestamp - this.lastEmpTime < this.empCooldown) return;
     this.empActive = true;
     const empBlast = new EmpBlast(this.game, this);
@@ -208,18 +210,28 @@ class TractorBeam {
   }
 }
 
-/*class InkCloud {
-  constructor(game, biomech) {
-    this.game = game;
+class InkCloud {
+  game: Game;
+  biomech: BiomechLeviathan;
+  spawnDistance = 300;
+  angle = Math.random() * 2 * Math.PI;
+  x: number;
+  y: number;
+  radius = 10;
+  maxRadius = 200;
+  growthRate = 20;
+  cloudActive = false;
+
+  constructor(biomech: BiomechLeviathan) {
+    this.game = biomech.game;
     this.biomech = biomech;
-    this.spawnDistance = 300;
-    this.angle = Math.random() * 2 * Math.PI;
     this.x = biomech.x + this.spawnDistance * Math.cos(this.angle);
     this.y = biomech.y + this.spawnDistance * Math.sin(this.angle);
-    this.radius = 10;
-    this.maxRadius = 200;
-    this.growthRate = 20;
-    this.cloudActive = false;
+  }
+}
+
+/*class InkCloud {
+  constructor(game, biomech) {
     this.cloudX = 0;
     this.cloudY = 0;
     this.cloudRadius = 0;
