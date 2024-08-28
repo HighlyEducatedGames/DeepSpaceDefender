@@ -1,20 +1,22 @@
 import Explosion from '../effects/Explosion.js';
+import { FriendlyProjectile, Particle, Projectile } from '../GameObject';
 
 export default class Flame {
+  game: Game;
   active = false;
   particlesPerTick = 1;
-  sound = document.getElementById('flame_sound');
+  sound: HTMLAudioElement;
 
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
+  constructor(game: Game) {
     this.game = game;
+    this.sound = this.game.getAudio('flame_sound');
   }
 
   update() {
     if (this.active) {
       if (this.sound.paused) {
         this.sound.loop = true;
-        this.sound.play();
+        this.sound.play().catch(() => {});
       }
       this.createParticles();
     } else {
@@ -27,22 +29,26 @@ export default class Flame {
 
   createParticles() {
     for (let i = 0; i < this.particlesPerTick; i++) {
-      this.game.particles.push(new FlameParticle(this.game));
+      this.game.projectiles.push(new FlameParticle(this.game));
     }
   }
 }
 
-class FlameParticle {
+class FlameParticle extends FriendlyProjectile {
+  x: number;
+  y: number;
   radius = Math.random() * 20 + 10;
+  width = this.radius * 2;
+  height = this.radius * 2;
+  damage = 1;
+  speed = 0;
   color = `rgba(${255}, ${Math.random() * 150}, 0, 1)`;
   alpha = 1;
-  damage = 1;
   tickingDamage = 1;
-  markedForDeletion = false;
+  velocity: { x: number; y: number };
 
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
-    this.game = game;
+  constructor(game: Game) {
+    super(game);
     this.x = this.game.player.x + Math.cos(this.game.player.rotation) * this.game.player.width * 0.5;
     this.y = this.game.player.y + Math.sin(this.game.player.rotation) * this.game.player.height * 0.5;
     this.velocity = {
@@ -51,7 +57,7 @@ class FlameParticle {
     };
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     if (this.alpha > 0) {
       ctx.save();
       ctx.globalAlpha = this.alpha;
@@ -83,27 +89,5 @@ class FlameParticle {
     }
 
     if (this.radius < 0.5 || this.alpha <= 0) this.markedForDeletion = true;
-  }
-
-  checkCollisions() {
-    // Check collision to each enemy
-    this.game.enemies.enemies.forEach((enemy) => {
-      if (this.game.checkCollision(this, enemy)) {
-        enemy.takeDamage(this.damage);
-        if (enemy.markedForDeletion) {
-          this.game.cloneSound(this.game.player.sounds.torchedEnemy);
-          this.game.addScore(enemy.score);
-          this.game.effects.push(new Explosion(this.game, enemy.x, enemy.y, false));
-        }
-      }
-    });
-
-    // Check collision with boss
-    if (this.game.boss) {
-      if (this.game.checkCollision(this, this.game.boss)) {
-        this.game.boss.takeDamage(this.tickingDamage);
-        this.markedForDeletion = true;
-      }
-    }
   }
 }

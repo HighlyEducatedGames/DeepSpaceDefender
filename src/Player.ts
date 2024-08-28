@@ -2,7 +2,7 @@ import { PlayerProjectile, ChargedProjectile } from './projectiles/PlayerProject
 import Bomb from './projectiles/Bomb';
 import Missile from './projectiles/Missile';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
-import Flame from './projectiles/Flame.js';
+import Flame from './projectiles/Flame';
 import Laser from './projectiles/Laser.js';
 import ParticleBomb from './projectiles/ParticleBomb.js';
 import AbilityTimer from './AbilityTimer';

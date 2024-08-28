@@ -1,4 +1,4 @@
-import BossExplosion from '../effects/BossExplosion.js';
+import BossExplosion from '../effects/BossExplosion';
 import Explosion from '../effects/Explosion.js';
 
 export default class BiomechLeviathan {
