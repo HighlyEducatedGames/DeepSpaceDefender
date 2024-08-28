@@ -1,24 +1,28 @@
-export default class Missile {
+import { FriendlyProjectile, GameObject } from '../GameObject';
+
+export default class Missile extends FriendlyProjectile {
+  target: GameObject;
+  x: number;
+  y: number;
   width = 20;
   height = 20;
+  radius = this.width * 0.5;
+  damage = 50;
+  speed = 300;
   directionX = 0;
   directionY = 0;
-  speed = 300;
-  damage = 50;
   maxDistance = 3000;
-  markedForDeletion = false;
-  image = document.getElementById('missile_image');
-  sound = document.getElementById('missile_sound');
+  image = this.game.getImage('missile_image');
+  sound = this.game.getAudio('missile_sound');
 
-  constructor(game, target) {
-    /** @type {import('../Game.js').default} */
-    this.game = game;
+  constructor(game: Game, target: GameObject) {
+    super(game);
     this.target = target;
     this.x = this.game.player.x;
     this.y = this.game.player.y;
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     ctx.save();
     ctx.translate(this.x, this.y);
     const angleToTarget = Math.atan2(this.target.y - this.y, this.target.x - this.x);
@@ -35,22 +39,13 @@ export default class Missile {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     if (this.target) {
       // Move the missile towards the target
       const angleToTarget = Math.atan2(this.target.y - this.y, this.target.x - this.x);
       this.x += (Math.cos(angleToTarget) * this.speed * deltaTime) / 1000 || 0;
       this.y += (Math.sin(angleToTarget) * this.speed * deltaTime) / 1000 || 0;
     } else {
-      this.markedForDeletion = true;
-    }
-  }
-
-  checkCollisions() {
-    // Check for collision with target
-    if (this.game.checkCollision(this, this.target)) {
-      this.target.takeDamage(this.damage);
-      this.game.playCollision();
       this.markedForDeletion = true;
     }
   }

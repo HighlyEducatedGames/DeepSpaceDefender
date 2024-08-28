@@ -1,6 +1,6 @@
 import { PlayerProjectile, ChargedProjectile } from './projectiles/PlayerProjectile.js';
-import Bomb from './projectiles/Bomb.js';
-import Missile from './projectiles/Missile.js';
+import Bomb from './projectiles/Bomb';
+import Missile from './projectiles/Missile';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import Flame from './projectiles/Flame.js';
 import Laser from './projectiles/Laser.js';
@@ -158,7 +158,7 @@ export default class Player extends GameObject {
     if (this.game.debug) {
       ctx.strokeStyle = 'white';
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
@@ -368,19 +368,20 @@ export default class Player extends GameObject {
 
   handleActionMissile() {
     if (this.missiles <= 0) return;
-    const enemies = this.game.enemies.enemies.slice();
     this.missiles--;
     if (!this.game.boss) {
-      for (let i = 0; i < 3 && enemies.length > 0; i++) {
-        // Ensure we don't exceed the number of enemies
-        const randomIndex = Math.floor(Math.random() * enemies.length);
-        const target = enemies[randomIndex];
+      const enemies = this.game.enemies.enemies
+        .slice()
+        .sort((a, b) => this.getDistanceToPlayer(a) - this.getDistanceToPlayer(b));
+
+      // Launch missiles at the 3 closest enemies
+      for (let i = 0; i < 3 && i < enemies.length; i++) {
+        const target = enemies[i];
         if (target) {
           const missile = new Missile(this.game, target);
           // Only play the missile sound on the first spawned missile
-          // if (i === 0) this.game.cloneSound(missile.sound); // TODO
-          // this.game.projectiles.push(missile); // TODO
-          enemies.splice(randomIndex, 1); // Remove the selected enemy from the array
+          if (i === 0) this.game.cloneSound(missile.sound);
+          this.game.projectiles.push(missile);
         }
       }
     } else {

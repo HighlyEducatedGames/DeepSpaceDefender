@@ -56,9 +56,16 @@ export abstract class EnemyProjectile extends Projectile {
 
   checkCollisions() {
     // Check collision to player
-    // if (this.game.checkCollision(this, this.game.player)) {
-    // this.game.player.takeDamage(this.damage); // TODO
-    // this.markedForDeletion = true;
-    // }
+    if (this.game.checkCollision(this, this.game.player)) {
+      this.game.player.takeDamage(this.damage);
+      this.markedForDeletion = true;
+    }
+
+    // Check collision to bomb
+    if (this.game.player.bomb) {
+      if (this.game.checkCollision(this, this.game.player.bomb)) {
+        this.markedForDeletion = true;
+      }
+    }
   }
 }

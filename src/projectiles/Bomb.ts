@@ -1,26 +1,31 @@
-export default class Bomb {
+import { EnemyProjectile, FriendlyProjectile } from '../GameObject';
+
+export default class Bomb extends FriendlyProjectile {
+  x: number;
+  y: number;
+  width = 0;
+  height = 0;
   radius = 300;
   damage = 150;
+  speed = 0;
   timer = 0;
   duration = 1000;
   flashTimer = 0;
   flashPeriod = 200;
   flashDuration = 100;
   hitBoss = false;
-  markedForDeletion = false;
-  sound = document.getElementById('bomb_sound');
+  sound = this.game.getAudio('bomb_sound');
 
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
-    this.game = game;
+  constructor(game: Game) {
+    super(game);
     this.x = this.game.player.x;
     this.y = this.game.player.y;
 
     // Play bomb sound as soon as it is spawned
-    this.sound.play();
+    this.sound.play().catch(() => {});
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     if (this.flashTimer < this.flashDuration) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.beginPath();
@@ -37,7 +42,7 @@ export default class Bomb {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     if (this.timer >= this.duration) {
       this.timer = 0;
       this.markedForDeletion = true;
@@ -55,22 +60,5 @@ export default class Bomb {
     // Follow the player
     this.x = this.game.player.x;
     this.y = this.game.player.y;
-  }
-
-  checkCollisions() {
-    // Check Enemies
-    this.game.enemies.enemies.forEach((enemy) => {
-      if (this.game.checkCollision(this, enemy)) {
-        enemy.takeDamage(this.damage);
-      }
-    });
-
-    // Check boss
-    if (this.game.boss && !this.hitBoss) {
-      if (this.game.checkCollision(this, this.game.boss)) {
-        this.hitBoss = true;
-        this.game.boss.takeDamage(this.damage);
-      }
-    }
   }
 }
