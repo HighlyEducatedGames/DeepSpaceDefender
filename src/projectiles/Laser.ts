@@ -18,7 +18,7 @@ export default class Laser {
     this.sounds = {
       hit: this.game.getAudio('laser_hit_sound'),
       fire: this.game.getAudio('laser_fire_sound'),
-      charge: this.game.getAudio('laser_charge_sound'),
+      charge: this.game.getAudio('laser_charging_sound'),
     };
   }
 
