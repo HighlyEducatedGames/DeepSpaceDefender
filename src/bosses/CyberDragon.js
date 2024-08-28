@@ -1,4 +1,3 @@
-import { getOffScreenRandomSide } from '../utilities.js';
 import Asteroid from '../projectiles/Asteroid.js';
 import Explosion from '../effects/Explosion.js';
 
@@ -49,8 +48,9 @@ export default class CyberDragon {
       laserCharging: document.getElementById('laser_charging_sound'),
       spiralShot: document.getElementById('spiral_shot_sound'),
     };
+    this.music = null;
 
-    getOffScreenRandomSide(this, 20);
+    this.game.getOffScreenRandomSide(this, 20);
   }
 
   draw(ctx) {

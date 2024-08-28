@@ -1,6 +1,5 @@
 import BossExplosion from '../effects/BossExplosion.js';
 import Explosion from '../effects/Explosion.js';
-import { getOffScreenRandomSide } from '../utilities.js';
 
 export default class BiomechLeviathan {
   constructor(game) {
@@ -45,7 +44,7 @@ export default class BiomechLeviathan {
     };
     this.music = document.getElementById('boss_music');
 
-    getOffScreenRandomSide(this, 100);
+    this.game.getOffScreenRandomSide(this, 100);
   }
 
   draw(ctx) {

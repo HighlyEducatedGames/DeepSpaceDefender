@@ -1,4 +1,3 @@
-import { getRandomInterval } from '../utilities.js';
 import { BehaviorTree, SequenceNode, SelectorNode, ActionNode } from './BehaviorTree.js';
 
 class Enemy {
@@ -210,7 +209,7 @@ export class RegularEnemy extends Enemy {
   maxHealth = 10;
   damage = 10;
   score = this.maxHealth;
-  attackInterval = getRandomInterval(3000, 5000);
+  attackInterval = this.game.getRandomInterval(3000, 5000);
   image = document.getElementById('enemy_image');
 
   constructor(game) {
@@ -226,7 +225,7 @@ export class TankEnemy extends Enemy {
   maxHealth = 30;
   damage = 10;
   score = this.maxHealth;
-  attackInterval = getRandomInterval(2000, 3000);
+  attackInterval = this.game.getRandomInterval(2000, 3000);
   image = document.getElementById('tank_enemy_image');
 
   constructor(game) {
@@ -242,7 +241,7 @@ export class StealthEnemy extends Enemy {
   maxHealth = 20;
   damage = 10;
   score = this.maxHealth;
-  attackInterval = getRandomInterval(1000, 2000);
+  attackInterval = this.game.getRandomInterval(1000, 2000);
   image = document.getElementById('stealth_enemy_image');
   // Stealth only properties
   visible = false;

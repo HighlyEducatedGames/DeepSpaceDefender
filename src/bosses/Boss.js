@@ -1,4 +1,3 @@
-import { getOffScreenRandomSide } from '../utilities.js';
 import Explosion from '../effects/Explosion.js';
 import BossExplosion from '../effects/BossExplosion.js';
 
@@ -27,7 +26,7 @@ export default class Boss {
     this.image = document.getElementById('boss_image');
     this.music = document.getElementById('boss_music');
 
-    const { x, y } = getOffScreenRandomSide(this, 20);
+    const { x, y } = this.game.getOffScreenRandomSide(this, 20);
     this.x = x;
     this.y = y;
 

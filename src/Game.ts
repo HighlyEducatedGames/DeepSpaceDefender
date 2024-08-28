@@ -1,4 +1,3 @@
-/* global menuBack */
 import GUI from './GUI.js';
 import Menu from './Menu.js';
 import MusicController from './MusicController.js';
@@ -15,39 +14,48 @@ import CyberDragon from './bosses/CyberDragon.js';
 import { WormholeController } from './hazards/WormholeController.js';
 import { ArrowIndicator } from './HUD.js';
 import InputHandler, { Action } from './InputHandler.js';
+import { GameObject, Projectile } from './GameObject';
 
 export default class Game {
+  canvas: HTMLCanvasElement;
+  width: number;
+  height: number;
+  player: Player;
+  inputs: InputHandler;
+  music: MusicController;
+  menu: Menu;
+  GUI: GUI;
+  powerUps: PowerUpController;
+  enemies: EnemyController;
+  wormholes: WormholeController;
   debug = false;
   topMargin = 90;
-  player = null;
-  projectiles = [];
+  projectiles: Projectile[] = [];
   particles = [];
   effects = [];
   targetFPS = 60;
   targetFrameDuration = 1000 / this.targetFPS;
-  tickMs = null;
+  tickMs = 0;
   numStars = 50;
   parallaxLayers = 3;
-  stars = [];
-  boss = null;
+  stars: Star[] = [];
+  coins: Coin[] = [];
+  boss: Bosses | null = null;
   level = 0;
   score = 0;
   isGameOver = false;
   levelTimer = 0;
   levelDuration = 30000;
+  countdown = 0;
   maxCoins = 5;
-  ally = null;
+  ally: Ally | null = null;
   allySpawnTimer = 0;
   allyInterval = 60000;
-  arrowIndicators = [];
+  arrowIndicators: ArrowIndicator[] = [];
   frame = 0;
   paused = true;
-  images = {
-    title: document.getElementById('title_screen_image'),
-  };
-  sounds = {
-    collision: document.getElementById('collision_sound'),
-  };
+  images = { title: this.getImage('title_screen_image') };
+  sounds = { collision: this.getAudio('collision_sound') };
 
   // DEBUG FLAGS
   doEnemies = true;
@@ -56,10 +64,11 @@ export default class Game {
   doBoss = false;
   doWormholes = false;
 
-  constructor(canvas) {
+  constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.width = this.canvas.width;
     this.height = this.canvas.height;
+    this.player = new Player(this);
     this.inputs = new InputHandler(this);
     this.music = new MusicController(this);
     this.menu = new Menu(this);
@@ -84,7 +93,7 @@ export default class Game {
   }
 
   // Set any properties here that change on a new level
-  startLevel(level) {
+  startLevel(level: number) {
     this.level = level;
     this.levelTimer = 0;
     this.levelDuration = 30000;
@@ -123,68 +132,68 @@ export default class Game {
   }
 
   // Main game loop
-  render(ctx, deltaTime) {
+  render(ctx: CTX, deltaTime: number) {
     this.update(deltaTime);
     this.checkCollisions();
     this.cleanup();
     this.draw(ctx);
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     if (!this.isGameOver) {
       this.levelUpdate(deltaTime);
-      this.player.update(deltaTime);
-      this.stars.forEach((star) => star.update(deltaTime));
-      this.coins.forEach((coin) => coin.update(deltaTime));
+      // this.player.update(deltaTime);
+      // this.stars.forEach((star) => star.update(deltaTime));
+      // this.coins.forEach((coin) => coin.update(deltaTime));
       // HERE
-      this.projectiles.forEach((projectile) => projectile.update(deltaTime));
-      this.particles.forEach((particle) => particle.update(deltaTime));
-      this.wormholes.update(deltaTime);
-      if (this.boss) this.boss.update(deltaTime);
-      this.enemies.update(deltaTime);
-      this.effects.forEach((effect) => effect.update(deltaTime));
-      this.powerUps.update(deltaTime);
-      if (this.ally) this.ally.update(deltaTime);
-      this.arrowIndicators.forEach((arrow) => arrow.update(deltaTime));
+      // this.projectiles.forEach((projectile) => projectile.update(deltaTime));
+      // this.particles.forEach((particle) => particle.update(deltaTime));
+      // this.wormholes.update(deltaTime);
+      // if (this.boss) this.boss.update(deltaTime);
+      // this.enemies.update(deltaTime);
+      // this.effects.forEach((effect) => effect.update(deltaTime));
+      // this.powerUps.update(deltaTime);
+      // if (this.ally) this.ally.update(deltaTime);
+      // this.arrowIndicators.forEach((arrow) => arrow.update(deltaTime));
     }
   }
 
   checkCollisions() {
-    this.coins.forEach((coin) => coin.checkCollisions());
-    this.player.checkCollisions();
-    this.projectiles.forEach((projectile) => projectile.checkCollisions());
-    this.particles.forEach((particle) => particle.checkCollisions());
-    this.powerUps.powerUps.forEach((powerUp) => powerUp.checkCollisions());
+    // this.coins.forEach((coin) => coin.checkCollisions());
+    // this.player.checkCollisions();
+    // this.projectiles.forEach((projectile) => projectile.checkCollisions());
+    // this.particles.forEach((particle) => particle.checkCollisions());
+    // this.powerUps.powerUps.forEach((powerUp) => powerUp.checkCollisions());
   }
 
   cleanup() {
-    this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
+    // this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
     // HERE
-    this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
-    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
-    if (this.boss && this.boss.markedForDeletion) this.boss = null;
-    if (this.ally && this.ally.markedForDeletion) {
-      this.ally = null;
-      this.allySpawnTimer = 0;
-    }
-    this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
-    this.arrowIndicators = this.arrowIndicators.filter((arrow) => !arrow.markedForDeletion);
+    // this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
+    // this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
+    // if (this.boss && this.boss.markedForDeletion) this.boss = null;
+    // if (this.ally && this.ally.markedForDeletion) {
+    // this.ally = null;
+    // this.allySpawnTimer = 0;
+    // }
+    // this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
+    // this.arrowIndicators = this.arrowIndicators.filter((arrow) => !arrow.markedForDeletion);
   }
 
-  draw(ctx) {
-    this.stars.forEach((star) => star.draw(ctx));
-    this.projectiles.forEach((projectile) => projectile.draw(ctx));
-    this.particles.forEach((particle) => particle.draw(ctx));
-    this.coins.forEach((coin) => coin.draw(ctx));
-    this.wormholes.draw(ctx);
-    if (this.boss) this.boss.draw(ctx);
-    this.enemies.draw(ctx);
-    this.effects.forEach((effect) => effect.draw(ctx));
-    this.powerUps.draw(ctx);
-    if (this.ally) this.ally.draw(ctx);
-    this.arrowIndicators.forEach((arrow) => arrow.draw(ctx));
-    this.player.draw(ctx);
-    this.GUI.draw(ctx);
+  draw(ctx: CTX) {
+    // this.stars.forEach((star) => star.draw(ctx));
+    // this.projectiles.forEach((projectile) => projectile.draw(ctx));
+    // this.particles.forEach((particle) => particle.draw(ctx));
+    // this.coins.forEach((coin) => coin.draw(ctx));
+    // this.wormholes.draw(ctx);
+    // if (this.boss) this.boss.draw(ctx);
+    // this.enemies.draw(ctx);
+    // this.effects.forEach((effect) => effect.draw(ctx));
+    // this.powerUps.draw(ctx);
+    // if (this.ally) this.ally.draw(ctx);
+    // this.arrowIndicators.forEach((arrow) => arrow.draw(ctx));
+    // this.player.draw(ctx);
+    // this.GUI.draw(ctx);
 
     // Game over text
     if (this.isGameOver) {
@@ -237,34 +246,7 @@ export default class Game {
     }
   }
 
-  crateStars() {
-    this.stars = [];
-    for (let i = 0; i < this.numStars; i++) {
-      this.stars.push(new Star(this));
-    }
-  }
-
-  checkCollision(object1, object2) {
-    const dx = object1.x - object2.x;
-    const dy = object1.y - object2.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < (object1.radius || object1.width * 0.5) + (object2.radius || object2.width * 0.5);
-  }
-
-  gameOver() {
-    this.isGameOver = true;
-    this.music.setTrack(this.music.tracks.gameOver);
-  }
-
-  nextLevel() {
-    this.startLevel(this.level + 1);
-  }
-
-  prevLevel() {
-    if (this.level > 1) this.startLevel(this.level - 1);
-  }
-
-  levelUpdate(deltaTime) {
+  levelUpdate(deltaTime: number) {
     if (!this.boss) {
       // Countdown if not a boss level
       this.levelTimer += deltaTime;
@@ -293,12 +275,39 @@ export default class Game {
     }
   }
 
+  crateStars() {
+    this.stars = [];
+    for (let i = 0; i < this.numStars; i++) {
+      this.stars.push(new Star(this));
+    }
+  }
+
+  checkCollision(object1: GameObject, object2: GameObject) {
+    const dx = object1.x - object2.x;
+    const dy = object1.y - object2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < object1.radius + object2.radius;
+  }
+
+  gameOver() {
+    this.isGameOver = true;
+    this.music.setTrack(this.music.tracks.gameOver);
+  }
+
+  nextLevel() {
+    this.startLevel(this.level + 1);
+  }
+
+  prevLevel() {
+    if (this.level > 1) this.startLevel(this.level - 1);
+  }
+
   spawnAlly() {
     if (this.doAlly && !this.ally) this.ally = new Ally(this);
   }
 
-  outOfBounds(object, extraMargin = 0) {
-    const radius = (object.radius || object.width * 0.5) + extraMargin;
+  outOfBounds(object: GameObject, extraMargin = 0) {
+    const radius = object.radius + extraMargin;
     return (
       object.x + radius < 0 ||
       object.x - radius > this.width ||
@@ -307,8 +316,7 @@ export default class Game {
     );
   }
 
-  addScore(score) {
-    if (typeof score !== 'number' || score === Infinity) return;
+  addScore(score: number) {
     this.score += score;
   }
 
@@ -316,18 +324,66 @@ export default class Game {
     this.cloneSound(this.sounds.collision);
   }
 
-  cloneSound(sound) {
-    if (!(sound instanceof Audio)) return;
-    const clone = sound.cloneNode();
+  cloneSound(sound: HTMLAudioElement) {
+    if (!sound.src) return;
+    const clone = sound.cloneNode() as HTMLAudioElement;
     clone.volume = this.music.fxVol;
-    clone.play();
+    clone.play().catch(() => {});
   }
 
   getRandomY(margin = 0) {
     return Math.random() * (this.height - this.topMargin - margin * 2) + this.topMargin + margin;
   }
 
-  addArrowIndicator(target) {
+  addArrowIndicator(target: GameObject) {
     this.arrowIndicators.push(new ArrowIndicator(this, target));
+  }
+
+  getRandomDirection() {
+    const directions = ['right', 'down', 'left', 'up'];
+    return directions[Math.floor(Math.random() * directions.length)];
+  }
+
+  getRandomInterval(min: number, max: number) {
+    return Math.random() * (max - min) + min;
+  }
+
+  getOffScreenRandomSide(object: GameObject, extraMargin = 0) {
+    const side = Math.floor(Math.random() * 4) as 0 | 1 | 2 | 3;
+    let x, y;
+
+    switch (side) {
+      case 0: // left
+        x = -object.width * 0.5 - extraMargin;
+        y = Math.random() * object.game.height;
+        break;
+      case 1: // right
+        x = object.game.width + object.height * 0.5 + extraMargin;
+        y = Math.random() * object.game.height;
+        break;
+      case 2: // top
+        x = Math.random() * object.game.width;
+        y = -object.height * 0.5 - extraMargin;
+        break;
+      case 3: // bottom
+        x = Math.random() * object.game.width;
+        y = object.game.height + object.height * 0.5 + extraMargin;
+        break;
+    }
+    return { x, y, side };
+  }
+
+  getImage(id: string): HTMLImageElement {
+    const element = document.getElementById(id);
+    if (element && element instanceof HTMLImageElement) return element;
+    console.warn(`Missing image with the id of '${id}'`);
+    return document.getElementById('404_image') as HTMLImageElement;
+  }
+
+  getAudio(id: string): HTMLAudioElement {
+    const element = document.getElementById(id);
+    if (element && element instanceof HTMLAudioElement) return element;
+    console.warn(`Missing audio with the id of '${id}'`);
+    return new Audio();
   }
 }

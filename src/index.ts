@@ -1,5 +1,4 @@
-/* global loaded */
-import Game from './Game.js';
+import Game from './Game';
 
 // Show the loading page for a period of time before initializing the game
 // Either all the assets load in this time, and we wait out the duration, or the loading time is longer and we switch once ready
@@ -14,8 +13,8 @@ window.addEventListener('load', () => {
 });
 
 function initGame() {
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
+  const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d') as CTX;
   canvas.width = 1280;
   canvas.height = 720;
 
@@ -52,7 +51,7 @@ function initGame() {
   animate();
 }
 
-function updateGame(game, ctx, deltaTime) {
+function updateGame(game: Game, ctx: CTX, deltaTime: number) {
   // Update current user inputs
   game.inputs.update(deltaTime);
   game.handleGameControls();
@@ -67,7 +66,7 @@ function updateGame(game, ctx, deltaTime) {
   if (game.debug) game.GUI.drawDebug(ctx);
 }
 
-function drawPausedScreen(game, ctx) {
+function drawPausedScreen(game: Game, ctx: CTX) {
   ctx.drawImage(game.images.title, 0, 0, game.width, game.height);
 
   if (game.frame > 0) {

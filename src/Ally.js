@@ -1,5 +1,3 @@
-import { getOffScreenRandomSide } from './utilities.js';
-
 export default class Ally {
   x = null;
   y = null;
@@ -44,7 +42,7 @@ export default class Ally {
     this.game = game;
 
     // Get spawning location and side
-    const { x, y, side } = getOffScreenRandomSide(this);
+    const { x, y, side } = this.game.getOffScreenRandomSide(this);
     this.x = x;
     this.y = y;
     this.enteringSide = side;

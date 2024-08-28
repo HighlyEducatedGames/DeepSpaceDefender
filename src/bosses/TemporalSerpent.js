@@ -1,4 +1,3 @@
-import { getRandomDirection, getOffScreenRandomSide } from '../utilities.js';
 
 export default class TemporalSerpent {
   constructor(game) {
@@ -19,7 +18,7 @@ export default class TemporalSerpent {
     this.segmentAddInterval = 200;
     this.lastSegmentAddTime = 0;
     this.lastBombDamageTime = 0;
-    this.direction = getRandomDirection();
+    this.direction = this.game.getRandomDirection();
     this.projectileCollisionRadius = 100;
     this.playerCollisionRadius = 120;
     this.maxSegments = 3000;
@@ -41,8 +40,9 @@ export default class TemporalSerpent {
     this.sounds = {
       hazard: document.getElementById('hazard_sound'),
     };
+    this.music = null;
 
-    getOffScreenRandomSide(this, 100);
+    this.game.getOffScreenRandomSide(this, 100);
   }
 
   draw(ctx) {

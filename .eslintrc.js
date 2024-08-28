@@ -2,16 +2,16 @@ module.exports = {
   env: {
     node: true,
     browser: true,
-    es2021: true,
   },
-  extends: ['eslint:recommended', 'plugin:prettier/recommended'],
+  parser: '@typescript-eslint/parser',
+  extends: ['plugin:prettier/recommended'],
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
   plugins: ['prettier'],
   rules: {
-    'no-console': 'warn',
+    'no-console': ['warn', { allow: ['warn'] }], // Allow console.warn
     'no-global-assign': 'warn',
     'prettier/prettier': [
       'error',
