@@ -1,25 +1,29 @@
-export default class Asteroid {
+import { EnemyProjectile } from '../GameObject.js';
+
+export default class Asteroid extends EnemyProjectile {
   sizes = [
     { width: 75, height: 75 },
     { width: 50, height: 50 },
     { width: 30, height: 30 },
   ];
+  x: number;
   y = -this.sizes[0].height;
   size = this.sizes[Math.floor(Math.random() * this.sizes.length)];
   width = this.size.width;
+  radius = this.width * 0.5;
   height = this.size.height;
   damage = 10;
   speed = 200;
   markedForDeletion = false;
-  image = document.getElementById('asteroid_image');
+  image: HTMLImageElement;
 
-  constructor(game) {
-    /** @type {import('../Game.ts').default} */
-    this.game = game;
+  constructor(game: Game) {
+    super(game);
     this.x = Math.random() * this.game.width;
+    this.image = this.game.getImage('asteroid_image');
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     // Tail
     const tailLength = 5;
     const tailOpacity = 0.1;
@@ -42,37 +46,11 @@ export default class Asteroid {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     // Movement
     this.y += (this.speed * deltaTime) / 1000;
 
     // Remove asteroids that go off-screen
     if (this.y + this.height * 0.5 > this.game.height + 100) this.markedForDeletion = true;
-  }
-
-  checkCollisions() {
-    // Check collision with player
-    if (this.game.checkCollision(this.game.player, this)) {
-      this.game.player.sounds.collision.cloneNode().play();
-      this.game.player.takeDamage(this.damage);
-      this.markedForDeletion = true;
-    }
-
-    // Check player projectiles to asteroid
-    this.game.player.projectiles.forEach((projectile) => {
-      if (this.game.checkCollision(projectile, this)) {
-        this.markedForDeletion = true;
-        projectile.markedForDeletion = true;
-        // this.game.player.sounds.collision.cloneNode().play(); // TODO sounds here?
-        // TODO make larger, charged projectiles, pass through enemy projectiles
-        // TODO: Maybe not with asteroids
-      }
-    });
-
-    // Check collision with bomb
-    const bomb = this.game.player.bomb;
-    if (bomb) {
-      if (this.game.checkCollision(bomb, this)) this.markedForDeletion = true;
-    }
   }
 }

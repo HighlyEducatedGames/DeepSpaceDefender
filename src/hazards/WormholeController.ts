@@ -1,31 +1,37 @@
-export class WormholeController {
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
+import { GameObject } from '../GameObject';
+
+export default class WormholeController {
+  game: Game;
+  wormholes: Wormhole[] = [];
+  spawnTimer = 0;
+  spawnInterval = 20000;
+
+  constructor(game: Game) {
     this.game = game;
-    this.wormholes = [];
-    this.spawnTime = 0;
-    this.spawnInterval = 20000;
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     this.wormholes.forEach((wormhole) => wormhole.draw(ctx));
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     if (!this.game.doWormholes) return;
 
-    this.spawnTime += deltaTime;
-    if (this.spawnTime > this.spawnInterval) {
-      this.spawnTime = 0;
+    this.spawnTimer += deltaTime;
+    if (this.spawnTimer > this.spawnInterval) {
+      this.spawnTimer = 0;
       this.spawn();
     }
 
     this.wormholes.forEach((wormhole) => wormhole.update(deltaTime));
+  }
+
+  cleanup() {
     this.wormholes = this.wormholes.filter((wormhole) => !wormhole.markedForDeletion);
   }
 
   spawn() {
-    // if (this.game.level < 8) return; // TODO
+    if (this.game.level < 8) return;
     if (this.isActive()) return;
     this.wormholes.push(new Wormhole(this.game, [0, 0, 255], [255, 0, 0]));
     this.wormholes.push(new Wormhole(this.game, [0, 0, 255], [255, 0, 0]));
@@ -37,7 +43,7 @@ export class WormholeController {
 
   reset() {
     this.wormholes = [];
-    this.spawnTime = 0;
+    this.spawnTimer = 0;
   }
 
   init() {
@@ -45,23 +51,26 @@ export class WormholeController {
   }
 }
 
-export default class Wormhole {
-  constructor(game, color1, color2) {
+class Wormhole {
+  game: Game;
+  entry = { x: 0, y: 0, opacity: 0 };
+  exit = { x: 0, y: 0, opacity: 0 };
+  radius = 37.5;
+  lifetime = 10000;
+  fadeDuration = 2000;
+  teleportCooldown = 1000;
+  playerLastTeleportTime = 0;
+  lastEnemyTeleportTimes = new Map();
+  margin = 50;
+  color1: number[];
+  color2: number[];
+  quadrants: { xMin: number; yMin: number; xMax: number; yMax: number }[] = [];
+  markedForDeletion = false;
+
+  constructor(game: Game, color1: number[], color2: number[]) {
     this.game = game;
-    this.markedForDeletion = false;
-    this.entry = null;
-    this.exit = null;
-    this.radius = 37.5;
-    this.lifetime = 10000;
-    this.fadeDuration = 2000;
-    this.teleportCooldown = 1000;
-    this.playerLastTeleportTime = 0;
-    this.lastEnemyTeleportTimes = new Map();
-    this.margin = 50;
     this.color1 = color1;
     this.color2 = color2;
-    this.markedForDeletion = false;
-    this.quadrants = [];
 
     this.getLocations();
   }
@@ -119,10 +128,8 @@ export default class Wormhole {
     };
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     ctx.save();
-
-    this.setOpacity(this.color1);
 
     // Draw entry wormhole with gradient and opacity
     const entryGradient = ctx.createRadialGradient(
@@ -203,12 +210,12 @@ export default class Wormhole {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     this.lifetime -= deltaTime;
     if (this.lifetime <= 0) this.markedForDeletion = true;
   }
 
-  setOpacity(numbers, opacity) {
+  setOpacity(numbers: number[], opacity: number) {
     numbers[3] = opacity;
     const [r, g, b, a] = numbers;
     return `rgba(${r}, ${g}, ${b}, ${a})`;

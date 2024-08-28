@@ -11,7 +11,7 @@ import Boss from './bosses/Boss';
 import BiomechLeviathan from './bosses/BiomechLeviathan';
 // import TemporalSerpent from './bosses/TemporalSerpent.js';
 // import CyberDragon from './bosses/CyberDragon.js';
-import { WormholeController } from './hazards/WormholeController.js';
+import WormholeController from './hazards/WormholeController';
 import InputHandler, { Action } from './InputHandler';
 import { Effect, GameObject, Particle, Projectile } from './GameObject';
 import { Enemy } from './enemies/BasicEnemies';
