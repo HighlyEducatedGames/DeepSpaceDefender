@@ -1,12 +1,14 @@
 export default class AbilityTimer {
+  game: Game;
+  duration: number;
+  image: HTMLImageElement;
   active = false;
   timer = 0;
 
-  constructor(game, duration, image) {
-    /** @type {import('./Game.js').default} */
+  constructor(game: Game, duration: number, image: string) {
     this.game = game;
     this.duration = duration;
-    this.image = document.getElementById(image);
+    this.image = this.game.getImage(image);
   }
 
   activate() {
@@ -14,7 +16,7 @@ export default class AbilityTimer {
     this.timer = 0;
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     if (this.active) {
       if (this.timer >= this.duration) {
         this.active = false;

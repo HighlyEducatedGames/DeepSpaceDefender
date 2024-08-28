@@ -1,37 +1,43 @@
 import { Action } from './InputHandler';
 
 export default class GUI {
-  images = {
-    bomb: document.getElementById('bomb_powerup_image'),
-    missile: document.getElementById('missile_powerup_image'),
-  };
+  game: Game;
+  images: { [key: string]: HTMLImageElement };
 
-  constructor(game) {
-    /** @type {import('./Game.js').default} */
+  boostBarWidth = 200;
+  boostBarHeight = 20;
+  boostBarX: number;
+  boostBarY = 20;
+
+  healthBarWidth = 200;
+  healthBarHeight = 20;
+  healthBarX: number;
+  healthBarY = this.boostBarY + this.boostBarHeight + 5;
+
+  chargeBarWidth = 200;
+  chargeBarHeight = 20;
+  chargeBarX: number;
+  chargeBarY = 20;
+
+  shieldBarWidth = 200;
+  shieldBarHeight = 20;
+  shieldBarX: number;
+  shieldBarY = this.chargeBarY + this.chargeBarHeight + 5;
+
+  constructor(game: Game) {
     this.game = game;
+    this.images = {
+      bomb: this.game.getImage('bomb_powerup_image'),
+      missile: this.game.getImage('missile_powerup_image'),
+    };
 
-    this.boostBarWidth = 200;
-    this.boostBarHeight = 20;
     this.boostBarX = this.game.width * 0.5 - this.boostBarWidth * 0.5 - 250;
-    this.boostBarY = 20;
-
-    this.healthBarWidth = 200;
-    this.healthBarHeight = 20;
     this.healthBarX = this.boostBarX;
-    this.healthBarY = this.boostBarY + this.boostBarHeight + 5;
-
-    this.chargeBarWidth = 200;
-    this.chargeBarHeight = 20;
     this.chargeBarX = this.game.width * 0.5 - this.chargeBarWidth * 0.5 + 420;
-    this.chargeBarY = 20;
-
-    this.shieldBarWidth = 200;
-    this.shieldBarHeight = 20;
     this.shieldBarX = this.chargeBarX;
-    this.shieldBarY = this.chargeBarY + this.chargeBarHeight + 5;
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     this.drawText(ctx);
     this.drawBoostBar(ctx);
     this.drawHealthBar(ctx);
@@ -41,7 +47,7 @@ export default class GUI {
     this.drawPowerCooldowns(ctx);
   }
 
-  drawText(ctx) {
+  drawText(ctx: CTX) {
     ctx.fillStyle = 'white';
     ctx.font = '15px "Press Start 2P", cursive';
     ctx.fillText('Score: ' + this.game.score, 10, 25);
@@ -58,7 +64,7 @@ export default class GUI {
     ctx.fillText('Shield', this.shieldBarX - ctx.measureText('Shield').width - 10, this.shieldBarY + 15);
   }
 
-  drawBoostBar(ctx) {
+  drawBoostBar(ctx: CTX) {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(this.boostBarX, this.boostBarY, this.boostBarWidth, this.boostBarHeight);
 
@@ -88,7 +94,7 @@ export default class GUI {
     }
   }
 
-  drawHealthBar(ctx) {
+  drawHealthBar(ctx: CTX) {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(this.healthBarX, this.healthBarY, this.healthBarWidth, this.healthBarHeight);
 
@@ -100,7 +106,7 @@ export default class GUI {
     ctx.strokeRect(this.healthBarX, this.healthBarY, this.healthBarWidth, this.healthBarHeight);
   }
 
-  drawChargeBar(ctx) {
+  drawChargeBar(ctx: CTX) {
     const isCharging = this.game.player.isCharging;
     const spacebarHeldTime = this.game.inputs.actions[Action.FIRE].heldDuration;
     const flamethrowerActive = false; // TODO get from flamethrower class??
@@ -156,7 +162,7 @@ export default class GUI {
     }
   }
 
-  drawShieldBar(ctx) {
+  drawShieldBar(ctx: CTX) {
     const powerUp = this.game.player.abilities.shield;
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
@@ -177,7 +183,7 @@ export default class GUI {
     ctx.strokeRect(this.shieldBarX, this.shieldBarY, this.shieldBarWidth, this.shieldBarHeight);
   }
 
-  drawInventories(ctx) {
+  drawInventories(ctx: CTX) {
     const livesIconX = this.healthBarX + this.healthBarWidth + 10;
     ctx.drawImage(this.game.player.images.idle, livesIconX, this.healthBarY, 20, 20);
     ctx.fillStyle = 'white';
@@ -193,17 +199,17 @@ export default class GUI {
     ctx.fillStyle = 'white';
     ctx.fillText(colonText, bombIconX + 25, this.chargeBarY + 18);
     ctx.fillStyle = this.game.player.bombs === this.game.player.maxBombs ? fullInventoryColor : 'white';
-    ctx.fillText(this.game.player.bombs, bombIconX + 25 + colonTextWidth, this.chargeBarY + 18);
+    ctx.fillText(this.game.player.bombs.toString(), bombIconX + 25 + colonTextWidth, this.chargeBarY + 18);
 
     const missileIconX = this.shieldBarX + this.shieldBarWidth + 10;
     ctx.drawImage(this.images.missile, missileIconX, this.shieldBarY, 20, 20);
     ctx.fillStyle = 'white';
     ctx.fillText(colonText, missileIconX + 25, this.shieldBarY + 18);
     ctx.fillStyle = this.game.player.missiles === this.game.player.maxMissiles ? fullInventoryColor : 'white';
-    ctx.fillText(this.game.player.missiles, missileIconX + 25 + colonTextWidth, this.shieldBarY + 18);
+    ctx.fillText(this.game.player.missiles.toString(), missileIconX + 25 + colonTextWidth, this.shieldBarY + 18);
   }
 
-  drawPowerCooldowns(ctx) {
+  drawPowerCooldowns(ctx: CTX) {
     const arr = Object.values(this.game.player.abilities);
     const size = 30;
     const startX = this.game.width - size - 10;
@@ -237,7 +243,7 @@ export default class GUI {
     ctx.globalAlpha = 1;
   }
 
-  drawDebug(ctx) {
+  drawDebug(ctx: CTX) {
     ctx.fillStyle = 'white';
     ctx.font = '10px "Press Start 2P", cursive';
     const ms = Math.floor(this.game.tickMs * 10) / 10;

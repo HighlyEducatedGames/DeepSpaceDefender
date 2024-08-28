@@ -1,4 +1,4 @@
-import GUI from './GUI.js';
+import GUI from './GUI';
 import Menu from './Menu.js';
 import MusicController from './MusicController.js';
 import PowerUpController from './powerUps/PowerUpController';
@@ -186,6 +186,7 @@ export default class Game {
     this.powerUps.draw(ctx);
     this.projectiles.forEach((projectile) => projectile.draw(ctx));
     this.player.draw(ctx);
+    this.GUI.draw(ctx);
     // this.particles.forEach((particle) => particle.draw(ctx));
     // this.wormholes.draw(ctx);
     // if (this.boss) this.boss.draw(ctx);
@@ -193,7 +194,6 @@ export default class Game {
     // this.effects.forEach((effect) => effect.draw(ctx));
     // if (this.ally) this.ally.draw(ctx);
     // this.arrowIndicators.forEach((arrow) => arrow.draw(ctx));
-    // this.GUI.draw(ctx);
 
     // Game over text
     if (this.isGameOver) {

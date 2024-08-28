@@ -5,7 +5,7 @@ import BiomechLeviathan from './bosses/BiomechLeviathan.js';
 import Flame from './projectiles/Flame.js';
 import Laser from './projectiles/Laser.js';
 import ParticleBomb from './projectiles/ParticleBomb.js';
-import AbilityTimer from './AbilityTimer.js';
+import AbilityTimer from './AbilityTimer';
 import { Action } from './InputHandler';
 import { GameObject } from './GameObject';
 
