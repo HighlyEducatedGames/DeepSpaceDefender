@@ -12,6 +12,7 @@ export default class BiomechLeviathan extends BossCreature {
   maxHealth = 2000;
   health = this.maxHealth;
   points = this.maxHealth;
+  damage = 10;
   image: HTMLImageElement;
   music: HTMLAudioElement;
   sounds: { [key: string]: HTMLAudioElement };
@@ -31,8 +32,6 @@ export default class BiomechLeviathan extends BossCreature {
   tractorBeam: TractorBeam | null = null;
   tractorBeamTimer = 0;
   tractorBeamCooldown = 5000;
-  collisionTimer = 0;
-  collisionCooldown = 3000;
 
   constructor(game: Game) {
     super(game);
@@ -86,6 +85,8 @@ export default class BiomechLeviathan extends BossCreature {
   }
 
   update(deltaTime: number) {
+    super.update(deltaTime);
+
     const angleToPlayer = this.game.player.getAngleToPlayer(this);
     this.x += (Math.cos(angleToPlayer) * this.speed * deltaTime) / 1000;
     this.y += (Math.sin(angleToPlayer) * this.speed * deltaTime) / 1000;
@@ -127,18 +128,14 @@ export default class BiomechLeviathan extends BossCreature {
     }
   }
 
-  /*checkCollisions(deltaTime: number) {
-    this.lastCollisionTime += deltaTime;
-    if (this.lastCollisionTime >= this.collisionCooldown) {
-      // Collision with player
-      if (this.game.checkCollision(this.game.player, { x: this.x, y: this.y, radius: this.playerCollisionRadius })) {
-        this.game.player.takeDamage(this.damage);
-        this.game.playCollision();
-        this.sounds.eat.play();
-        this.lastCollisionTime = 0;
-      }
+  spawnTractorBeam(deltaTime: number) {
+    if (this.tractorBeam) return;
+    this.tractorBeamTimer += deltaTime;
+    if (this.tractorBeamTimer >= this.tractorBeamCooldown) {
+      this.tractorBeamTimer = 0;
+      this.tractorBeam = new TractorBeam(this);
     }
-  }*/
+  }
 
   /*spawnInkCloud() {
     if (this.inkClouds.length >= 3) return;
@@ -153,13 +150,8 @@ export default class BiomechLeviathan extends BossCreature {
   }
 */
 
-  spawnTractorBeam(deltaTime: number) {
-    if (this.tractorBeam) return;
-    this.tractorBeamTimer += deltaTime;
-    if (this.tractorBeamTimer >= this.tractorBeamCooldown) {
-      this.tractorBeamTimer = 0;
-      this.tractorBeam = new TractorBeam(this);
-    }
+  onPlayerCollision() {
+    this.sounds.eat.play().catch(() => {});
   }
 
   onDeath() {

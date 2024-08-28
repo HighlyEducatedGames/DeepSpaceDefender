@@ -77,6 +77,10 @@ export abstract class BossCreature extends GameObject {
   abstract points: number;
   abstract image: HTMLImageElement;
   abstract music: HTMLAudioElement;
+  abstract damage: number;
+  allowCollision = true;
+  collisionTimer = 0;
+  collisionCooldown = 3000;
 
   constructor(game: Game) {
     super(game);
@@ -94,9 +98,29 @@ export abstract class BossCreature extends GameObject {
 
   abstract onDeath(): void;
 
-  checkCollisions() {
-    // TODO CHECK COLLISIONS TO PLAYER AND TICK DAMAGE OR USE COLLISION COOLDOWN
+  update(deltaTime: number) {
+    if (!this.allowCollision) {
+      this.collisionTimer += deltaTime;
+      if (this.collisionTimer >= this.collisionCooldown) {
+        this.collisionTimer = 0;
+        this.allowCollision = true;
+      }
+    }
   }
+
+  checkCollisions() {
+    // Check collisions with player
+    if (this.allowCollision) {
+      if (this.game.checkCollision(this, this.game.player)) {
+        this.allowCollision = false;
+        this.game.player.takeDamage(this.damage);
+        this.game.playCollision();
+        this.onPlayerCollision();
+      }
+    }
+  }
+
+  abstract onPlayerCollision(): void;
 }
 
 export abstract class Effect {

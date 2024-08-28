@@ -13,6 +13,7 @@ export default class Boss extends BossCreature {
   points = this.maxHealth;
   image: HTMLImageElement;
   music: HTMLAudioElement;
+  damage = 10;
   attackTimer = 0;
   attackInterval = 2000;
   canAttack = false;
@@ -60,6 +61,8 @@ export default class Boss extends BossCreature {
   }
 
   update(deltaTime: number) {
+    super.update(deltaTime);
+
     // Movement
     const distanceToPlayer = this.game.player.getDistanceToPlayer(this);
     // Snap to player if close to avoid bouncing
@@ -146,6 +149,8 @@ export default class Boss extends BossCreature {
       this.game.projectiles.push(new BossProjectile(this, options));
     }
   }
+
+  onPlayerCollision() {}
 
   // Play effects on death
   onDeath() {
