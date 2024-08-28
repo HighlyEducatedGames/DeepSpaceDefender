@@ -4,16 +4,11 @@ export abstract class GameObject {
   abstract y: number;
   abstract width: number;
   abstract height: number;
-  radius = 0;
+  abstract radius: number;
   markedForDeletion = false;
 
   constructor(game: Game) {
     this.game = game;
-    this.init();
-  }
-
-  init() {
-    this.radius = this.width * 0.5;
   }
 
   abstract draw(ctx: CanvasRenderingContext2D): void;

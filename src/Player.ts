@@ -7,10 +7,18 @@ import Laser from './projectiles/Laser.js';
 import ParticleBomb from './projectiles/ParticleBomb.js';
 import AbilityTimer from './AbilityTimer.js';
 import { Action } from './InputHandler.js';
+import { GameObject } from './GameObject';
 
-export default class Player {
+export default class Player extends GameObject {
+  x: number;
+  y: number;
   width = 50;
   height = 50;
+  radius = this.width * 0.5;
+  flame: Flame;
+  laser: Laser;
+  particleBomb: ParticleBomb;
+  abilities: { [key: string]: AbilityTimer };
   offset = 4;
   speed = 200;
   maxSpeed = 300;
@@ -32,29 +40,28 @@ export default class Player {
   boostTimer = 0;
   boostDuration = 500;
   boostCooldownTimer = 0;
-  bomb = null;
+  bomb: Bomb | null = null;
   bombs = 0;
   maxBombs = 20;
   missiles = 0;
   maxMissiles = 20;
   images = {
-    idle: document.getElementById('player_image'),
-    thrust: document.getElementById('player_thrust_image'),
-    reverse: document.getElementById('player_reverse_image'),
+    idle: this.game.getImage('player_image'),
+    thrust: this.game.getImage('player_thrust_image'),
+    reverse: this.game.getImage('player_reverse_image'),
   };
   sounds = {
-    acceleration: document.getElementById('acceleration_sound'),
-    reverse: document.getElementById('reverse_sound'),
-    fire: document.getElementById('fire_sound'),
-    charging: document.getElementById('charging_sound'),
-    torchedEnemy: document.getElementById('torch_sound'),
-    boost: document.getElementById('boost_sound'),
-    lostLife: document.getElementById('lifelost_sound'),
+    acceleration: this.game.getAudio('acceleration_sound'),
+    reverse: this.game.getAudio('reverse_sound'),
+    fire: this.game.getAudio('fire_sound'),
+    charging: this.game.getAudio('charging_sound'),
+    torchedEnemy: this.game.getAudio('torch_sound'),
+    boost: this.game.getAudio('boost_sound'),
+    lostLife: this.game.getAudio('lifelost_sound'),
   };
 
-  constructor(game) {
-    /** @type {import('./Game.js').default} */
-    this.game = game;
+  constructor(game: Game) {
+    super(game);
     this.x = this.game.width * 0.5;
     this.y = this.game.height * 0.5 + this.game.topMargin * 0.5;
     this.flame = new Flame(this.game);
@@ -71,19 +78,19 @@ export default class Player {
     };
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     // Draw player
     const xAdjustPos = Math.cos(this.rotation) * this.offset;
     const yAdjustPos = Math.sin(this.rotation) * this.offset;
 
     let image;
-    if (this.game.inputs.actions[Action.MOVE_FORWARD].isPressed) {
+    /*if (this.game.inputs.actions[Action.MOVE_FORWARD].isPressed) { // TODO
       image = this.images.thrust;
     } else if (this.game.inputs.actions[Action.MOVE_BACKWARD].isPressed) {
       image = this.images.reverse;
-    } else {
-      image = this.images.idle;
-    }
+    } else {*/
+    image = this.images.idle;
+    // }
 
     ctx.save();
     ctx.translate(this.x - xAdjustPos, this.y - yAdjustPos);
@@ -156,7 +163,7 @@ export default class Player {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     const isPressed = this.game.inputs.isPressed.bind(this.game.inputs);
     const justPressed = this.game.inputs.justPressed.bind(this.game.inputs);
     const justReleased = this.game.inputs.justReleased.bind(this.game.inputs);
@@ -175,10 +182,10 @@ export default class Player {
     // Forward and reverse
     if (isPressed(Action.MOVE_FORWARD)) {
       this.thrust = this.acceleration;
-      if (this.sounds.acceleration.paused) this.sounds.acceleration.play();
+      if (this.sounds.acceleration.paused) this.sounds.acceleration.play().catch(() => {});
     } else if (isPressed(Action.MOVE_BACKWARD)) {
       this.thrust = -this.acceleration;
-      if (this.sounds.reverse.paused) this.sounds.reverse.play();
+      if (this.sounds.reverse.paused) this.sounds.reverse.play().catch(() => {});
     } else {
       this.thrust = 0;
     }
@@ -261,10 +268,10 @@ export default class Player {
     }
 
     // Flame
-    this.flame.update(deltaTime);
+    this.flame.update();
 
     // Laser
-    this.laser.update(deltaTime);
+    this.laser.update();
 
     // // Player inputs
     if (!this.game.isGameOver) {
@@ -310,10 +317,10 @@ export default class Player {
     if (this.abilities.flame.active) return;
     if (this.abilities.laser.active) return;
 
-    if (!this.isCharging && this.game.inputs.actions[Action.FIRE].heldDuration >= this.chargingTriggerThreshold) {
-      this.isCharging = true;
-      this.sounds.charging.play();
-    }
+    /*if (!this.isCharging && this.game.inputs.actions[Action.FIRE].heldDuration >= this.chargingTriggerThreshold) {
+      this.isCharging = true; // TODO
+      this.sounds.charging.play().catch(() => {});;
+    }*/
   }
 
   handleActionChargedFire() {
@@ -321,7 +328,7 @@ export default class Player {
     this.isCharging = false;
     this.sounds.charging.pause();
     this.sounds.charging.currentTime = 0;
-    if (this.game.inputs.actions[Action.FIRE].heldDuration >= 1000) this.fireProjectile(true);
+    // if (this.game.inputs.actions[Action.FIRE].heldDuration >= 1000) this.fireProjectile(true);
   }
 
   fireProjectile(charged = false) {
@@ -331,7 +338,7 @@ export default class Player {
     for (let i = 0; i < projectilesToFire; i++) {
       const angle = powers.projectile.active ? (i - 1) * (Math.PI / 18) : 0;
       const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
-      this.game.projectiles.push(projectile);
+      // this.game.projectiles.push(projectile); // TODO
     }
     this.game.cloneSound(this.sounds.fire);
 
@@ -339,7 +346,7 @@ export default class Player {
       for (let i = 0; i < 3; i++) {
         const angle = (i - 1) * (Math.PI / 18) + Math.PI;
         const projectile = charged ? new ChargedProjectile(this.game, angle) : new PlayerProjectile(this.game, angle);
-        this.game.projectiles.push(projectile);
+        // this.game.projectiles.push(projectile); // TODO
       }
     }
   }
@@ -350,7 +357,7 @@ export default class Player {
     this.boostTimer = this.boostDuration;
     // Reduced cooldown if boost power-up is active
     this.boostCooldownTimer = this.abilities.boost.active ? 500 : 7000;
-    this.sounds.boost.play();
+    this.sounds.boost.play().catch(() => {});
   }
 
   handleActionBomb() {
@@ -371,13 +378,13 @@ export default class Player {
         if (target) {
           const missile = new Missile(this.game, target);
           // Only play the missile sound on the first spawned missile
-          if (i === 0) this.game.cloneSound(missile.sound);
-          this.game.projectiles.push(missile);
+          // if (i === 0) this.game.cloneSound(missile.sound); // TODO
+          // this.game.projectiles.push(missile); // TODO
           enemies.splice(randomIndex, 1); // Remove the selected enemy from the array
         }
       }
     } else {
-      this.game.projectiles.push(new Missile(this.game, this.game.boss));
+      // this.game.projectiles.push(new Missile(this.game, this.game.boss)); // TODO
     }
   }
 
@@ -385,7 +392,7 @@ export default class Player {
     return !this.isBoosting && (this.game.inputs.codes.unlimitedBoost.enabled || this.boostCooldownTimer <= 0);
   }
 
-  takeDamage(amount) {
+  takeDamage(amount: number) {
     this.game.inputs.playHaptic(100, 0.25);
     if (this.game.inputs.codes.invincibility.enabled) return;
     if (this.isBoosting) return;
@@ -395,7 +402,7 @@ export default class Player {
     if (this.health <= 0) {
       this.lives--;
       this.health = this.maxHealth;
-      this.sounds.lostLife.play();
+      this.sounds.lostLife.play().catch(() => {});
     }
     if (this.lives < 0) {
       this.health = 0;
@@ -404,32 +411,32 @@ export default class Player {
     }
   }
 
-  addHealth(amount) {
+  addHealth(amount: number) {
     this.health = Math.min(this.health + amount, this.maxHealth);
   }
 
-  addLife(amount) {
+  addLife(amount: number) {
     this.lives = Math.min(this.lives + amount, this.maxLives);
   }
 
-  getAngleToPlayer(object) {
+  getAngleToPlayer(object: GameObject) {
     return Math.atan2(this.y - object.y, this.x - object.x);
   }
 
-  getDistanceToPlayer(object) {
+  getDistanceToPlayer(object: GameObject) {
     return Math.hypot(this.x - object.x, this.y - object.y);
   }
 
-  stopPlayerMovement() {
+  /*stopPlayerMovement() {
     this.velocity = { x: 0, y: 0 };
     this.thrust = 0;
-  }
+  }*/
 
-  addBomb(amount) {
+  addBomb(amount: number) {
     this.bombs = Math.min(this.bombs + amount, this.maxBombs);
   }
 
-  addMissile(amount) {
+  addMissile(amount: number) {
     this.missiles = Math.min(this.missiles + amount, this.maxMissiles);
   }
 }

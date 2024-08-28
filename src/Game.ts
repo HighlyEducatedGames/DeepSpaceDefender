@@ -3,9 +3,9 @@ import Menu from './Menu.js';
 import MusicController from './MusicController.js';
 import PowerUpController from './powerUps/PowerUpController.js';
 import EnemyController from './enemies/EnemyController.js';
-import Player from './Player.js';
-import Coin from './Coin.js';
-import Star from './Star.js';
+import Player from './Player';
+import Coin from './Coin';
+import Star from './Star';
 import Ally from './Ally.js';
 import Boss from './bosses/Boss.js';
 import BiomechLeviathan from './bosses/BiomechLeviathan.js';
@@ -142,10 +142,9 @@ export default class Game {
   update(deltaTime: number) {
     if (!this.isGameOver) {
       this.levelUpdate(deltaTime);
-      // this.player.update(deltaTime);
-      // this.stars.forEach((star) => star.update(deltaTime));
-      // this.coins.forEach((coin) => coin.update(deltaTime));
-      // HERE
+      this.player.update(deltaTime);
+      this.stars.forEach((star) => star.update(deltaTime));
+      this.coins.forEach((coin) => coin.update());
       // this.projectiles.forEach((projectile) => projectile.update(deltaTime));
       // this.particles.forEach((particle) => particle.update(deltaTime));
       // this.wormholes.update(deltaTime);
@@ -159,16 +158,15 @@ export default class Game {
   }
 
   checkCollisions() {
-    // this.coins.forEach((coin) => coin.checkCollisions());
-    // this.player.checkCollisions();
+    this.player.checkCollisions();
+    this.coins.forEach((coin) => coin.checkCollisions());
     // this.projectiles.forEach((projectile) => projectile.checkCollisions());
     // this.particles.forEach((particle) => particle.checkCollisions());
     // this.powerUps.powerUps.forEach((powerUp) => powerUp.checkCollisions());
   }
 
   cleanup() {
-    // this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
-    // HERE
+    this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
     // this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
     // this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
     // if (this.boss && this.boss.markedForDeletion) this.boss = null;
@@ -181,10 +179,11 @@ export default class Game {
   }
 
   draw(ctx: CTX) {
-    // this.stars.forEach((star) => star.draw(ctx));
+    this.stars.forEach((star) => star.draw(ctx));
+    this.coins.forEach((coin) => coin.draw(ctx));
+    this.player.draw(ctx);
     // this.projectiles.forEach((projectile) => projectile.draw(ctx));
     // this.particles.forEach((particle) => particle.draw(ctx));
-    // this.coins.forEach((coin) => coin.draw(ctx));
     // this.wormholes.draw(ctx);
     // if (this.boss) this.boss.draw(ctx);
     // this.enemies.draw(ctx);
@@ -192,7 +191,6 @@ export default class Game {
     // this.powerUps.draw(ctx);
     // if (this.ally) this.ally.draw(ctx);
     // this.arrowIndicators.forEach((arrow) => arrow.draw(ctx));
-    // this.player.draw(ctx);
     // this.GUI.draw(ctx);
 
     // Game over text
