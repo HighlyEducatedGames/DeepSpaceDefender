@@ -1,6 +1,6 @@
 import BossExplosion from '../effects/BossExplosion';
 import Explosion from '../effects/Explosion.js';
-import { BossCreature } from '../GameObject';
+import { BossCreature, Particle } from '../GameObject';
 
 export default class BiomechLeviathan extends BossCreature {
   x: number;
@@ -27,6 +27,7 @@ export default class BiomechLeviathan extends BossCreature {
   healthBarX: number;
   healthBarY: number;
   playerCollisionRadius = 65;
+  empBlast: EmpBlast | null = null;
   empTimer = 0;
   empCooldown = 5000;
   empActive = false;
@@ -71,6 +72,12 @@ export default class BiomechLeviathan extends BossCreature {
     // Tractor Beam
     if (this.tractorBeam) this.tractorBeam.draw(ctx);
 
+    // Ink Clouds
+    this.inkClouds.forEach((cloud) => cloud.draw(ctx));
+
+    // EMP Blast
+    if (this.empBlast) this.empBlast.draw(ctx);
+
     // DEBUG - Hitbox
     if (this.game.debug) {
       ctx.strokeStyle = 'white';
@@ -101,6 +108,12 @@ export default class BiomechLeviathan extends BossCreature {
       this.tractorBeam.update(deltaTime);
       if (this.tractorBeam.markedForDeletion) this.tractorBeam = null;
     }
+
+    // Ink Clouds
+    this.inkClouds.forEach((cloud) => cloud.update(deltaTime));
+
+    // EMP Blast
+    if (this.empBlast) this.empBlast.update();
 
     // Health values to change phases at
     const phases = {
@@ -144,13 +157,12 @@ export default class BiomechLeviathan extends BossCreature {
     this.inkClouds.push(new InkCloud(this));
   }
 
-  /*spawnEmpBlast() {
-    if (this.game.timestamp - this.lastEmpTime < this.empCooldown) return;
+  spawnEmpBlast() {
+    /*  if (this.game.timestamp - this.lastEmpTime < this.empCooldown) return;
     this.empActive = true;
     const empBlast = new EmpBlast(this.game, this);
-    this.lastEmpTime = this.game.timestamp;
+    this.lastEmpTime = this.game.timestamp;*/
   }
-*/
 
   onPlayerCollision() {
     this.sounds.eat.play().catch(() => {});
@@ -217,10 +229,21 @@ class InkCloud {
   angle = Math.random() * 2 * Math.PI;
   x: number;
   y: number;
+  damage = 10;
   radius = 10;
+  initialRadius = this.radius;
   maxRadius = 200;
   growthRate = 20;
+  active = true;
   cloudActive = false;
+  cloudX = 0;
+  cloudY = 0;
+  cloudRadius = 150;
+  cloudTimer = 0;
+  cloudDuration = 5000;
+  lifespan = 5000;
+  timer = 0;
+  markedForDeletion = false;
 
   constructor(biomech: BiomechLeviathan) {
     this.game = biomech.game;
@@ -228,21 +251,8 @@ class InkCloud {
     this.x = biomech.x + this.spawnDistance * Math.cos(this.angle);
     this.y = biomech.y + this.spawnDistance * Math.sin(this.angle);
   }
-}
 
-/*class InkCloud {
-  constructor(game, biomech) {
-    this.cloudX = 0;
-    this.cloudY = 0;
-    this.cloudRadius = 0;
-    this.cloudDuration = 5000;
-    this.cloudStartTime = 0;
-    this.startTime = this.game.timestamp;
-    this.lifespan = 5000;
-    this.markedForDeletion = false;
-  }
-
-  draw(ctx) {
+  draw(ctx: CTX) {
     ctx.fillStyle = 'rgba(128, 128, 128, 0.5)';
     ctx.beginPath();
     let points = 36; // Number of points to define the splat perimeter
@@ -262,109 +272,111 @@ class InkCloud {
     ctx.fill();
 
     if (this.cloudActive) {
-      if (this.cloudActive) {
-        ctx.fillStyle = 'rgba(64, 64, 64, 0.9)'; // Lower opacity for the cloud
-        ctx.beginPath();
-        let points = 36; // Number of points to define the splat perimeter
-        for (let i = 0; i < points; i++) {
-          let angle = (i / points) * 2 * Math.PI;
-          let randomFactor = (Math.random() - 0.5) * 0.2; // Adjust for more or less irregularity
-          let radius = this.cloudRadius + randomFactor * this.cloudRadius;
-          let x = this.cloudX + Math.cos(angle) * radius;
-          let y = this.cloudY + Math.sin(angle) * radius;
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.save();
-        ctx.strokeStyle = 'grey'; // Grey outline
-        ctx.lineWidth = 2; // Thickness of the outline
-        ctx.beginPath();
-        for (let i = 0; i < points; i++) {
-          let angle = (i / points) * 2 * Math.PI;
-          let randomFactor = (Math.random() - 0.5) * 0.2; // Adjust for more or less irregularity
-          let radius = this.cloudRadius + randomFactor * this.cloudRadius;
-          let x = this.cloudX + Math.cos(angle) * radius;
-          let y = this.cloudY + Math.sin(angle) * radius;
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.closePath();
-        ctx.stroke();
-        ctx.restore();
-
-        if (this.game.timestamp > this.cloudStartTime + this.cloudDuration) {
-          this.cloudActive = false;
+      ctx.fillStyle = 'rgba(64, 64, 64, 0.9)'; // Lower opacity for the cloud
+      ctx.beginPath();
+      let points = 36; // Number of points to define the splat perimeter
+      for (let i = 0; i < points; i++) {
+        let angle = (i / points) * 2 * Math.PI;
+        let randomFactor = (Math.random() - 0.5) * 0.2; // Adjust for more or less irregularity
+        let radius = this.cloudRadius + randomFactor * this.cloudRadius;
+        let x = this.cloudX + Math.cos(angle) * radius;
+        let y = this.cloudY + Math.sin(angle) * radius;
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
         }
       }
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.save();
+      ctx.strokeStyle = 'grey'; // Grey outline
+      ctx.lineWidth = 2; // Thickness of the outline
+      ctx.beginPath();
+      for (let i = 0; i < points; i++) {
+        let angle = (i / points) * 2 * Math.PI;
+        let randomFactor = (Math.random() - 0.5) * 0.2; // Adjust for more or less irregularity
+        let radius = this.cloudRadius + randomFactor * this.cloudRadius;
+        let x = this.cloudX + Math.cos(angle) * radius;
+        let y = this.cloudY + Math.sin(angle) * radius;
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
     }
   }
 
-  update() {
+  update(deltaTime: number) {
     // Grow the ink blob
-    const elapsedTime = (this.game.timestamp - this.startTime) / 1000;
+    this.timer += deltaTime;
+    const elapsedTime = this.timer / 1000;
     this.radius = Math.min(this.initialRadius + this.growthRate * elapsedTime, this.maxRadius);
 
+    // Cloud Timer
+    if (this.cloudActive) {
+      this.cloudTimer += deltaTime;
+      if (this.cloudTimer >= this.cloudDuration) {
+        this.cloudActive = false; // TODO mark anything for deletion??
+      }
+    }
+
+    if (this.timer >= this.lifespan) {
+      this.markedForDeletion = true;
+    }
+  }
+
+  checkCollisions() {
+    // Check collision to the player
     // Check if ink blob hits the player
     const dx = this.x - this.game.player.x;
     const dy = this.y - this.game.player.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance < this.radius + this.game.player.width / 2) {
-      // Ink blob hits the player
-      this.cloudActive = true;
-      this.cloudX = this.game.player.x;
-      this.cloudY = this.game.player.y;
-      this.cloudRadius = 150; // Radius of the cloud obscuring vision
-      this.cloudStartTime = this.game.timestamp;
-      this.active = false;
-      if (!this.game.player.shieldActive) {
-        // Check if the shield is not active
-        this.game.player.takeDamage(10);
-      }
+    if (distance < this.radius + this.game.player.radius) this.onPlayerCollision();
+  }
 
-      this.biomech.sounds.splat.cloneNode().play();
-    } else if (this.game.timestamp - this.startTime > this.lifespan) {
-      // Remove ink cloud if it exceeds its lifespan
-      this.markedForDeletion = true;
-    }
+  onPlayerCollision() {
+    this.cloudActive = true;
+    this.cloudX = this.game.player.x;
+    this.cloudY = this.game.player.y;
+    this.cloudTimer = 0;
+    this.active = false;
+
+    this.game.player.takeDamage(this.damage);
+    this.biomech.sounds.splat.play().catch(() => {});
   }
 }
 
 class EmpBlast {
-  constructor(game, biomech) {
-    this.game = game;
+  game: Game;
+  biomech: BiomechLeviathan;
+  x: number;
+  y: number;
+  radius = 200;
+  timer = 0;
+  duration = 2000;
+  pulseTime = 0;
+  pulseScale = 0;
+  sparkFrequency = 0.5;
+
+  constructor(biomech: BiomechLeviathan) {
+    this.game = biomech.game;
     this.biomech = biomech;
-    this.particles = [];
     this.x = this.biomech.x;
     this.y = this.biomech.y;
-    this.radius = 200;
-    this.duration = 2000;
-    this.endTime = this.game.timestamp + this.duration;
-    this.pulseTime = 0;
-    this.pulseScale = 0;
-    this.sparkFrequency = 0.5;
-
-    this.biomech.empActive = true;
-    // TODO: empDisableFire = true;
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     // Blast
     ctx.fillStyle = 'rgba(0, 0, 255, 0.3)';
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius * this.pulseScale, 0, 2 * Math.PI);
     ctx.fill();
-
-    // Particles
-    this.particles.forEach((particle) => particle.draw(ctx));
   }
 
   update() {
@@ -373,21 +385,12 @@ class EmpBlast {
 
     // Generate spark particles
     if (Math.random() < this.sparkFrequency) {
-      this.particles.push(new EmpSparkParticle(this.game, this.x, this.y));
+      this.game.particles.push(new EmpSparkParticle(this.game, this.x, this.y));
     }
 
-    this.particles.forEach((particle, index) => {
-      if (particle.markedForDeletion) this.particles.splice(index, 1);
-    });
-    this.particles.forEach((particle) => particle.update());
-
-    this.checkCollisions();
-
     // Update the EMP blast's position to follow the biomech Leviathan
-    // if (biomechLeviathan) {
-    //   empBlast.x = biomechLeviathan.x;
-    //   empBlast.y = biomechLeviathan.y;
-    // }
+    this.x = this.biomech.x;
+    this.y = this.biomech.y;
 
     // Re-enable player controls after the EMP blast ends
     // setTimeout(() => {
@@ -408,22 +411,24 @@ class EmpBlast {
   }
 }
 
-class EmpSparkParticle {
-  constructor(game, x, y) {
-    this.game = game;
+class EmpSparkParticle extends Particle {
+  x: number;
+  y: number;
+  size = Math.random() * 5 + 2;
+  color = `rgba(0, 255, 255, ${Math.random() * 0.5 + 0.5})`;
+  velocity = {
+    x: (Math.random() - 0.5) * 10,
+    y: (Math.random() - 0.5) * 10,
+  };
+  alpha = 1;
+
+  constructor(game: Game, x: number, y: number) {
+    super(game);
     this.x = x;
     this.y = y;
-    this.size = Math.random() * 5 + 2;
-    this.color = `rgba(0, 255, 255, ${Math.random() * 0.5 + 0.5})`;
-    this.velocity = {
-      x: (Math.random() - 0.5) * 10,
-      y: (Math.random() - 0.5) * 10,
-    };
-    this.alpha = 1;
-    this.markedForDeletion = false;
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     if (this.alpha > 0) {
       ctx.save();
       ctx.globalAlpha = this.alpha;
@@ -443,4 +448,3 @@ class EmpSparkParticle {
     if (this.alpha <= 0) this.markedForDeletion = true;
   }
 }
-*/
