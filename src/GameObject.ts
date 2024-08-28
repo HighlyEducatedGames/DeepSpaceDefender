@@ -96,3 +96,33 @@ export abstract class BossCreature extends GameObject {
 
   checkCollisions() {}
 }
+
+export abstract class Effect {
+  game: Game;
+  abstract x: number;
+  abstract y: number;
+  abstract particles: Particle[];
+  markedForDeletion = false;
+
+  constructor(game: Game) {
+    this.game = game;
+  }
+
+  abstract draw(ctx: CTX): void;
+  abstract update(deltaTime: number): void;
+  abstract cleanup(): void;
+}
+
+export abstract class Particle {
+  game: Game;
+  abstract x: number;
+  abstract y: number;
+  markedForDeletion = false;
+
+  constructor(game: Game) {
+    this.game = game;
+  }
+
+  abstract draw(ctx: CTX): void;
+  abstract update(deltaTime: number): void;
+}

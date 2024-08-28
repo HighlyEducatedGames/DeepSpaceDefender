@@ -13,7 +13,7 @@ import Boss from './bosses/Boss';
 // import CyberDragon from './bosses/CyberDragon.js';
 import { WormholeController } from './hazards/WormholeController.js';
 import InputHandler, { Action } from './InputHandler';
-import { GameObject, Projectile } from './GameObject';
+import { Effect, GameObject, Particle, Projectile } from './GameObject';
 import { Enemy } from './enemies/BasicEnemies';
 
 export default class Game {
@@ -31,8 +31,8 @@ export default class Game {
   debug = false;
   topMargin = 90;
   projectiles: Projectile[] = [];
-  particles = [];
-  effects = [];
+  particles: Particle[] = [];
+  effects: Effect[] = [];
   targetFPS = 60;
   targetFrameDuration = 1000 / this.targetFPS;
   tickMs = 0;
@@ -148,9 +148,9 @@ export default class Game {
       if (this.boss) this.boss.update(deltaTime);
       if (this.ally) this.ally.update(deltaTime);
       this.projectiles.forEach((projectile) => projectile.update(deltaTime));
-      // this.particles.forEach((particle) => particle.update(deltaTime));
+      this.particles.forEach((particle) => particle.update(deltaTime));
+      this.effects.forEach((effect) => effect.update(deltaTime));
       // this.wormholes.update(deltaTime);
-      // this.effects.forEach((effect) => effect.update(deltaTime));
     }
   }
 
@@ -162,8 +162,6 @@ export default class Game {
     if (this.boss) this.boss.checkCollisions();
     if (this.ally) this.ally.checkCollisions();
     this.projectiles.forEach((projectile) => projectile.checkCollisions());
-    // this.particles.forEach((particle) => particle.checkCollisions());
-    // this.powerUps.powerUps.forEach((powerUp) => powerUp.checkCollisions());
   }
 
   cleanup() {
@@ -173,8 +171,8 @@ export default class Game {
     if (this.boss && this.boss.markedForDeletion) this.boss = null;
     this.cleanupAlly();
     this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
-    // this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
-    // this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
+    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
+    this.effects.forEach((effect) => effect.cleanup());
   }
 
   draw(ctx: CTX) {
@@ -182,14 +180,14 @@ export default class Game {
     this.coins.forEach((coin) => coin.draw(ctx));
     this.powerUps.draw(ctx);
     this.projectiles.forEach((projectile) => projectile.draw(ctx));
+    this.particles.forEach((particle) => particle.draw(ctx));
+    this.effects.forEach((effect) => effect.draw(ctx));
     this.enemies.draw(ctx);
     if (this.boss) this.boss.draw(ctx);
     if (this.ally) this.ally.draw(ctx);
     this.player.draw(ctx);
     this.GUI.draw(ctx);
-    // this.particles.forEach((particle) => particle.draw(ctx));
     // this.wormholes.draw(ctx);
-    // this.effects.forEach((effect) => effect.draw(ctx));
 
     // Game over text
     if (this.isGameOver) {

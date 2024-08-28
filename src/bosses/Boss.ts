@@ -1,4 +1,5 @@
 import { BossCreature, EnemyProjectile } from '../GameObject';
+import BossExplosion from '../effects/BossExplosion';
 
 export default class Boss extends BossCreature {
   x: number;
@@ -148,7 +149,7 @@ export default class Boss extends BossCreature {
 
   // Play effects on death
   onDeath() {
-    // this.game.effects.push(new BossExplosion(this.game, this.x, this.y)); // TODO
+    this.game.effects.push(new BossExplosion(this.game, this.x, this.y));
   }
 }
 

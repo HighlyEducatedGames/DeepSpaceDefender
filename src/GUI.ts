@@ -250,7 +250,7 @@ export default class GUI {
     const percent = Math.floor((this.game.tickMs / this.game.targetFrameDuration) * 100);
 
     const line3 = `Boss Phase: ${this.game.boss ? this.game.boss.phase : 0}`;
-    const line2 = `E: ${this.getEntities()} P: ${this.game.projectiles.length} T: ${this.game.particles.length}`;
+    const line2 = `E: ${this.getEntities()} P: ${this.game.projectiles.length} T: ${this.getParticles()}`;
     const line1Part1 = `Tick: ${ms.toFixed(1)}ms - `;
     const line1Part2 = `${percent}%`;
     const line1Part1Width = ctx.measureText(line1Part1).width;
@@ -284,5 +284,12 @@ export default class GUI {
     // entities += this.game.wormholes.wormholes.length * 2;
     // entities += this.game.effects.length;
     return entities;
+  }
+
+  getParticles() {
+    let particles = 0;
+    particles += this.game.particles.length;
+    particles += this.game.effects.reduce((a, b) => a + b.particles.length, 0);
+    return particles;
   }
 }

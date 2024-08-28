@@ -1,61 +1,66 @@
-export default class BossExplosion {
-  constructor(game, x, y, doSound = true) {
-    /** @type {import('../Game.js').default} */
-    this.game = game;
+import { Effect, Particle } from '../GameObject';
+
+export default class BossExplosion extends Effect {
+  x: number;
+  y: number;
+  doSound: boolean;
+  particles: Particle[] = [];
+  numParticles = 150;
+  numShockWaves = 5;
+  rotationSpeed = 0.05;
+  explosionStrength = 5;
+  sound: HTMLAudioElement;
+
+  constructor(game: Game, x: number, y: number, doSound = true) {
+    super(game);
     this.x = x;
     this.y = y;
     this.doSound = doSound;
-    this.numParticles = 150;
-    this.numShockwaves = 5;
-    this.particles = [];
-    this.shockwaves = [];
-    this.markedForDeletion = false;
-    this.rotationSpeed = 0.05;
-    this.explosionStrength = 5;
-    this.sound = document.getElementById('explosion_sound');
+    this.sound = this.game.getAudio('explosion_sound');
 
     for (let i = 0; i < this.numParticles; i++) {
       this.particles.push(new BossParticle(this));
     }
 
-    for (let i = 0; i < this.numShockwaves; i++) {
+    for (let i = 0; i < this.numShockWaves; i++) {
       const initialRadius = i * 5;
       const initialAngle = i * (Math.PI / 6);
-      this.shockwaves.push(new BossShockWave(this, initialRadius, initialAngle));
+      this.particles.push(new BossShockWave(this, initialRadius, initialAngle));
     }
 
-    if (this.doSound) {
-      this.sound.currentTime = 0;
-      this.sound.play();
-    }
+    if (this.doSound) this.game.cloneSound(this.sound);
   }
 
-  draw(ctx) {
-    this.shockwaves.forEach((shockwave) => shockwave.draw(ctx));
+  draw(ctx: CTX) {
     this.particles.forEach((particle) => particle.draw(ctx));
   }
 
-  update(deltaTime) {
-    this.shockwaves.forEach((shockwave) => shockwave.update(deltaTime));
-    this.shockwaves = this.shockwaves.filter((shockwave) => !shockwave.markedForDeletion);
-
+  update(deltaTime: number) {
     this.particles.forEach((particle) => particle.update(deltaTime));
-    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
+  }
 
-    if (this.particles.length === 0 && this.shockwaves.length === 0) this.markedForDeletion = true;
+  cleanup() {
+    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
+    if (this.particles.length === 0) this.markedForDeletion = true;
   }
 }
 
-class BossParticle {
-  constructor(explosion) {
+class BossParticle extends Particle {
+  explosion: BossExplosion;
+  x: number;
+  y: number;
+  radius = Math.random() * 5 + 2;
+  color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+  speed: number;
+  angle = Math.random() * Math.PI * 2;
+  tracer: { x: number; y: number };
+
+  constructor(explosion: BossExplosion) {
+    super(explosion.game);
     this.explosion = explosion;
-    this.game = this.explosion.game;
     this.x = this.explosion.x;
     this.y = this.explosion.y;
-    this.radius = Math.random() * 5 + 2;
-    this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
     this.speed = Math.random() * this.explosion.explosionStrength + 2;
-    this.angle = Math.random() * Math.PI * 2;
     this.tracer = { x: this.x, y: this.y };
     this.markedForDeletion = false;
 
@@ -64,7 +69,7 @@ class BossParticle {
     }
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(this.tracer.x, this.tracer.y);
@@ -92,20 +97,25 @@ class BossParticle {
   }
 }
 
-class BossShockWave {
-  constructor(explosion, initialRadius, initialAngle) {
+class BossShockWave extends Particle {
+  explosion: BossExplosion;
+  x: number;
+  y: number;
+  radius: number;
+  angle: number;
+  speed = 25;
+  color = 'grey';
+
+  constructor(explosion: BossExplosion, radius: number, angle: number) {
+    super(explosion.game);
     this.explosion = explosion;
-    this.game = this.explosion.game;
     this.x = this.explosion.x;
     this.y = this.explosion.y;
-    this.radius = initialRadius;
-    this.angle = initialAngle;
-    this.speed = 25;
-    this.color = 'grey';
-    this.markedForDeletion = false;
+    this.radius = radius;
+    this.angle = angle;
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
@@ -117,7 +127,7 @@ class BossShockWave {
     ctx.restore();
   }
 
-  update(deltaTime) {
+  update() {
     this.radius += this.speed;
     this.angle += this.explosion.rotationSpeed;
 
