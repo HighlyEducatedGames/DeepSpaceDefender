@@ -385,7 +385,7 @@ export default class Player extends GameObject {
         }
       }
     } else {
-      // this.game.projectiles.push(new Missile(this.game, this.game.boss)); // TODO
+      this.game.projectiles.push(new Missile(this.game, this.game.boss));
     }
   }
 

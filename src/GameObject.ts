@@ -41,10 +41,10 @@ export abstract class FriendlyProjectile extends Projectile {
 
     // Check collision to boss
     if (this.game.boss) {
-      // if (this.game.checkCollision(this, this.game.boss)) {
-      // this.game.boss.takeDamage(this.damage); // TODO
-      // this.markedForDeletion = true;
-      // }
+      if (this.game.checkCollision(this, this.game.boss)) {
+        this.game.boss.takeDamage(this.damage);
+        this.markedForDeletion = true;
+      }
     }
   }
 }
@@ -68,4 +68,31 @@ export abstract class EnemyProjectile extends Projectile {
       }
     }
   }
+}
+
+export abstract class BossCreature extends GameObject {
+  abstract speed: number;
+  abstract maxHealth: number;
+  abstract health: number;
+  abstract points: number;
+  abstract image: HTMLImageElement;
+  abstract music: HTMLAudioElement;
+
+  constructor(game: Game) {
+    super(game);
+  }
+
+  takeDamage(damage: number) {
+    this.health -= damage;
+    if (this.health <= 0) {
+      this.game.addScore(this.points);
+      this.markedForDeletion = true;
+      this.onDeath();
+      this.game.nextLevel();
+    }
+  }
+
+  abstract onDeath(): void;
+
+  checkCollisions() {}
 }

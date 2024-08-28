@@ -72,10 +72,10 @@ export default class Bomb extends FriendlyProjectile {
 
     // Check collision to boss
     if (this.game.boss && !this.hitBoss) {
-      /*if (this.game.checkCollision(this, this.game.boss)) {
+      if (this.game.checkCollision(this, this.game.boss)) {
         this.game.boss.takeDamage(this.damage);
         this.hitBoss = true;
-      }*/
+      }
     }
   }
 }

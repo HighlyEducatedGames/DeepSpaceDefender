@@ -6,11 +6,11 @@ import EnemyController from './enemies/EnemyController';
 import Player from './Player';
 import Coin from './Coin';
 import Star from './Star';
-import Ally from './Ally.js';
-import Boss from './bosses/Boss.js';
-import BiomechLeviathan from './bosses/BiomechLeviathan.js';
-import TemporalSerpent from './bosses/TemporalSerpent.js';
-import CyberDragon from './bosses/CyberDragon.js';
+import Ally from './Ally';
+import Boss from './bosses/Boss';
+// import BiomechLeviathan from './bosses/BiomechLeviathan.js';
+// import TemporalSerpent from './bosses/TemporalSerpent.js';
+// import CyberDragon from './bosses/CyberDragon.js';
 import { WormholeController } from './hazards/WormholeController.js';
 import InputHandler, { Action } from './InputHandler';
 import { GameObject, Projectile } from './GameObject';
@@ -60,7 +60,7 @@ export default class Game {
   doEnemies = true;
   doPowerUps = true;
   doAlly = true;
-  doBoss = false;
+  doBoss = true;
   doWormholes = false;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -115,7 +115,7 @@ export default class Game {
 
     // Initialize boss if boss level
     if (this.level % 5 === 0 && this.doBoss) {
-      const bosses = [Boss, BiomechLeviathan, CyberDragon, TemporalSerpent];
+      const bosses = [Boss /*, BiomechLeviathan, CyberDragon, TemporalSerpent*/];
       const bossIndex = Math.floor((level - 5) / 5) % bosses.length;
       this.boss = new bosses[bossIndex](this);
       this.music.setTrack(this.boss.music);
@@ -145,13 +145,12 @@ export default class Game {
       this.coins.forEach((coin) => coin.update());
       this.powerUps.update(deltaTime);
       this.enemies.update(deltaTime);
+      if (this.boss) this.boss.update(deltaTime);
       if (this.ally) this.ally.update(deltaTime);
       this.projectiles.forEach((projectile) => projectile.update(deltaTime));
       // this.particles.forEach((particle) => particle.update(deltaTime));
       // this.wormholes.update(deltaTime);
-      // if (this.boss) this.boss.update(deltaTime);
       // this.effects.forEach((effect) => effect.update(deltaTime));
-      // if (this.ally) this.ally.update(deltaTime);
     }
   }
 
@@ -160,6 +159,7 @@ export default class Game {
     this.coins.forEach((coin) => coin.checkCollisions());
     this.powerUps.checkCollisions();
     this.enemies.checkCollisions();
+    if (this.boss) this.boss.checkCollisions();
     if (this.ally) this.ally.checkCollisions();
     this.projectiles.forEach((projectile) => projectile.checkCollisions());
     // this.particles.forEach((particle) => particle.checkCollisions());
@@ -170,14 +170,10 @@ export default class Game {
     this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
     this.powerUps.cleanup();
     this.enemies.cleanup();
+    if (this.boss && this.boss.markedForDeletion) this.boss = null;
     this.cleanupAlly();
     this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
     // this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
-    // if (this.boss && this.boss.markedForDeletion) this.boss = null;
-    // if (this.ally && this.ally.markedForDeletion) {
-    // this.ally = null;
-    // this.allySpawnTimer = 0;
-    // }
     // this.effects = this.effects.filter((effect) => !effect.markedForDeletion);
   }
 
@@ -187,14 +183,13 @@ export default class Game {
     this.powerUps.draw(ctx);
     this.projectiles.forEach((projectile) => projectile.draw(ctx));
     this.enemies.draw(ctx);
+    if (this.boss) this.boss.draw(ctx);
     if (this.ally) this.ally.draw(ctx);
     this.player.draw(ctx);
     this.GUI.draw(ctx);
     // this.particles.forEach((particle) => particle.draw(ctx));
     // this.wormholes.draw(ctx);
-    // if (this.boss) this.boss.draw(ctx);
     // this.effects.forEach((effect) => effect.draw(ctx));
-    // if (this.ally) this.ally.draw(ctx);
 
     // Game over text
     if (this.isGameOver) {

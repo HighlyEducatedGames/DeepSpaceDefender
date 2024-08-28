@@ -1,41 +1,44 @@
-import Explosion from '../effects/Explosion.js';
-import BossExplosion from '../effects/BossExplosion.js';
+import { BossCreature, EnemyProjectile } from '../GameObject';
 
-export default class Boss {
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
-    this.game = game;
-    this.x = null;
-    this.y = null;
-    this.width = 100;
-    this.height = 100;
-    this.speed = 50;
-    this.maxHealth = 1000;
-    this.health = this.maxHealth;
-    this.score = 1000;
-    this.lastAttackTime = Date.now();
-    this.shootInterval = 2000;
-    this.canShoot = false;
-    this.phase = 1;
-    this.phaseTransitioned = [false, false, false];
-    this.healthBarWidth = this.width;
-    this.healthBarHeight = 10;
-    this.healthBarX = this.x - this.width * 0.5;
-    this.healthBarY = this.y - this.height * 0.5 + this.height + 5;
-    this.markedForDeletion = false;
-    this.image = document.getElementById('boss_image');
-    this.music = document.getElementById('boss_music');
+export default class Boss extends BossCreature {
+  x: number;
+  y: number;
+  width = 100;
+  height = 100;
+  radius = this.width * 0.5;
+  speed = 50;
+  maxHealth = 1000;
+  health = this.maxHealth;
+  points = this.maxHealth;
+  image: HTMLImageElement;
+  music: HTMLAudioElement;
+  attackTimer = 0;
+  attackInterval = 2000;
+  canShoot = false;
+  phase = 1;
+  phaseTransitioned = [false, false, false];
+  healthBarWidth = this.width;
+  healthBarHeight = 10;
+  healthBarX: number;
+  healthBarY: number;
+
+  constructor(game: Game) {
+    super(game);
+    this.image = this.game.getImage('boss_image');
+    this.music = this.game.getAudio('boss_music');
 
     const { x, y } = this.game.getOffScreenRandomSide(this, 20);
     this.x = x;
     this.y = y;
+    this.healthBarX = this.x - this.width * 0.5;
+    this.healthBarY = this.y - this.height * 0.5 + this.height + 5;
 
     setTimeout(() => {
       this.canShoot = true;
     }, 5000);
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     // Boss image
     ctx.drawImage(this.image, this.x - this.width * 0.5, this.y - this.height * 0.5, this.width, this.height);
 
@@ -50,12 +53,12 @@ export default class Boss {
     if (this.game.debug) {
       ctx.strokeStyle = 'white';
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     // Movement
     const distanceToPlayer = this.game.player.getDistanceToPlayer(this);
     // Snap to player if close to avoid bouncing
@@ -82,11 +85,13 @@ export default class Boss {
     } else if (this.health < this.maxHealth * 0.2 && this.phase === 2 && !this.phaseTransitioned[2]) {
       this.phase = 3;
       this.phaseTransitioned[2] = true;
-      this.shootInterval = 1000;
+      this.attackInterval = 1000;
     }
 
     // Attack Logic
-    if (this.canShoot && Date.now() - this.lastAttackTime > this.shootInterval) {
+    this.attackTimer += deltaTime;
+    if (this.canShoot && this.attackTimer >= this.attackInterval) {
+      this.attackTimer = 0;
       switch (this.phase) {
         case 1:
           this.attackPattern1();
@@ -98,30 +103,29 @@ export default class Boss {
           this.attackPattern3();
           break;
       }
-      this.lastAttackTime = Date.now();
-    }
-  }
-
-  takeDamage(damage) {
-    this.health -= damage;
-    if (this.health <= 0) {
-      this.game.addScore(this.score);
-      this.game.effects.push(new BossExplosion(this.game, this.x, this.y));
-      this.markedForDeletion = true;
-      this.game.nextLevel();
     }
   }
 
   // Single projectile attack
   attackPattern1() {
-    this.game.projectiles.push(new BossProjectile(this, 20, this.game.player.getAngleToPlayer(this), 250));
+    const options: BossProjectileOptions = {
+      radius: 20,
+      angle: this.game.player.getAngleToPlayer(this),
+      speed: 250,
+    };
+    this.game.projectiles.push(new BossProjectile(this, options));
   }
 
   // Spread shot attack
   attackPattern2() {
     for (let i = -2; i <= 2; i++) {
       let angle = Math.atan2(this.game.player.y - this.y, this.game.player.x - this.x) + (i * Math.PI) / 12;
-      this.game.projectiles.push(new BossProjectile(this, 25, angle, 275));
+      const options: BossProjectileOptions = {
+        radius: 25,
+        angle: angle,
+        speed: 275,
+      };
+      this.game.projectiles.push(new BossProjectile(this, options));
     }
   }
 
@@ -133,32 +137,59 @@ export default class Boss {
     const angleToPlayer = this.game.player.getAngleToPlayer(this);
     for (let i = 0; i < numberOfProjectiles; i++) {
       let angle = i * angleIncrement + angleToPlayer;
-      this.game.projectiles.push(new BossProjectile(this, 20, angle, 350));
+      const options: BossProjectileOptions = {
+        radius: 20,
+        angle: angle,
+        speed: 350,
+      };
+      this.game.projectiles.push(new BossProjectile(this, options));
     }
+  }
+
+  // Play effects on death
+  onDeath() {
+    // this.game.effects.push(new BossExplosion(this.game, this.x, this.y)); // TODO
   }
 }
 
-class BossProjectile {
-  constructor(boss, radius, angle, speed) {
+interface BossProjectileOptions {
+  radius: number;
+  angle: number;
+  speed: number;
+}
+
+class BossProjectile extends EnemyProjectile {
+  boss: Boss;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  radius: number;
+  speed: number;
+  damage = 10;
+  directionX: number;
+  directionY: number;
+  image: HTMLImageElement;
+  spriteWidth = 30;
+  spriteHeight = 30;
+  maxFrames = 8;
+  staggerFrames = 5;
+
+  constructor(boss: Boss, { radius, speed, angle }: BossProjectileOptions) {
+    super(boss.game);
     this.boss = boss;
-    /** @type {import('../Game.js').default} */
-    this.game = this.boss.game;
     this.x = this.boss.x;
     this.y = this.boss.y;
     this.radius = radius;
+    this.width = this.radius * 2;
+    this.height = this.radius * 2;
     this.speed = speed;
     this.directionX = Math.cos(angle);
     this.directionY = Math.sin(angle);
-    this.damage = 10;
-    this.markedForDeletion = false;
-    this.image = document.getElementById('boss_projectile_sprite_sheet');
-    this.spriteWidth = 30;
-    this.spriteHeight = 30;
-    this.maxFrames = 8;
-    this.staggerFrames = 5;
+    this.image = this.game.getImage('boss_projectile_sprite_sheet');
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     const frameX = Math.floor(this.game.frame / this.staggerFrames) % (this.maxFrames - 1);
     ctx.drawImage(
       this.image,
@@ -181,7 +212,7 @@ class BossProjectile {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     // Movement
     this.x += (this.speed * this.directionX * deltaTime) / 1000;
     this.y += (this.speed * this.directionY * deltaTime) / 1000;
@@ -190,20 +221,5 @@ class BossProjectile {
     if (this.game.outOfBounds(this)) {
       this.markedForDeletion = true;
     }
-
-    // Collides with player
-    if (this.game.checkCollision(this, this.game.player)) {
-      this.game.player.takeDamage(this.damage);
-      this.markedForDeletion = true;
-    }
-
-    // Collision to other projectiles
-    this.game.projectiles.forEach((projectile) => {
-      if (projectile === this) return;
-      if (this.game.checkCollision(this, projectile)) {
-        this.markedForDeletion = true;
-        projectile.markedForDeletion = true;
-      }
-    });
   }
 }
