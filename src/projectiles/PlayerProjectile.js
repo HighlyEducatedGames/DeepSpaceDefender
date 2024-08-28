@@ -1,4 +1,4 @@
-import { Action } from '../InputHandler.js';
+import { Action } from '../InputHandler';
 
 export class PlayerProjectile {
   width = 5;

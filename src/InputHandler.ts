@@ -1,5 +1,3 @@
-/* global updateMenuText */
-
 export const Action = Object.freeze({
   DEBUG: 0,
   PAUSE: 1,
@@ -14,6 +12,7 @@ export const Action = Object.freeze({
   MOVE_LEFT: 10,
   MOVE_RIGHT: 11,
 });
+type ActionType = keyof typeof Action;
 
 const Direction = Object.freeze({
   NEUTRAL: 0,
@@ -22,16 +21,17 @@ const Direction = Object.freeze({
 });
 
 class ActionKey {
-  keys = [];
-  gamepadButtons = [];
-  gamepadAxes = [];
+  name: string;
+  keys: string[] = [];
+  gamepadButtons: string[] = [];
+  gamepadAxes: string[] = [];
   isPressed = false;
   justPressed = false;
   heldDuration = 0;
   justReleased = false;
   _justReleasedFlag = false;
 
-  constructor(actionName) {
+  constructor(actionName: string) {
     this.name = actionName;
   }
 
@@ -45,7 +45,7 @@ class ActionKey {
     }
   }
 
-  hold(deltaTime) {
+  hold(deltaTime: number) {
     if (this.isPressed) {
       this.heldDuration += deltaTime;
     }
@@ -59,7 +59,7 @@ class ActionKey {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     if (this.justPressed && this.heldDuration > 0) this.justPressed = false;
 
     // Ensure justReleased has been seen for at least one game tick by using a flag
@@ -73,18 +73,25 @@ class ActionKey {
   }
 }
 
+type CheatCode = {
+  code: string[];
+  index: number;
+  enabled: boolean;
+};
+
 export default class InputHandler {
-  keys = {};
-  actions = {};
-  gamepadIndex = null;
-  gamepadButtons = {};
-  gamepadAxes = {};
+  game: Game;
+  keys: { [key: string]: boolean } = {};
+  actions: { [key: string]: ActionKey } = {};
+  gamepadIndex: number | null = null;
+  gamepadButtons: { [key: string]: boolean } = {};
+  gamepadAxes: { [key: string]: { direction: number; axisValue: number } } = {};
   gamepadAxesThreshold = 0.5;
   mapped = false;
-  keyMap = {};
-  buttonMap = {};
-  axisMap = {};
-  codes = {
+  keyMap: { [key: string]: ActionKey } = {};
+  buttonMap: { [key: string]: ActionKey } = {};
+  axisMap: { [key: string]: ActionKey } = {};
+  codes: { [key: string]: CheatCode } = {
     invincibility: {
       code: ['i', 'd', 'd', 'q', 'd'],
       index: 0,
@@ -114,13 +121,13 @@ export default class InputHandler {
     },
   };
 
-  constructor(game) {
-    /** @type {import('./Game.js').default} */
+  constructor(game: Game) {
     this.game = game;
     for (const action in Action) {
-      this.actions[Action[action]] = new ActionKey(action);
-      this.actions[Action[action]].keys.forEach((key) => {
-        this.keyMap[key] = this.actions[Action[action]];
+      const actionKey = action as ActionType;
+      this.actions[Action[actionKey]] = new ActionKey(action);
+      this.actions[Action[actionKey]].keys.forEach((key) => {
+        this.keyMap[key] = this.actions[Action[actionKey]];
       });
     }
     updateMenuText(this.usingGamepad.value);
@@ -132,16 +139,18 @@ export default class InputHandler {
   // so we don't have to loop over the this.actions object in the triggerAction() method
   mapInputs() {
     for (const action in Action) {
-      this.actions[Action[action]].keys.forEach((key) => {
-        this.keyMap[key] = this.actions[Action[action]];
+      const actionKey = action as ActionType;
+
+      this.actions[Action[actionKey]].keys.forEach((key) => {
+        this.keyMap[key] = this.actions[Action[actionKey]];
       });
 
-      this.actions[Action[action]].gamepadButtons.forEach((button) => {
-        this.buttonMap[button] = this.actions[Action[action]];
+      this.actions[Action[actionKey]].gamepadButtons.forEach((button) => {
+        this.buttonMap[button] = this.actions[Action[actionKey]];
       });
 
-      this.actions[Action[action]].gamepadAxes.forEach((axis) => {
-        this.axisMap[axis] = this.actions[Action[action]];
+      this.actions[Action[actionKey]].gamepadAxes.forEach((axis) => {
+        this.axisMap[axis] = this.actions[Action[actionKey]];
       });
     }
 
@@ -155,7 +164,8 @@ export default class InputHandler {
     window.addEventListener('gamepaddisconnected', (e) => this.handleGamepadDisconnected(e));
   }
 
-  handleKeyDown({ key }) {
+  handleKeyDown(e: KeyboardEvent) {
+    const { key } = e;
     this.usingGamepad.value = false;
     if (!this.keys[key]) {
       this.keys[key] = true;
@@ -165,7 +175,7 @@ export default class InputHandler {
     this.handleDebugMode(key);
   }
 
-  handleDebugMode(key) {
+  handleDebugMode(key: string) {
     // Boss selector 1-9
     if (this.game.debug && /^[1-9]$/.test(key)) this.game.startLevel(parseInt(key) * 5);
     // Change level with PGUP/PGDOWN;
@@ -173,20 +183,23 @@ export default class InputHandler {
     if (this.game.debug && key === 'PageDown') this.game.prevLevel();
   }
 
-  handleKeyUp({ key }) {
+  handleKeyUp(e: KeyboardEvent) {
+    const { key } = e;
     if (this.keys[key]) {
       this.triggerAction('release', key);
       delete this.keys[key];
     }
   }
 
-  handleGamepadConnected({ gamepad }) {
+  handleGamepadConnected(e: GamepadEvent) {
+    const { gamepad } = e;
     this.usingGamepad.value = true;
     this.gamepadIndex = gamepad.index;
     this.playHaptic(200);
   }
 
-  handleGamepadDisconnected({ gamepad }) {
+  handleGamepadDisconnected(e: GamepadEvent) {
+    const { gamepad } = e;
     if (this.gamepadIndex === gamepad.index) {
       this.usingGamepad.value = false;
       this.gamepadIndex = null;
@@ -213,7 +226,7 @@ export default class InputHandler {
     });
   }
 
-  handleGamepadButton(index, button) {
+  handleGamepadButton(index: number, button: GamepadButton) {
     const key = `gamepad_button_${index}`;
 
     if (button.pressed) {
@@ -228,8 +241,8 @@ export default class InputHandler {
     }
   }
 
-  handleGamepadAxis(index, axisValue) {
-    let direction = Direction.NEUTRAL;
+  handleGamepadAxis(index: number, axisValue: number) {
+    let direction: number = Direction.NEUTRAL;
     if (axisValue < -this.gamepadAxesThreshold) {
       direction = Direction.NEGATIVE;
     } else if (axisValue > this.gamepadAxesThreshold) {
@@ -253,7 +266,7 @@ export default class InputHandler {
     this.gamepadAxes[index] = axisKey;
   }
 
-  bindKeys(actionName, ...keys) {
+  bindKeys(actionName: number, ...keys: string[]) {
     if (this.mapped) throw new Error('Binding keys is not allowed after the mapInputs() method has run.');
     if (!this.actions[actionName]) return;
     keys.forEach((key) => {
@@ -266,7 +279,7 @@ export default class InputHandler {
     });
   }
 
-  bindButtons(actionName, ...buttonIndexes) {
+  bindButtons(actionName: number, ...buttonIndexes: number[]) {
     if (this.mapped) throw new Error('Binding buttons is not allowed after the mapInputs() method has run.');
     if (!this.actions[actionName]) return;
     buttonIndexes.forEach((buttonIndex) => {
@@ -280,7 +293,7 @@ export default class InputHandler {
     });
   }
 
-  bindAxis(actionName, axisIndex, axisDirection) {
+  bindAxis(actionName: number, axisIndex: number, axisDirection: number) {
     if (this.mapped) throw new Error('Binding axis is not allowed after the mapInputs() method has run.');
     if (!this.actions[actionName]) return;
     const gamepadAxis = `gamepad_axis_${axisIndex}_${axisDirection}`;
@@ -292,7 +305,7 @@ export default class InputHandler {
     this.actions[actionName].gamepadAxes.push(gamepadAxis);
   }
 
-  triggerAction(actionType, key) {
+  triggerAction(actionType: string, key: string) {
     const boundKey = this.keyMap[key];
     const boundButton = this.buttonMap[key];
     const boundAxis = this.axisMap[key];
@@ -310,43 +323,44 @@ export default class InputHandler {
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     this.pollGamepad();
     for (const action in this.actions) {
       this.actions[action].update(deltaTime);
     }
   }
 
-  isPressed(actionName) {
+  isPressed(actionName: number) {
     const action = this.actions[actionName];
     if (!action) return false;
     return action.isPressed;
   }
 
-  justPressed(actionName) {
+  justPressed(actionName: number) {
     const action = this.actions[actionName];
     if (!action) return false;
     return action.justPressed;
   }
 
-  justReleased(actionName) {
+  justReleased(actionName: number) {
     const action = this.actions[actionName];
     if (!action) return false;
     return action.justReleased;
   }
 
-  heldDuration(actionName) {
+  heldDuration(actionName: number) {
     const action = this.actions[actionName];
     if (!action) return null;
     return action.heldDuration;
   }
 
   // Controller rumble if available
-  playHaptic(duration, magnitude = 1) {
+  playHaptic(duration: number, magnitude = 1) {
+    if (!this.gamepadIndex) return;
     const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
     const gamepad = gamepads[this.gamepadIndex];
     if (!gamepad || !gamepad.vibrationActuator) return;
-    if (!gamepad.vibrationActuator.effects.includes('dual-rumble')) return;
+    if (!gamepad.vibrationActuator.effects?.includes('dual-rumble')) return;
 
     gamepad.vibrationActuator
       .playEffect('dual-rumble', {
@@ -358,7 +372,7 @@ export default class InputHandler {
       .catch(() => {});
   }
 
-  handleCodes(input) {
+  handleCodes(input: string) {
     for (const key in this.codes) {
       const code = this.codes[key];
       if (input === code.code[code.index]) {

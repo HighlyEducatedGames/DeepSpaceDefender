@@ -13,7 +13,7 @@ import TemporalSerpent from './bosses/TemporalSerpent.js';
 import CyberDragon from './bosses/CyberDragon.js';
 import { WormholeController } from './hazards/WormholeController.js';
 import { ArrowIndicator } from './HUD.js';
-import InputHandler, { Action } from './InputHandler.js';
+import InputHandler, { Action } from './InputHandler';
 import { GameObject, Projectile } from './GameObject';
 
 export default class Game {

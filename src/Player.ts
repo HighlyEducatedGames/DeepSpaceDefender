@@ -6,7 +6,7 @@ import Flame from './projectiles/Flame.js';
 import Laser from './projectiles/Laser.js';
 import ParticleBomb from './projectiles/ParticleBomb.js';
 import AbilityTimer from './AbilityTimer.js';
-import { Action } from './InputHandler.js';
+import { Action } from './InputHandler';
 import { GameObject } from './GameObject';
 
 export default class Player extends GameObject {
@@ -84,13 +84,13 @@ export default class Player extends GameObject {
     const yAdjustPos = Math.sin(this.rotation) * this.offset;
 
     let image;
-    /*if (this.game.inputs.actions[Action.MOVE_FORWARD].isPressed) { // TODO
+    if (this.game.inputs.actions[Action.MOVE_FORWARD].isPressed) {
       image = this.images.thrust;
     } else if (this.game.inputs.actions[Action.MOVE_BACKWARD].isPressed) {
       image = this.images.reverse;
-    } else {*/
-    image = this.images.idle;
-    // }
+    } else {
+      image = this.images.idle;
+    }
 
     ctx.save();
     ctx.translate(this.x - xAdjustPos, this.y - yAdjustPos);
@@ -317,10 +317,10 @@ export default class Player extends GameObject {
     if (this.abilities.flame.active) return;
     if (this.abilities.laser.active) return;
 
-    /*if (!this.isCharging && this.game.inputs.actions[Action.FIRE].heldDuration >= this.chargingTriggerThreshold) {
-      this.isCharging = true; // TODO
-      this.sounds.charging.play().catch(() => {});;
-    }*/
+    if (!this.isCharging && this.game.inputs.actions[Action.FIRE].heldDuration >= this.chargingTriggerThreshold) {
+      this.isCharging = true;
+      this.sounds.charging.play().catch(() => {});
+    }
   }
 
   handleActionChargedFire() {
@@ -328,7 +328,7 @@ export default class Player extends GameObject {
     this.isCharging = false;
     this.sounds.charging.pause();
     this.sounds.charging.currentTime = 0;
-    // if (this.game.inputs.actions[Action.FIRE].heldDuration >= 1000) this.fireProjectile(true);
+    if (this.game.inputs.actions[Action.FIRE].heldDuration >= 1000) this.fireProjectile(true);
   }
 
   fireProjectile(charged = false) {
