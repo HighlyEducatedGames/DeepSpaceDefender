@@ -1,43 +1,56 @@
-class PowerUp {
-  x = null;
-  y = null;
+import { GameObject } from '../GameObject';
+
+interface PowerUpOptions {
+  width: number;
+  height: number;
+  speed: number;
+  image: string;
+}
+
+export abstract class PowerUp extends GameObject {
+  x = 0;
+  y = 0;
+  width: number;
+  height: number;
+  radius: number;
+  speed: number;
+  image: HTMLImageElement;
   dx = 0;
   dy = 0;
   margin = 50;
-  markedForDeletion = false;
-  sound = document.getElementById('powerup_sound');
+  sound = this.game.getAudio('powerup_sound');
+  abstract onPlayerCollision(): void;
 
-  constructor(game, { width, height, speed, image }) {
-    /** @type {import('../Game.js').default} */
-    this.game = game;
+  constructor(game: Game, { width, height, speed, image }: PowerUpOptions) {
+    super(game);
     this.width = width;
     this.height = height;
+    this.radius = this.width * 0.5;
     this.speed = speed;
-    this.image = document.getElementById(image);
+    this.image = this.game.getImage(image);
 
     this.getOffScreenSpawnPosition();
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     ctx.drawImage(this.image, this.x - this.width * 0.5, this.y - this.height * 0.5, this.width, this.height);
 
     // DEBUG - Hitbox
     if (this.game.debug) {
       ctx.strokeStyle = 'white';
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.width * 0.5, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     this.x += (this.speed * this.dx * deltaTime) / 1000;
 
     //Sin Wave
     this.y += Math.sin(this.x / 50) * 1.5;
 
     if (this.y < 0 || this.y + this.height > this.game.height) {
-      this.directionY *= -1;
       this.y = Math.max(0, Math.min(this.y, this.game.height - this.height));
     }
 
@@ -45,15 +58,12 @@ class PowerUp {
   }
 
   checkCollisions() {
+    // Check collision to player
     if (this.game.checkCollision(this, this.game.player)) {
       this.onPlayerCollision();
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
-  }
-
-  onPlayerCollision() {
-    throw new Error('You forgot to override a onPlayerCollision method in a PowerUp sub class.');
   }
 
   getOffScreenSpawnPosition() {
@@ -66,7 +76,7 @@ class PowerUp {
 }
 
 class BombPowerUp extends PowerUp {
-  constructor(game) {
+  constructor(game: Game) {
     super(game, { width: 30, height: 30, speed: 75, image: 'bomb_powerup_image' });
   }
 
@@ -76,7 +86,7 @@ class BombPowerUp extends PowerUp {
 }
 
 class HomingMissilePowerUp extends PowerUp {
-  constructor(game) {
+  constructor(game: Game) {
     super(game, { width: 30, height: 30, speed: 75, image: 'missile_powerup_image' });
   }
 
@@ -86,7 +96,7 @@ class HomingMissilePowerUp extends PowerUp {
 }
 
 class ProjectilePowerUp extends PowerUp {
-  constructor(game) {
+  constructor(game: Game) {
     super(game, { width: 20, height: 20, speed: 75, image: 'powerup_image' });
   }
 
@@ -96,7 +106,7 @@ class ProjectilePowerUp extends PowerUp {
 }
 
 class BoostPowerUp extends PowerUp {
-  constructor(game) {
+  constructor(game: Game) {
     super(game, { width: 30, height: 30, speed: 100, image: 'boost_powerup_image' });
   }
 
@@ -108,7 +118,7 @@ class BoostPowerUp extends PowerUp {
 }
 
 class ShieldPowerUp extends PowerUp {
-  constructor(game) {
+  constructor(game: Game) {
     super(game, { width: 30, height: 30, speed: 50, image: 'shield_powerup_image' });
   }
 
@@ -118,7 +128,7 @@ class ShieldPowerUp extends PowerUp {
 }
 
 class ReversePowerUp extends PowerUp {
-  constructor(game) {
+  constructor(game: Game) {
     super(game, { width: 30, height: 30, speed: 150, image: 'reverse_powerup_image' });
   }
 
@@ -128,7 +138,7 @@ class ReversePowerUp extends PowerUp {
 }
 
 class FlameThrowerPowerUp extends PowerUp {
-  constructor(game) {
+  constructor(game: Game) {
     super(game, { width: 30, height: 30, speed: 100, image: 'flame_powerup_image' });
   }
 
@@ -138,7 +148,7 @@ class FlameThrowerPowerUp extends PowerUp {
 }
 
 class LaserPowerUp extends PowerUp {
-  constructor(game) {
+  constructor(game: Game) {
     super(game, { width: 30, height: 30, speed: 100, image: 'laser_powerup_image' });
   }
 
@@ -148,7 +158,7 @@ class LaserPowerUp extends PowerUp {
 }
 
 class ParticleBombPowerUp extends PowerUp {
-  constructor(game) {
+  constructor(game: Game) {
     super(game, { width: 30, height: 30, speed: 100, image: 'particle_bomb_powerup_image' });
   }
 
@@ -160,11 +170,11 @@ class ParticleBombPowerUp extends PowerUp {
 export default {
   bomb: BombPowerUp,
   missile: HomingMissilePowerUp,
-  projectile: ProjectilePowerUp,
+  /*projectile: ProjectilePowerUp,
   boost: BoostPowerUp,
   shield: ShieldPowerUp,
   reverse: ReversePowerUp,
   flame: FlameThrowerPowerUp,
   laser: LaserPowerUp,
-  particleBomb: ParticleBombPowerUp,
+  particleBomb: ParticleBombPowerUp,*/
 };

@@ -1,31 +1,39 @@
-import PowerUps from './PowerUp.js';
+import PowerUps, { PowerUp } from './PowerUp';
+import { GameObject } from '../GameObject';
+import powerUp from './PowerUp';
 
 export default class PowerUpController {
-  powerUps = [];
+  game: Game;
+  powerUps: PowerUp[] = [];
   maxPowerUps = 5;
-  spawnTime = 0;
+  spawnTimer = 0;
   spawnInterval = 5000;
 
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
+  constructor(game: Game) {
     this.game = game;
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     this.powerUps.forEach((powerUp) => powerUp.draw(ctx));
   }
 
-  update(deltaTime) {
+  update(deltaTime: number) {
     if (!this.game.doPowerUps) return;
 
-    if (this.spawnTime > this.spawnInterval) {
-      this.spawnTime = 0;
+    this.spawnTimer += deltaTime;
+    if (this.spawnTimer > this.spawnInterval) {
+      this.spawnTimer = 0;
       this.spawn();
-    } else {
-      this.spawnTime += deltaTime;
     }
 
     this.powerUps.forEach((powerUp) => powerUp.update(deltaTime));
+  }
+
+  checkCollisions() {
+    this.powerUps.forEach((powerUp) => powerUp.checkCollisions());
+  }
+
+  cleanup() {
     this.powerUps = this.powerUps.filter((powerUp) => !powerUp.markedForDeletion);
   }
 
