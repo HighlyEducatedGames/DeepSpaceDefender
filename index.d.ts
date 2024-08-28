@@ -21,3 +21,13 @@ interface GamepadHapticActuator {
 interface Gamepad {
   vibrationActuator: GamepadHapticActuator;
 }
+
+interface PerformanceMemory {
+  jsHeapSizeLimit: number;
+  totalJSHeapSize: number;
+  usedJSHeapSize: number;
+}
+
+interface Performance {
+  memory?: PerformanceMemory;
+}

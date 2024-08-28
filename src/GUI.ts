@@ -246,19 +246,18 @@ export default class GUI {
   drawDebug(ctx: CTX) {
     ctx.fillStyle = 'white';
     ctx.font = '10px "Press Start 2P", cursive';
+    let lineY = this.game.height + 5;
+    function nextY() {
+      lineY -= 15;
+      return lineY;
+    }
+
+    // Tick Rate
     const ms = Math.floor(this.game.tickMs * 10) / 10;
     const percent = Math.floor((this.game.tickMs / this.game.targetFrameDuration) * 100);
-
-    const line3 = `Boss Phase: ${this.game.boss ? this.game.boss.phase : 0}`;
-    const line2 = `E: ${this.getEntities()} P: ${this.game.projectiles.length} T: ${this.getParticles()}`;
-    const line1Part1 = `Tick: ${ms.toFixed(1)}ms - `;
-    const line1Part2 = `${percent}%`;
-    const line1Part1Width = ctx.measureText(line1Part1).width;
-
-    ctx.fillText(line3, 10, this.game.height - 40);
-    ctx.fillText(line2, 10, this.game.height - 25);
-    ctx.fillText(line1Part1, 10, this.game.height - 10);
-
+    const ticksPart1 = `Tick: ${ms.toFixed(1)}ms - `;
+    const ticksPart2 = `${percent}%`;
+    const ticksPart1Width = ctx.measureText(ticksPart1).width;
     let color;
     if (percent < 50) {
       color = 'white';
@@ -267,9 +266,24 @@ export default class GUI {
     } else {
       color = 'red';
     }
-
+    const y = nextY();
+    ctx.fillText(ticksPart1, 10, y);
     ctx.fillStyle = color;
-    ctx.fillText(line1Part2, 10 + line1Part1Width, this.game.height - 10);
+    ctx.fillText(ticksPart2, 10 + ticksPart1Width, y);
+
+    // Counts
+    const counts = `E: ${this.getEntities()} P: ${this.game.projectiles.length} T: ${this.getParticles()}`;
+    ctx.fillText(counts, 10, nextY());
+
+    // Boss
+    const boss = `Boss Phase: ${this.game.boss ? this.game.boss.phase : 0}`;
+    ctx.fillText(boss, 10, nextY());
+
+    // HEAP
+    if (performance.memory) {
+      const heap = `Heap: ${this.getMemory()}`;
+      ctx.fillText(heap, 10, nextY());
+    }
   }
 
   getEntities() {
@@ -291,5 +305,14 @@ export default class GUI {
     particles += this.game.particles.length;
     particles += this.game.effects.reduce((a, b) => a + b.particles.length, 0);
     return particles;
+  }
+
+  getMemory() {
+    if (performance.memory) {
+      const { totalJSHeapSize, usedJSHeapSize } = performance.memory;
+      return `${(usedJSHeapSize / 1048576).toFixed(0)}/${(totalJSHeapSize / 1048576).toFixed(0)}`;
+    } else {
+      return 'N/A';
+    }
   }
 }
