@@ -428,6 +428,16 @@ export default class Player extends GameObject {
     return Math.hypot(this.x - object.x, this.y - object.y);
   }
 
+  getDirectionToPlayer(object: { x: number; y: number }): Direction {
+    const dx = this.x - object.x;
+    const dy = this.y - object.y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      return dx > 0 ? 'right' : 'left';
+    } else {
+      return dy > 0 ? 'down' : 'up';
+    }
+  }
+
   /*stopPlayerMovement() {
     this.velocity = { x: 0, y: 0 };
     this.thrust = 0;

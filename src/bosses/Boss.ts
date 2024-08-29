@@ -18,7 +18,6 @@ export default class Boss extends BossCreature {
   attackInterval = 2000;
   canAttack = false;
   phase = 1;
-  phaseTransitioned = [false, false, false];
   healthBarWidth = this.width;
   healthBarHeight = 10;
   healthBarX: number;
@@ -82,13 +81,11 @@ export default class Boss extends BossCreature {
     this.healthBarY = this.y - this.height * 0.5 + this.height + 5;
 
     // Phase Transitions
-    if (this.health < this.maxHealth * 0.6 && this.phase === 1 && !this.phaseTransitioned[1]) {
+    if (this.health < this.maxHealth * 0.6) {
       this.phase = 2;
-      this.phaseTransitioned[1] = true;
       this.speed += 20;
-    } else if (this.health < this.maxHealth * 0.2 && this.phase === 2 && !this.phaseTransitioned[2]) {
+    } else if (this.health < this.maxHealth * 0.2) {
       this.phase = 3;
-      this.phaseTransitioned[2] = true;
       this.attackInterval = 1000;
     }
 

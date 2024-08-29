@@ -115,17 +115,11 @@ export default class BiomechLeviathan extends BossCreature {
     // EMP Blast
     if (this.empBlast) this.empBlast.update();
 
-    // Health values to change phases at
-    const phases = {
-      1: 1.0,
-      2: 0.6,
-      3: 0.3,
-    };
-
     // Phase Transitions
-    const nextTransition = phases[(this.phase + 1) as keyof typeof phases];
-    if (nextTransition !== undefined && this.health <= this.maxHealth * nextTransition) {
-      this.phase++;
+    if (this.health < this.maxHealth * 0.6) {
+      this.phase = 2;
+    } else if (this.health < this.maxHealth * 0.3) {
+      this.phase = 3;
     }
 
     // Attack logic

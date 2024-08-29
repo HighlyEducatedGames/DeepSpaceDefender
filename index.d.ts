@@ -31,3 +31,5 @@ interface PerformanceMemory {
 interface Performance {
   memory?: PerformanceMemory;
 }
+
+type Direction = 'up' | 'down' | 'left' | 'right';

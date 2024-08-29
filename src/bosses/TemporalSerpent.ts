@@ -1,84 +1,70 @@
+import { BossCreature } from '../GameObject';
 
-export default class TemporalSerpent {
-  constructor(game) {
-    /** @type {import('../Game.js').default} */
-    this.game = game;
-    this.x = 250;
-    this.y = 250;
-    this.speed = 400;
-    this.health = 2000;
-    this.maxHealth = 2000;
-    this.lastAttackTime = 0;
-    this.attackInterval = 3000;
-    this.canAttack = true;
-    this.phase = 1;
-    this.phaseTransitioned = [false, false, false];
-    this.segments = [{ x: this.x, y: this.y, radius: 30 }];
-    this.detachedSegments = [];
-    this.segmentAddInterval = 200;
-    this.lastSegmentAddTime = 0;
-    this.lastBombDamageTime = 0;
+export default class TemporalSerpent extends BossCreature {
+  x: number;
+  y: number;
+  width = 100;
+  height = 100;
+  radius = this.width * 0.5;
+  speed = 400;
+  maxHealth = 2000;
+  health = this.maxHealth;
+  points = this.maxHealth;
+  image: HTMLImageElement;
+  images: { [key: string]: HTMLImageElement };
+  music: HTMLAudioElement;
+  sounds: { [key: string]: HTMLAudioElement };
+  damage = 10;
+  attackTimer = 0;
+  attackInterval = 3000;
+  canAttack = false;
+  direction: Direction;
+  phase = 1;
+  healthBarWidth = 200;
+  healthBarHeight = 20;
+  healthBarX: number;
+  healthBarY: number;
+  segments: { x: number; y: number; radius: number }[] = [];
+  detachedSegments: { x: number; y: number; radius: number }[] = [];
+  segmentSpacing = 30;
+  segmentAddTimer = 0;
+  segmentAddInterval = 600;
+  maxSegments = 3000;
+  hazardZones: HazardZone[] = [];
+  hazardZoneInterval = 500;
+  directionChangeTimer = 0;
+  directionChangeInterval = 1500;
+  followPlayerTimer = 0;
+  followPlayerInterval = 2500;
+  projectileCollisionRadius = 100;
+  playerCollisionRadius = 120;
+
+  constructor(game: Game) {
+    super(game);
+    this.images = {
+      base: this.game.getImage('temporal_serpent_image'),
+      head: this.game.getImage('temporal_serpent_head_image'),
+      segment: this.game.getImage('temporal_serpent_segment_image'),
+    };
+    this.image = this.images.head;
+    this.sounds = {
+      hazard: this.game.getAudio('hazard_sound'),
+    };
+    this.music = this.game.getAudio('boss_music');
+
+    const { x, y } = this.game.getOffScreenRandomSide(this, 20);
+    this.x = x;
+    this.y = y;
     this.direction = this.game.getRandomDirection();
-    this.projectileCollisionRadius = 100;
-    this.playerCollisionRadius = 120;
-    this.maxSegments = 3000;
-    this.healthBarWidth = 200;
-    this.healthBarHeight = 20;
     this.healthBarX = (this.game.width - this.healthBarWidth) * 0.5;
     this.healthBarY = this.game.height - this.healthBarHeight - 30;
-    this.projectiles = [];
-    this.hazardZones = [];
-    this.directionChangeInterval = 1500;
-    this.followPlayerInterval = 2500;
-    this.lastDirectionChangeTime = this.game.timestamp;
-    this.lastFollowPlayerTime = this.game.timestamp;
-    this.images = {
-      base: document.getElementById('temporal_serpent_image'),
-      head: document.getElementById('temporal_serpent_head_image'),
-      segment: document.getElementById('temporal_serpent_segment_image'),
-    };
-    this.sounds = {
-      hazard: document.getElementById('hazard_sound'),
-    };
-    this.music = null;
-
-    this.game.getOffScreenRandomSide(this, 100);
+    this.segments = [{ x: this.x, y: this.y, radius: 30 }];
   }
 
-  draw(ctx) {
-    // Serpent segments
-    /*this.segments.forEach((segment, index) => {
-      // Skip the head segment
-      if (index !== 0) {
-        if (
-          segment.x > 0 &&
-          segment.x < this.game.width &&
-          segment.y > 0 &&
-          segment.y < this.game.height
-        ) {
-          ctx.drawImage(
-            this.images.segment,
-            segment.x - segment.radius,
-            segment.y - segment.radius,
-            segment.radius * 2,
-            segment.radius * 2,
-          );
-        }
-      }
-    });*/
-
-    // detachedSegments.forEach((segment) => {
-    //   ctx.drawImage(
-    //     serpentSegment,
-    //     segment.x - segment.radius,
-    //     segment.y - segment.radius,
-    //     segment.radius * 2,
-    //     segment.radius * 2,
-    //   );
-    // });
+  draw(ctx: CTX) {
+    const [head, ...bodySegments] = this.segments;
 
     // Serpent head
-    const head = this.segments[0];
     if (head.x > 0 && head.x < this.game.width && head.y > 0 && head.y < this.game.height) {
       ctx.drawImage(this.images.head, head.x - head.radius, head.y - head.radius, head.radius * 2, head.radius * 2);
 
@@ -90,6 +76,17 @@ export default class TemporalSerpent {
         ctx.stroke();
       }
     }
+
+    // Serpent segmants
+    [...bodySegments, ...this.detachedSegments].forEach((segment) => {
+      ctx.drawImage(
+        this.images.segment,
+        segment.x - segment.radius,
+        segment.y - segment.radius,
+        segment.radius * 2,
+        segment.radius * 2,
+      );
+    });
 
     // Health Bar
     const healthRatio = this.health / this.maxHealth;
@@ -111,172 +108,150 @@ export default class TemporalSerpent {
     ctx.restore();
   }
 
-  update() {
-    //   if (!temporalSerpent || !temporalSerpent.alive) return;
+  update(deltaTime: number) {
+    const [head] = this.segments;
+    const moveDistance = (this.speed * deltaTime) / 1000;
 
-    // const head = temporalSerpent.segments[0];
-    // const moveDistance = (temporalSerpent.speed * deltaTime) / 1000;
-
-    // // Change direction at random intervals
-    // if (timestamp - lastDirectionChangeTime > DIRECTION_CHANGE_INTERVAL) {
-    //   temporalSerpent.direction = getRandomDirection();
-    //   lastDirectionChangeTime = timestamp;
-    // }
-
-    // // Change direction towards the player at specific intervals
-    // if (timestamp - lastFollowPlayerTime > FOLLOW_PLAYER_INTERVAL) {
-    //   temporalSerpent.direction = getDirectionTowardsPlayer(player, head);
-    //   lastFollowPlayerTime = timestamp;
-    // }
-
-    // // Move the head based on the current direction
-    // switch (temporalSerpent.direction) {
-    //   case 'right':
-    //     head.x += moveDistance;
-    //     if (head.x >= canvas.width - head.radius) {
-    //       head.x = canvas.width - head.radius;
-    //       temporalSerpent.direction = 'down';
-    //     }
-    //     break;
-    //   case 'down':
-    //     head.y += moveDistance;
-    //     if (head.y >= canvas.height - head.radius) {
-    //       head.y = canvas.height - head.radius;
-    //       temporalSerpent.direction = 'left';
-    //     }
-    //     break;
-    //   case 'left':
-    //     head.x -= moveDistance;
-    //     if (head.x <= head.radius) {
-    //       head.x = head.radius;
-    //       temporalSerpent.direction = 'up';
-    //     }
-    //     break;
-    //   case 'up':
-    //     head.y -= moveDistance;
-    //     if (head.y <= head.radius) {
-    //       head.y = head.radius;
-    //       temporalSerpent.direction = 'right';
-    //     }
-    //     break;
-    // }
-
-    // // Leave a hazardous zone behind the last segment at a specified interval
-    // const interval = 500; // Change this value to adjust the interval
-    // if (temporalSerpent.segments.length > 0 && temporalSerpent.segments.length % interval === 0) {
-    //   const lastSegment = temporalSerpent.segments[temporalSerpent.segments.length - 1];
-    //   hazardousZones.push({
-    //     x: lastSegment.x,
-    //     y: lastSegment.y,
-    //     radius: HAZARD_RADIUS,
-    //     spawnTime: timestamp,
-    //   });
-
-    //   // Remove old hazardous zones
-    //   hazardousZones = hazardousZones.filter((zone) => timestamp - zone.spawnTime < HAZARD_DURATION);
-    // }
-
-    // // Add new segment to the tail at the increased interval
-    // const increasedSegmentInterval = temporalSerpent.segmentAddInterval * 3;
-
-    // if (timestamp - temporalSerpent.lastSegmentAddTime > increasedSegmentInterval) {
-    //   const newSegment = { x: head.x, y: head.y, radius: head.radius };
-    //   temporalSerpent.segments.push(newSegment);
-    //   temporalSerpent.lastSegmentAddTime = timestamp;
-
-    //   if (temporalSerpent.segments.length > temporalSerpent.maxSegments) {
-    //     temporalSerpent.segments.shift();
-    //   }
-    // }
-
-    // // Update segments to follow the previous segment with increased spacing
-    // const segmentSpacing = 30;
-    // for (let i = temporalSerpent.segments.length - 1; i > 0; i--) {
-    //   const segment = temporalSerpent.segments[i];
-    //   const previousSegment = temporalSerpent.segments[i - 1];
-    //   const distance = Math.sqrt(Math.pow(previousSegment.x - segment.x, 2) + Math.pow(previousSegment.y - segment.y, 2));
-
-    //   if (distance > segmentSpacing) {
-    //     segment.x = previousSegment.x;
-    //     segment.y = previousSegment.y;
-    //   }
-    // }
-
-    // // Phase transitions
-    // if (temporalSerpent.health <= temporalSerpent.maxHealth * 0.75 && !temporalSerpent.phaseTransitioned[0]) {
-    //   temporalSerpent.phase = 2;
-    //   temporalSerpent.phaseTransitioned[0] = true;
-    // } else if (temporalSerpent.health <= temporalSerpent.maxHealth * 0.5 && !temporalSerpent.phaseTransitioned[1]) {
-    //   temporalSerpent.phase = 3;
-    //   temporalSerpent.phaseTransitioned[1] = true;
-    // } else if (temporalSerpent.health <= temporalSerpent.maxHealth * 0.25 && !temporalSerpent.phaseTransitioned[2]) {
-    //   temporalSerpent.phase = 4;
-    //   temporalSerpent.phaseTransitioned[2] = true;
-    // }
-
-    // // Attack logic
-    // if (temporalSerpent.canAttack && timestamp - temporalSerpent.lastAttackTime > temporalSerpent.attackInterval) {
-    //   switch (temporalSerpent.phase) {
-    //     case 1:
-    //       attackPhase1();
-    //       break;
-    //     case 2:
-    //       attackPhase4();
-    //       break;
-    //     case 3:
-    //       attackPhase3();
-    //       break;
-    //     case 4:
-    //       attackPhase2();
-    //       break;
-    //   }
-    //   temporalSerpent.lastAttackTime = timestamp;
-    // }
-    // handleSerpentBombImpact(temporalSerpent, deltaTime, timestamp);
-
-    // function updateDetachedSegments(deltaTime) {
-    //   detachedSegments.forEach((segment, index) => {
-    //     if (segment.travelDirection) {
-    //       const travelDistance = segment.speed * (deltaTime / 1000);
-    //       segment.x += segment.travelDirection.x * travelDistance;
-    //       segment.y += segment.travelDirection.y * travelDistance;
-    //       segment.travelDistance -= travelDistance;
-
-    //       if (segment.travelDistance <= 0) {
-    //         segment.explode = true;
-    //         segment.explosionTime = this.game.timestamp;
-    //         delete segment.travelDirection; // Remove travelDirection to stop further movement
-    //       }
-    //     }
-    //   });
-    // }
-
-    this.hazardZones.forEach((zone, index) => {
-      if (zone.isMarkedForDeletion) this.hazardZones.splice(index, 1);
-    });
-    this.checkCollisions();
-  }
-
-  getDirectionTowardsPlayer() {
-    const dx = this.game.player.x - this.x;
-    const dy = this.game.player.y - this.y;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      return dx > 0 ? 'right' : 'left';
-    } else {
-      return dy > 0 ? 'down' : 'up';
+    // Change direction at random intervals
+    this.directionChangeTimer += deltaTime;
+    if (this.directionChangeTimer >= this.directionChangeInterval) {
+      this.directionChangeTimer = 0;
+      this.direction = this.game.getRandomDirection();
     }
+
+    // Change direction towards the player at specific intervals
+    this.followPlayerTimer += deltaTime;
+    if (this.followPlayerTimer >= this.followPlayerInterval) {
+      this.followPlayerTimer = 0;
+      this.direction = this.game.player.getDirectionToPlayer(head);
+    }
+
+    // Move the head based on the current direction
+    switch (this.direction) {
+      case 'up':
+        head.y -= moveDistance;
+        if (head.y <= head.radius) {
+          head.y = head.radius;
+          this.direction = 'right';
+        }
+        break;
+      case 'down':
+        head.y += moveDistance;
+        if (head.y >= this.game.height - head.radius) {
+          head.y = this.game.height - head.radius;
+          this.direction = 'left';
+        }
+        break;
+      case 'left':
+        head.x -= moveDistance;
+        if (head.x <= head.radius) {
+          head.x = head.radius;
+          this.direction = 'up';
+        }
+        break;
+      case 'right':
+        head.x += moveDistance;
+        if (head.x >= this.game.width - head.radius) {
+          head.x = this.game.width - head.radius;
+          this.direction = 'down';
+        }
+        break;
+    }
+
+    // Leave a hazardous zone behind the last segment at a specified interval
+    if (this.segments.length > 0 && this.segments.length % this.hazardZoneInterval === 0) {
+      const lastSegment = this.segments[this.segments.length - 1];
+      this.hazardZones.push(new HazardZone(this.game, lastSegment.x, lastSegment.y));
+    }
+
+    // Add new segment to the tail at the increased interval
+    this.segmentAddTimer += deltaTime;
+    if (this.segmentAddTimer >= this.segmentAddInterval) {
+      this.segmentAddTimer = 0;
+      if (this.segments.length < this.maxSegments) {
+        const newSegment = { x: head.x, y: head.y, radius: head.radius };
+        this.segments.push(newSegment);
+      }
+    }
+
+    // Update segments to follow the previous segment with increased spacing
+    for (let i = this.segments.length - 1; i > 0; i--) {
+      const segment = this.segments[i];
+      const previousSegment = this.segments[i - 1];
+      const distance = Math.sqrt(
+        Math.pow(previousSegment.x - segment.x, 2) + Math.pow(previousSegment.y - segment.y, 2),
+      );
+      if (distance > this.segmentSpacing) {
+        segment.x = previousSegment.x;
+        segment.y = previousSegment.y;
+      }
+    }
+
+    // Update detached segments
+    // this.detachedSegments.forEach((segment, index) => {
+    //   if (segment.travelDirection) {
+    //     const travelDistance = segment.speed * (deltaTime / 1000);
+    //     segment.x += segment.travelDirection.x * travelDistance;
+    //     segment.y += segment.travelDirection.y * travelDistance;
+    //     segment.travelDistance -= travelDistance;
+    //     if (segment.travelDistance <= 0) {
+    //       segment.explode = true;
+    //       segment.explosionTime = this.game.timestamp;
+    //       delete segment.travelDirection; // Remove travelDirection to stop further movement
+    //     }
+    //   }
+    // });
+
+    // Phase transitions
+    if (this.health <= this.maxHealth * 0.75) {
+      this.phase = 2;
+    } else if (this.health <= this.maxHealth * 0.5) {
+      this.phase = 3;
+    } else if (this.health <= this.maxHealth * 0.25) {
+      this.phase = 4;
+    }
+
+    // Attack logic
+    this.attackTimer += deltaTime;
+    if (this.canAttack && this.attackTimer >= this.attackInterval) {
+      this.attackTimer += 0;
+      switch (this.phase) {
+        case 1:
+          this.attackPhase1();
+          break;
+        case 2:
+          this.attackPhase4();
+          break;
+        case 3:
+          this.attackPhase3();
+          break;
+        case 4:
+          this.attackPhase2();
+          break;
+      }
+    }
+
+    // handleSerpentBombImpact(temporalSerpent, deltaTime, timestamp); // TODO
   }
 
-  checkCollisions() {
-    // BOMD // TODO
-    // Temporarily make the serpent leave the screen
-    // Return the serpent after 5 seconds
-  }
+  // checkCollisions() {
+  // BOMD // TODO
+  // Temporarily make the serpent leave the screen
+  // Return the serpent after 5 seconds
+  // }
+
+  // cleanup() {
+  //   // Remove old hazardous zones
+  //   hazardousZones = hazardousZones.filter((zone) => timestamp - zone.spawnTime < HAZARD_DURATION);
+  // this.hazardZones.forEach((zone, index) => {
+  // if (zone.isMarkedForDeletion) this.hazardZones.splice(index, 1);
+  // });
+  // }
 
   attackPhase1() {
     if (this.segments.length === 0) return;
     const lastSegement = this.segments[this.segments.length - 1];
-    this.hazardZones.push(new Hazard(this.game, lastSegement.x, lastSegement.y));
+    this.hazardZones.push(new HazardZone(this.game, lastSegement.x, lastSegement.y));
   }
 
   attackPhase2() {
@@ -313,7 +288,7 @@ export default class TemporalSerpent {
   }
 
   attackPhase3() {
-    this.activateEnergyBarrier();
+    // this.activateEnergyBarrier();
   }
 
   attackPhase4() {
@@ -342,7 +317,7 @@ export default class TemporalSerpent {
   }
 
   // Function to handle the explosion of detached segments
-  handleSegmentExplosions(timestamp) {
+  handleSegmentExplosions(timestamp: unknown) {
     //   if (!temporalSerpent || !temporalSerpent.alive) return;
     //   const segmentsToRemove = [];
     //   detachedSegments.forEach((segment, index) => {
@@ -379,7 +354,7 @@ export default class TemporalSerpent {
     //   }
   }
 
-  makeTemporalSerpentLeaveScreen(duration) {
+  makeTemporalSerpentLeaveScreen(duration: unknown) {
     // if (temporalSerpent) {
     //   const offScreenMargin = 100;
     //   temporalSerpent.x = -offScreenMargin;
@@ -409,29 +384,36 @@ export default class TemporalSerpent {
     // // Clear hazardous zones
     // hazardousZones.length = 0;
   }
+
+  onPlayerCollision() {}
+  onDeath() {}
 }
 
-class Hazard {
-  constructor(game, x, y) {
+class HazardZone {
+  game: Game;
+  x: number;
+  y: number;
+  duration = 250;
+  damage = 1;
+  radius = 15;
+  damageRate = 1000;
+  coolDownActive = false;
+  coolDownTimer = 0;
+  particles: HazardParticle[] = [];
+  maxParticles = 1;
+  markedForDeletion = false;
+  timer = 0;
+
+  constructor(game: Game, x: number, y: number) {
     this.game = game;
     this.x = x;
     this.y = y;
-    this.duration = 250;
-    this.damage = 1;
-    this.radius = 15;
-    this.damageRate = 1000;
-    this.coolDownActive = false;
-    this.coolDownTimer = 0;
-    this.particles = [];
-    this.maxParticles = 1;
-    this.markedForDeletion = false;
-    this.spawnTime = this.game.timestamp;
     this.markedForDeletion = false;
 
     this.createParticles();
   }
 
-  draw(ctx) {
+  draw(ctx: CTX) {
     // Zone
     ctx.fillStyle = 'rgba(255, 69, 0, 0.3)';
     ctx.beginPath();
@@ -443,14 +425,12 @@ class Hazard {
   }
 
   update() {
-    this.hazardousZones.forEach((zone) => {
-      if (this.game.timestamp - zone.spawnTime < this.duration) zone.markedForDeletion = true;
-    });
-
-    this.particles.forEach((particle) => particle.update());
-    if (this.particles.length <= 0) this.markedForDeletion = true;
-
-    this.checkCollisions();
+    // this.hazardousZones.forEach((zone) => {
+    //   if (this.game.timestamp - zone.spawnTime < this.duration) zone.markedForDeletion = true;
+    // });
+    // this.particles.forEach((particle) => particle.update());
+    // if (this.particles.length <= 0) this.markedForDeletion = true;
+    // this.checkCollisions();
   }
 
   checkCollisions() {
@@ -495,63 +475,68 @@ class Hazard {
 
   createParticles() {
     for (let i = 0; i < this.maxParticles; i++) {
-      this.particles.push(new HazardParticle(this.x, this.y));
+      this.particles.push(new HazardParticle(this.game, this.x, this.y));
     }
   }
 }
 
 class HazardParticle {
-  constructor(game, x, y) {
+  game: Game;
+  x: number;
+  y: number;
+
+  constructor(game: Game, x: number, y: number) {
     this.game = game;
     this.x = x;
     this.y = y;
-    this.size = null;
-    this.alpha = null;
-    this.decay = null;
-    this.dx = null;
-    this.dy = null;
+    // this.size = null;
+    // this.alpha = null;
+    // this.decay = null;
+    // this.dx = null;
+    // this.dy = null;
 
     this.reset();
   }
 
-  draw(ctx) {
-    if (this.alpha > 0) {
-      ctx.save();
-      ctx.globalAlpha = this.alpha;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0, 255, 0, 1)'; // Green color
-      ctx.fill();
-      ctx.restore();
-    }
+  draw(ctx: CTX) {
+    // if (this.alpha > 0) {
+    //   ctx.save();
+    //   ctx.globalAlpha = this.alpha;
+    //   ctx.beginPath();
+    //   ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    //   ctx.fillStyle = 'rgba(0, 255, 0, 1)'; // Green color
+    //   ctx.fill();
+    //   ctx.restore();
+    // }
   }
 
   update() {
-    this.x += this.dx;
-    this.y += this.dy;
-    this.alpha -= this.decay;
-    if (this.alpha <= 0) this.reset();
+    // this.x += this.dx;
+    // this.y += this.dy;
+    // this.alpha -= this.decay;
+    // if (this.alpha <= 0) this.reset();
   }
 
   reset() {
-    this.size = Math.random() * 10 + 5;
-    this.alpha = 1;
-    this.decay = Math.random() * 0.02 + 0.01;
-    this.dx = (Math.random() - 0.5) * 1;
-    this.dy = (Math.random() - 0.5) * 1;
+    // this.size = Math.random() * 10 + 5;
+    // this.alpha = 1;
+    // this.decay = Math.random() * 0.02 + 0.01;
+    // this.dx = (Math.random() - 0.5) * 1;
+    // this.dy = (Math.random() - 0.5) * 1;
   }
 }
 
 class EnergyBarrier {
-  constructor(game) {
+  game: Game;
+  constructor(game: Game) {
     this.game = game;
-    this.duration = 5000;
-    this.cooldown = 10000;
-    this.endTime = 0;
-    this.coolDownEndTime = 0;
+    //   this.duration = 5000;
+    //   this.cooldown = 10000;
+    //   this.endTime = 0;
+    //   this.coolDownEndTime = 0;
   }
 
-  draw(ctx) {}
+  draw(ctx: CTX) {}
 
   update() {}
 }

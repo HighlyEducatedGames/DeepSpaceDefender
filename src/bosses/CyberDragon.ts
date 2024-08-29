@@ -20,7 +20,6 @@ export default class CyberDragon extends BossCreature {
   attackInterval = 2000;
   canAttack = false;
   phase = 1;
-  phaseTransitioned = [false, false, false, false];
   healthBarWidth = this.width;
   healthBarHeight = 10;
   healthBarX: number;
@@ -119,15 +118,12 @@ export default class CyberDragon extends BossCreature {
     this.healthBarY = this.y + this.height * 0.5 + 10;
 
     // Phase Transitions
-    if (this.health < this.maxHealth * 0.75 && this.phase === 1 && !this.phaseTransitioned[1]) {
+    if (this.health < this.maxHealth * 0.75) {
       this.phase = 2;
-      this.phaseTransitioned[1] = true;
-    } else if (this.health < this.maxHealth * 0.5 && this.phase === 1 && !this.phaseTransitioned[3]) {
+    } else if (this.health < this.maxHealth * 0.5) {
       this.phase = 3;
-      this.phaseTransitioned[2] = true;
-    } else if (this.health < this.maxHealth * 0.25 && this.phase === 1 && !this.phaseTransitioned[3]) {
+    } else if (this.health < this.maxHealth * 0.25) {
       this.phase = 4;
-      this.phaseTransitioned[2] = true;
     }
 
     // Laser Charging

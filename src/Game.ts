@@ -336,8 +336,8 @@ export default class Game {
     return Math.random() * (this.height - this.topMargin - margin * 2) + this.topMargin + margin;
   }
 
-  getRandomDirection() {
-    const directions = ['right', 'down', 'left', 'up'];
+  getRandomDirection(): Direction {
+    const directions: Direction[] = ['right', 'down', 'left', 'up'];
     return directions[Math.floor(Math.random() * directions.length)];
   }
 
