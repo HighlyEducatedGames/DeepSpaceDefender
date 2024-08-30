@@ -73,12 +73,6 @@ class ActionKey {
   }
 }
 
-type CheatCode = {
-  code: string[];
-  index: number;
-  enabled: boolean;
-};
-
 export default class InputHandler {
   game: Game;
   keys: { [key: string]: boolean } = {};
@@ -177,7 +171,11 @@ export default class InputHandler {
 
   handleDebugMode(key: string) {
     // Boss selector 1-9
-    if (this.game.debug && /^[1-9]$/.test(key)) this.game.startLevel(parseInt(key) * 5);
+    if (this.game.debug && /^[1-9]$/.test(key)) {
+      const level = parseInt(key) * 5;
+      if (isNaN(level)) return;
+      this.game.startLevel(level);
+    }
     // Change level with PGUP/PGDOWN;
     if (this.game.debug && key === 'PageUp') this.game.nextLevel();
     if (this.game.debug && key === 'PageDown') this.game.prevLevel();
@@ -348,12 +346,6 @@ export default class InputHandler {
     return action.justReleased;
   }
 
-  heldDuration(actionName: number) {
-    const action = this.actions[actionName];
-    if (!action) return null;
-    return action.heldDuration;
-  }
-
   // Controller rumble if available
   playHaptic(duration: number, magnitude = 1) {
     if (!this.gamepadIndex) return;
@@ -431,7 +423,6 @@ export default class InputHandler {
 }
 
 // X-Box Controller Buttons
-
 // 0 = A
 // 1 = B
 // 2 = X
@@ -449,3 +440,9 @@ export default class InputHandler {
 // 14 = Dpad LEFT
 // 15 = Dpad RIGHT
 // 16 = X-Box button
+
+// X-Box Controller Axis
+// 0 = Left Stick - X
+// 1 = Left Stick - Y
+// 2 = Right Stick - X
+// 3 = Right Stick - Y
