@@ -138,20 +138,19 @@ export default class Game {
   }
 
   update(deltaTime: number) {
-    if (!this.isGameOver) {
-      this.levelUpdate(deltaTime);
-      this.player.update(deltaTime);
-      this.stars.forEach((star) => star.update(deltaTime));
-      this.coins.forEach((coin) => coin.update());
-      this.powerUps.update(deltaTime);
-      this.enemies.update(deltaTime);
-      if (this.boss) this.boss.update(deltaTime);
-      if (this.ally) this.ally.update(deltaTime);
-      this.projectiles.forEach((projectile) => projectile.update(deltaTime));
-      this.particles.forEach((particle) => particle.update(deltaTime));
-      this.effects.forEach((effect) => effect.update(deltaTime));
-      // this.wormholes.update(deltaTime);
-    }
+    if (!this.isGameOver) return;
+    this.levelUpdate(deltaTime);
+    this.player.update(deltaTime);
+    this.stars.forEach((star) => star.update(deltaTime));
+    this.coins.forEach((coin) => coin.update());
+    this.powerUps.update(deltaTime);
+    this.enemies.update(deltaTime);
+    if (this.boss) this.boss.update(deltaTime);
+    if (this.ally) this.ally.update(deltaTime);
+    this.projectiles.forEach((projectile) => projectile.update(deltaTime));
+    this.particles.forEach((particle) => particle.update(deltaTime));
+    this.effects.forEach((effect) => effect.update(deltaTime));
+    // this.wormholes.update(deltaTime);
   }
 
   checkCollisions() {
@@ -276,13 +275,6 @@ export default class Game {
     }
   }
 
-  checkCollision(object1: GameObject, object2: GameObject) {
-    const dx = object1.x - object2.x;
-    const dy = object1.y - object2.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < object1.radius + object2.radius;
-  }
-
   gameOver() {
     this.isGameOver = true;
     this.music.setTrack(this.music.tracks.gameOver);
@@ -307,16 +299,6 @@ export default class Game {
     }
   }
 
-  outOfBounds(object: GameObject, extraMargin = 0) {
-    const radius = object.radius + extraMargin;
-    return (
-      object.x + radius < 0 ||
-      object.x - radius > this.width ||
-      object.y + radius < 0 ||
-      object.y - radius > this.height
-    );
-  }
-
   addScore(score: number) {
     this.score += score;
   }
@@ -332,13 +314,35 @@ export default class Game {
     clone.play().catch(() => {});
   }
 
+  checkCollision(object1: CollisionObject, object2: CollisionObject) {
+    const dx = object1.x - object2.x;
+    const dy = object1.y - object2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < object1.radius + object2.radius;
+  }
+
+  outOfBounds(object: CollisionObject, extraMargin = 0) {
+    const radius = object.radius + extraMargin;
+    return (
+      object.x + radius < 0 ||
+      object.x - radius > this.width ||
+      object.y + radius < 0 ||
+      object.y - radius > this.height
+    );
+  }
+
   getRandomY(margin = 0) {
     return Math.random() * (this.height - this.topMargin - margin * 2) + this.topMargin + margin;
   }
 
   getRandomDirection(): Direction {
-    const directions: Direction[] = ['right', 'down', 'left', 'up'];
+    const directions: Direction[] = ['up', 'down', 'left', 'right'];
     return directions[Math.floor(Math.random() * directions.length)];
+  }
+
+  getRandomSide(): Side {
+    const sides: Side[] = ['top', 'bottom', 'left', 'right'];
+    return sides[Math.floor(Math.random() * sides.length)];
   }
 
   getRandomInterval(min: number, max: number) {
@@ -346,23 +350,23 @@ export default class Game {
   }
 
   getOffScreenRandomSide(object: GameObject, extraMargin = 0) {
-    const side = Math.floor(Math.random() * 4) as 0 | 1 | 2 | 3;
+    const side = this.getRandomSide();
     let x, y;
 
     switch (side) {
-      case 0: // left
+      case 'left':
         x = -object.width * 0.5 - extraMargin;
         y = Math.random() * object.game.height;
         break;
-      case 1: // right
+      case 'right':
         x = object.game.width + object.height * 0.5 + extraMargin;
         y = Math.random() * object.game.height;
         break;
-      case 2: // top
+      case 'top':
         x = Math.random() * object.game.width;
         y = -object.height * 0.5 - extraMargin;
         break;
-      case 3: // bottom
+      case 'bottom':
         x = Math.random() * object.game.width;
         y = object.game.height + object.height * 0.5 + extraMargin;
         break;

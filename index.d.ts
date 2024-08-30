@@ -33,9 +33,16 @@ interface Performance {
 }
 
 type Direction = 'up' | 'down' | 'left' | 'right';
+type Side = 'top' | 'bottom' | 'left' | 'right';
 
 type CheatCode = {
   code: string[];
   index: number;
   enabled: boolean;
+};
+
+type CollisionObject = {
+  x: number;
+  y: number;
+  radius: number;
 };

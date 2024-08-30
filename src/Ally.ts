@@ -6,8 +6,8 @@ export default class Ally extends GameObject {
   width = 50;
   height = 50;
   radius = this.width * 0.5;
-  enteringSide: 0 | 1 | 2 | 3;
-  exitingSide = Math.floor(Math.random() * 4) as 0 | 1 | 2 | 3;
+  enteringSide: Side;
+  exitingSide: Side;
   offset = 4;
   speed = 150;
   rotation = 0;
@@ -48,6 +48,7 @@ export default class Ally extends GameObject {
     this.x = x;
     this.y = y;
     this.enteringSide = side;
+    this.exitingSide = this.game.getRandomSide();
 
     // Play warning sound immediately
     this.sounds.warning.play().catch(() => {});
@@ -102,22 +103,22 @@ export default class Ally extends GameObject {
       const entrySpeed = (this.speed * deltaTime) / 1000;
       this.rotation = angleToPlayer;
       switch (this.enteringSide) {
-        case 0: // Enter from the left
+        case 'left':
           this.x += entrySpeed;
           if (this.x >= this.entryDistance) this.entering = false;
           this.rotation = 0;
           break;
-        case 1: // Enter from the right
+        case 'right':
           this.x -= entrySpeed;
           if (this.x <= this.game.width - this.entryDistance) this.entering = false;
           this.rotation = Math.PI;
           break;
-        case 2: // Enter from the top
+        case 'top':
           this.y += entrySpeed;
           if (this.y >= this.entryDistance) this.entering = false;
           this.rotation = Math.PI * 0.5;
           break;
-        case 3: // Enter from the bottom
+        case 'bottom':
           this.y -= entrySpeed;
           if (this.y <= this.game.height - this.entryDistance) this.entering = false;
           this.rotation = Math.PI * 1.5;
@@ -138,19 +139,19 @@ export default class Ally extends GameObject {
       // Rotate to point orthogonal toward exit side
       let exitSpeed = (this.speed * deltaTime) / 1000;
       switch (this.exitingSide) {
-        case 0: // Exit left
+        case 'left':
           this.x -= exitSpeed;
           this.rotation = Math.PI;
           break;
-        case 1: // Exit right
+        case 'right':
           this.x += exitSpeed;
           this.rotation = 0;
           break;
-        case 2: // Exit top
+        case 'top':
           this.y -= exitSpeed;
           this.rotation = Math.PI * 1.5;
           break;
-        case 3: // Exit bottom
+        case 'bottom':
           this.y += exitSpeed;
           this.rotation = Math.PI * 0.5;
           break;
