@@ -10,7 +10,7 @@ export abstract class GameObject {
   abstract speed: number;
   markedForDeletion = false;
 
-  constructor(game: Game) {
+  protected constructor(game: Game) {
     this.game = game;
   }
 
@@ -21,13 +21,13 @@ export abstract class GameObject {
 
 export abstract class Projectile extends GameObject {
   abstract damage: number;
-  constructor(game: Game) {
+  protected constructor(game: Game) {
     super(game);
   }
 }
 
 export abstract class FriendlyProjectile extends Projectile {
-  constructor(game: Game) {
+  protected constructor(game: Game) {
     super(game);
   }
 
@@ -61,7 +61,7 @@ export abstract class FriendlyProjectile extends Projectile {
 }
 
 export abstract class EnemyProjectile extends Projectile {
-  constructor(game: Game) {
+  protected constructor(game: Game) {
     super(game);
   }
 
@@ -83,11 +83,12 @@ export abstract class BossCreature extends GameObject {
   abstract music: HTMLAudioElement;
   abstract damage: number;
   abstract phase: number;
+  abstract playerCollisionRadius: number;
   allowCollision = true;
   collisionTimer = 0;
   collisionCooldown = 3000;
 
-  constructor(game: Game) {
+  protected constructor(game: Game) {
     super(game);
   }
 
@@ -114,7 +115,8 @@ export abstract class BossCreature extends GameObject {
   checkCollisions() {
     // Check collisions with player
     if (this.allowCollision) {
-      if (this.game.checkCollision(this, this.game.player)) {
+      const playerCollisionObject = { x: this.x, y: this.y, radius: this.playerCollisionRadius };
+      if (this.game.checkCollision(playerCollisionObject, this.game.player)) {
         this.allowCollision = false;
         this.game.player.takeDamage(this.damage);
         this.game.playCollision();
@@ -123,6 +125,7 @@ export abstract class BossCreature extends GameObject {
     }
   }
 
+  abstract cleanup(): void;
   abstract onPlayerCollision(): void;
   abstract onDeath(): void;
 }
@@ -134,7 +137,7 @@ export abstract class Effect {
   abstract particles: Particle[];
   markedForDeletion = false;
 
-  constructor(game: Game) {
+  protected constructor(game: Game) {
     this.game = game;
   }
 
@@ -149,7 +152,7 @@ export abstract class Particle {
   abstract y: number;
   markedForDeletion = false;
 
-  constructor(game: Game) {
+  protected constructor(game: Game) {
     this.game = game;
   }
 

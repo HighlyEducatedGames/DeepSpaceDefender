@@ -265,8 +265,9 @@ export default class Player extends GameObject {
     // Laser
     this.laser.update();
 
-    // // Player inputs
-    if (!this.game.isGameOver) {
+    // Player inputs
+    const empActive = this.game.boss instanceof BiomechLeviathan && Boolean(this.game.boss.empBlast);
+    if (!this.game.isGameOver && !empActive) {
       // Actions which only trigger on initial input
       if (justPressed(Action.FIRE)) this.handleActionFire();
       if (justPressed(Action.BOOST)) this.handleActionBoost();
@@ -420,11 +421,11 @@ export default class Player extends GameObject {
     this.missiles = Math.min(this.missiles + amount, this.maxMissiles);
   }
 
-  getAngleToPlayer(object: CollisionObject) {
+  getAngleToPlayer(object: { x: number; y: number }) {
     return Math.atan2(this.y - object.y, this.x - object.x);
   }
 
-  getDistanceToPlayer(object: CollisionObject) {
+  getDistanceToPlayer(object: { x: number; y: number }) {
     return Math.hypot(this.x - object.x, this.y - object.y);
   }
 
@@ -438,8 +439,9 @@ export default class Player extends GameObject {
     }
   }
 
-  /*stopPlayerMovement() {
-    this.velocity = { x: 0, y: 0 };
-    this.thrust = 0;
-  }*/
+  stopMovement() {
+    this.vx = 0;
+    this.vy = 0;
+    this.speed = 0;
+  }
 }

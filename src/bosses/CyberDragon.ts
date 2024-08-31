@@ -240,6 +240,8 @@ export default class CyberDragon extends BossCreature {
     }, 3500); // Play the sound again after a delay if still active
   }
 
+  cleanup() {}
+
   onPlayerCollision() {}
 
   onDeath() {

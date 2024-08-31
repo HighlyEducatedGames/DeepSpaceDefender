@@ -1,11 +1,11 @@
 import BossExplosion from '../effects/BossExplosion';
-import Explosion from '../effects/Explosion.js';
 import { BossCreature, Particle } from '../GameObject';
 
 export default class BiomechLeviathan extends BossCreature {
   x: number;
   y: number;
   radius = 100;
+  playerCollisionRadius = 65;
   width = 200;
   height = 200;
   speed = 40;
@@ -22,24 +22,19 @@ export default class BiomechLeviathan extends BossCreature {
     splat: this.game.getAudio('biomech_splat_sound'),
     noFire: this.game.getAudio('no_fire_sound'),
   };
-  attackTimer = 0;
-  attackInterval = 1500;
-  canAttack = false;
   phase = 1;
-  healthBarWidth = this.width;
-  healthBarHeight = 10;
   maxInkClouds = 3;
   inkClouds: InkCloud[] = [];
-  healthBarX: number;
-  healthBarY: number;
-  playerCollisionRadius = 65;
   empBlast: EmpBlast | null = null;
-  empTimer = 0;
-  empCooldown = 5000;
-  empActive = false;
+  empBlastTimer = 0;
+  empBlastCooldown = 5000;
   tractorBeam: TractorBeam | null = null;
   tractorBeamTimer = 0;
   tractorBeamCooldown = 5000;
+  healthBarWidth = this.width;
+  healthBarHeight = 10;
+  healthBarX: number;
+  healthBarY: number;
 
   constructor(game: Game) {
     super(game);
@@ -92,31 +87,25 @@ export default class BiomechLeviathan extends BossCreature {
     super.update(deltaTime);
 
     // Movement
-    const distanceToPlayer = this.game.player.getDistanceToPlayer(this);
-    // Snap to player if close to avoid bouncing
-    const snapThreshold = 2; // Increase this if bouncing continues
-    if (distanceToPlayer < snapThreshold) {
-      this.x = this.game.player.x;
-      this.y = this.game.player.y;
-    } else {
-      // Move toward player
-      const angleToPlayer = this.game.player.getAngleToPlayer(this);
-      this.vx = Math.cos(angleToPlayer);
-      this.vy = Math.sin(angleToPlayer);
-      this.x += (this.vx * this.speed * deltaTime) / 1000;
-      this.y += (this.vy * this.speed * deltaTime) / 1000;
-    }
+    const angleToPlayer = this.game.player.getAngleToPlayer(this);
+    this.vx = Math.cos(angleToPlayer);
+    this.vy = Math.sin(angleToPlayer);
+    this.x += (this.vx * this.speed * deltaTime) / 1000;
+    this.y += (this.vy * this.speed * deltaTime) / 1000;
 
-    // Ink Clouds
+    // Health bar follows boss
+    this.healthBarX = this.x - this.width * 0.5;
+    this.healthBarY = this.y - this.height * 0.5 + this.height + 5;
+
+    // Update weapons/abilities
+    if (this.tractorBeam) this.tractorBeam.update(deltaTime);
     this.inkClouds.forEach((cloud) => cloud.update(deltaTime));
-
-    // EMP Blast
-    if (this.empBlast) this.empBlast.update();
+    if (this.empBlast) this.empBlast.update(deltaTime);
 
     // Phase Transitions
-    if (this.health < this.maxHealth * 0.6) {
+    if (this.phase === 1 && this.health < this.maxHealth * 0.6) {
       this.phase = 2;
-    } else if (this.health < this.maxHealth * 0.3) {
+    } else if (this.phase === 2 && this.health < this.maxHealth * 0.3) {
       this.phase = 3;
     }
 
@@ -124,13 +113,12 @@ export default class BiomechLeviathan extends BossCreature {
     switch (this.phase) {
       case 1:
         this.spawnTractorBeam(deltaTime);
-        // this.spawnInkCloud();
         break;
       case 2:
-        // this.spawnInkCloud();
+        this.spawnInkCloud();
         break;
       case 3:
-        // this.spawnEmpBlast();
+        this.spawnEmpBlast(deltaTime);
         break;
     }
   }
@@ -149,11 +137,25 @@ export default class BiomechLeviathan extends BossCreature {
     this.inkClouds.push(new InkCloud(this));
   }
 
-  spawnEmpBlast() {
-    /*  if (this.game.timestamp - this.lastEmpTime < this.empCooldown) return;
-    this.empActive = true;
-    const empBlast = new EmpBlast(this.game, this);
-    this.lastEmpTime = this.game.timestamp;*/
+  spawnEmpBlast(deltaTime: number) {
+    if (this.empBlast) return;
+    this.empBlastTimer += deltaTime;
+    if (this.empBlastTimer >= this.empBlastCooldown) {
+      this.empBlastTimer = 0;
+      this.empBlast = new EmpBlast(this);
+    }
+  }
+
+  cleanup() {
+    if (this.tractorBeam && this.tractorBeam.markedForDeletion) this.tractorBeam = null;
+    this.inkClouds = this.inkClouds.filter((cloud) => !cloud.markedForDeletion);
+    if (this.empBlast && this.empBlast.markedForDeletion) this.empBlast = null;
+  }
+
+  checkCollisions() {
+    super.checkCollisions();
+    this.inkClouds.forEach((cloud) => cloud.checkCollisions());
+    if (this.empBlast) this.empBlast.checkCollisions();
   }
 
   onPlayerCollision() {
@@ -170,7 +172,7 @@ class TractorBeam {
   biomech: BiomechLeviathan;
   x: number;
   y: number;
-  beamWidth = 20;
+  beamWidth = 10;
   timer = 0;
   duration = 5000;
   strength = 0.2;
@@ -188,11 +190,11 @@ class TractorBeam {
     gradient.addColorStop(0, 'rgba(255, 255, 0, 0.5)'); // Yellow at the player end
     gradient.addColorStop(1, 'rgba(255, 255, 0, 0)'); // Transparent at the biomech boss end
 
-    const angle = Math.atan2(this.game.player.y - this.y, this.game.player.x - this.x);
-    const playerX1 = this.game.player.x + Math.cos(angle + Math.PI * 0.5) * this.beamWidth * 0.5;
-    const playerY1 = this.game.player.y + Math.sin(angle + Math.PI * 0.5) * this.beamWidth * 0.5;
-    const playerX2 = this.game.player.x + Math.cos(angle - Math.PI * 0.5) * this.beamWidth * 0.5;
-    const playerY2 = this.game.player.y + Math.sin(angle - Math.PI * 0.5) * this.beamWidth * 0.5;
+    const angle = this.game.player.getAngleToPlayer(this);
+    const playerX1 = this.game.player.x + Math.cos(angle + Math.PI * 0.5) * this.beamWidth;
+    const playerY1 = this.game.player.y + Math.sin(angle + Math.PI * 0.5) * this.beamWidth;
+    const playerX2 = this.game.player.x + Math.cos(angle - Math.PI * 0.5) * this.beamWidth;
+    const playerY2 = this.game.player.y + Math.sin(angle - Math.PI * 0.5) * this.beamWidth;
 
     ctx.fillStyle = gradient;
     ctx.beginPath();
@@ -208,9 +210,7 @@ class TractorBeam {
     this.y = this.biomech.y;
 
     this.timer += deltaTime;
-    if (this.timer >= this.duration) {
-      this.markedForDeletion = true;
-    }
+    if (this.timer >= this.duration) this.markedForDeletion = true;
   }
 }
 
@@ -313,34 +313,24 @@ class InkCloud {
     // Cloud Timer
     if (this.cloudActive) {
       this.cloudTimer += deltaTime;
-      if (this.cloudTimer >= this.cloudDuration) {
-        this.cloudActive = false; // TODO mark anything for deletion??
-      }
+      if (this.cloudTimer >= this.cloudDuration) this.cloudActive = false;
     }
 
-    if (this.timer >= this.lifespan) {
-      this.markedForDeletion = true;
-    }
+    if (this.timer >= this.lifespan) this.markedForDeletion = true;
   }
 
   checkCollisions() {
     // Check collision to the player
-    // Check if ink blob hits the player
-    const dx = this.x - this.game.player.x;
-    const dy = this.y - this.game.player.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance < this.radius + this.game.player.radius) this.onPlayerCollision();
-  }
+    if (this.game.checkCollision(this, this.game.player)) {
+      this.cloudActive = true;
+      this.cloudX = this.game.player.x;
+      this.cloudY = this.game.player.y;
+      this.cloudTimer = 0;
+      this.active = false;
 
-  onPlayerCollision() {
-    this.cloudActive = true;
-    this.cloudX = this.game.player.x;
-    this.cloudY = this.game.player.y;
-    this.cloudTimer = 0;
-    this.active = false;
-
-    this.game.player.takeDamage(this.damage);
-    this.biomech.sounds.splat.play().catch(() => {});
+      this.game.player.takeDamage(this.damage);
+      this.biomech.sounds.splat.play().catch(() => {});
+    }
   }
 }
 
@@ -355,12 +345,14 @@ class EmpBlast {
   pulseTime = 0;
   pulseScale = 0;
   sparkFrequency = 0.5;
+  markedForDeletion = false;
 
   constructor(biomech: BiomechLeviathan) {
     this.game = biomech.game;
     this.biomech = biomech;
     this.x = this.biomech.x;
     this.y = this.biomech.y;
+    this.game.player.stopMovement();
   }
 
   draw(ctx: CTX) {
@@ -371,7 +363,7 @@ class EmpBlast {
     ctx.fill();
   }
 
-  update() {
+  update(deltaTime: number) {
     this.pulseTime += 0.1; // Adjust the speed of the pulsing
     this.pulseScale = 1 + Math.sin(this.pulseTime) * 0.1; // Adjust the range of the pulsing
 
@@ -384,22 +376,13 @@ class EmpBlast {
     this.x = this.biomech.x;
     this.y = this.biomech.y;
 
-    // Re-enable player controls after the EMP blast ends
-    // setTimeout(() => {
-    //   empBlast.active = false;
-    //   empBlastActive = false;
-    //   empDisableFire = false;
-    // }, empBlast.duration);
+    this.timer += deltaTime;
+    if (this.timer >= this.duration) this.markedForDeletion = true;
   }
 
   checkCollisions() {
-    // Destroy projectiles within the EMP blast radius
-    // projectiles = projectiles.filter((projectile) => {
-    //   const dx = projectile.x - empBlast.x;
-    //   const dy = projectile.y - empBlast.y;
-    //   const distance = Math.sqrt(dx * dx + dy * dy);
-    //   return distance > empBlast.radius;
-    // });
+    // Destroy ALL projectiles within the EMP blast radius
+    this.game.projectiles = this.game.projectiles.filter((projectile) => !this.game.checkCollision(this, projectile));
   }
 }
 
@@ -408,10 +391,9 @@ class EmpSparkParticle extends Particle {
   y: number;
   size = Math.random() * 5 + 2;
   color = `rgba(0, 255, 255, ${Math.random() * 0.5 + 0.5})`;
-  velocity = {
-    x: (Math.random() - 0.5) * 10,
-    y: (Math.random() - 0.5) * 10,
-  };
+  vx = Math.random() - 0.5;
+  vy = Math.random() - 0.5;
+  speed = 600;
   alpha = 1;
 
   constructor(game: Game, x: number, y: number) {
@@ -432,9 +414,9 @@ class EmpSparkParticle extends Particle {
     }
   }
 
-  update() {
-    this.x += this.velocity.x;
-    this.y += this.velocity.y;
+  update(deltaTime: number) {
+    this.x += (this.vx * this.speed * deltaTime) / 1000;
+    this.y += (this.vy * this.speed * deltaTime) / 1000;
     this.alpha -= 0.02;
 
     if (this.alpha <= 0) this.markedForDeletion = true;

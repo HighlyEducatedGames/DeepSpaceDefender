@@ -206,6 +206,7 @@ export default class Game {
     this.powerUps.cleanup();
     this.enemies.cleanup();
     if (this.boss && this.boss.markedForDeletion) this.boss = null;
+    if (this.boss) this.boss.cleanup();
     this.cleanupAlly();
     this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
     this.particles = this.particles.filter((particle) => !particle.markedForDeletion);

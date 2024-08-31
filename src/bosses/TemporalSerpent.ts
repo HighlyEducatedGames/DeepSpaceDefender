@@ -385,6 +385,8 @@ export default class TemporalSerpent extends BossCreature {
     // hazardousZones.length = 0;
   }
 
+  cleanup() {}
+
   onPlayerCollision() {}
   onDeath() {}
 }

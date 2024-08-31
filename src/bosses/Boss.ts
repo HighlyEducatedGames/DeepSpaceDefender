@@ -5,6 +5,7 @@ export default class Boss extends BossCreature {
   x: number;
   y: number;
   radius = 50;
+  playerCollisionRadius = this.radius;
   width = 100;
   height = 100;
   speed = 50;
@@ -30,7 +31,7 @@ export default class Boss extends BossCreature {
     this.x = x;
     this.y = y;
     this.healthBarX = this.x - this.width * 0.5;
-    this.healthBarY = this.y - this.height * 0.5 + this.height + 5;
+    this.healthBarY = this.y + this.height * 0.5 + 5;
 
     setTimeout(() => {
       this.canAttack = true;
@@ -61,30 +62,21 @@ export default class Boss extends BossCreature {
     super.update(deltaTime);
 
     // Movement
-    const distanceToPlayer = this.game.player.getDistanceToPlayer(this);
-    // Snap to player if close to avoid bouncing
-    const snapThreshold = 2; // Increase this if bouncing continues
-    if (distanceToPlayer < snapThreshold) {
-      this.x = this.game.player.x;
-      this.y = this.game.player.y;
-    } else {
-      // Move toward player
-      const angleToPlayer = this.game.player.getAngleToPlayer(this);
-      this.vx = Math.cos(angleToPlayer);
-      this.vy = Math.sin(angleToPlayer);
-      this.x += (this.vx * this.speed * deltaTime) / 1000;
-      this.y += (this.vy * this.speed * deltaTime) / 1000;
-    }
+    const angleToPlayer = this.game.player.getAngleToPlayer(this);
+    this.vx = Math.cos(angleToPlayer);
+    this.vy = Math.sin(angleToPlayer);
+    this.x += (this.vx * this.speed * deltaTime) / 1000;
+    this.y += (this.vy * this.speed * deltaTime) / 1000;
 
     // Health bar follows boss
     this.healthBarX = this.x - this.width * 0.5;
     this.healthBarY = this.y - this.height * 0.5 + this.height + 5;
 
     // Phase Transitions
-    if (this.health < this.maxHealth * 0.6) {
+    if (this.phase === 1 && this.health < this.maxHealth * 0.6) {
       this.phase = 2;
-      this.speed += 20;
-    } else if (this.health < this.maxHealth * 0.2) {
+      this.speed = 70;
+    } else if (this.phase === 2 && this.health < this.maxHealth * 0.2) {
       this.phase = 3;
       this.attackInterval = 1000;
     }
@@ -147,9 +139,10 @@ export default class Boss extends BossCreature {
     }
   }
 
+  cleanup() {}
+
   onPlayerCollision() {}
 
-  // Play effects on death
   onDeath() {
     this.game.effects.push(new BossExplosion(this.game, this.x, this.y));
   }
