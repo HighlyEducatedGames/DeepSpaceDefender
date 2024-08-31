@@ -10,22 +10,28 @@ import { Action } from './InputHandler';
 import { GameObject } from './GameObject';
 
 export default class Player extends GameObject {
-  x: number;
-  y: number;
+  x = this.game.width * 0.5;
+  y = this.game.height * 0.5 + this.game.topMargin * 0.5;
+  radius = 25;
   width = 50;
   height = 50;
-  radius = this.width * 0.5;
-  flame: Flame;
-  laser: Laser;
-  particleBomb: ParticleBomb;
-  abilities: { [key: string]: AbilityTimer };
+  flame = new Flame(this.game);
+  laser = new Laser(this.game);
+  particleBomb = new ParticleBomb(this.game);
+  abilities = {
+    projectile: new AbilityTimer(this.game, 15000, 'powerup_image'),
+    shield: new AbilityTimer(this.game, 15000, 'shield_powerup_image'),
+    boost: new AbilityTimer(this.game, 10000, 'boost_powerup_image'),
+    reverse: new AbilityTimer(this.game, 10000, 'reverse_powerup_image'),
+    flame: new AbilityTimer(this.game, 10000, 'flame_powerup_image'),
+    laser: new AbilityTimer(this.game, 10000, 'laser_powerup_image'),
+    particleBomb: new AbilityTimer(this.game, 10000, 'particle_bomb_powerup_image'),
+  };
   offset = 4;
-  speed = 200;
+  speed = 0;
   maxSpeed = 300;
   rotation = -Math.PI * 0.5;
   rotationSpeed = 4;
-  velocity = { x: 0, y: 0 };
-  thrust = 0;
   acceleration = 300;
   deceleration = 0.98;
   maxLives = 9999;
@@ -62,20 +68,6 @@ export default class Player extends GameObject {
 
   constructor(game: Game) {
     super(game);
-    this.x = this.game.width * 0.5;
-    this.y = this.game.height * 0.5 + this.game.topMargin * 0.5;
-    this.flame = new Flame(this.game);
-    this.laser = new Laser(this.game);
-    this.particleBomb = new ParticleBomb(this.game);
-    this.abilities = {
-      projectile: new AbilityTimer(this.game, 15000, 'powerup_image'),
-      shield: new AbilityTimer(this.game, 15000, 'shield_powerup_image'),
-      boost: new AbilityTimer(this.game, 10000, 'boost_powerup_image'),
-      reverse: new AbilityTimer(this.game, 10000, 'reverse_powerup_image'),
-      flame: new AbilityTimer(this.game, 10000, 'flame_powerup_image'),
-      laser: new AbilityTimer(this.game, 10000, 'laser_powerup_image'),
-      particleBomb: new AbilityTimer(this.game, 10000, 'particle_bomb_powerup_image'),
-    };
   }
 
   draw(ctx: CTX) {
@@ -170,7 +162,7 @@ export default class Player extends GameObject {
 
     // Update player ability timers
     for (const key in this.abilities) {
-      this.abilities[key].update(deltaTime);
+      this.abilities[key as keyof typeof this.abilities].update(deltaTime);
     }
 
     // Rotate player
@@ -181,13 +173,13 @@ export default class Player extends GameObject {
 
     // Forward and reverse
     if (isPressed(Action.MOVE_FORWARD)) {
-      this.thrust = this.acceleration;
+      this.speed = this.acceleration;
       if (this.sounds.acceleration.paused) this.sounds.acceleration.play().catch(() => {});
     } else if (isPressed(Action.MOVE_BACKWARD)) {
-      this.thrust = -this.acceleration;
+      this.speed = -this.acceleration;
       if (this.sounds.reverse.paused) this.sounds.reverse.play().catch(() => {});
     } else {
-      this.thrust = 0;
+      this.speed = 0;
     }
 
     // Stop acceleration sound if no longer pressing ArrowUp
@@ -203,30 +195,30 @@ export default class Player extends GameObject {
     }
 
     // Speed limiter
-    const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
     if (speed > this.maxSpeed) {
-      this.velocity.x *= this.maxSpeed / speed;
-      this.velocity.y *= this.maxSpeed / speed;
+      this.vx *= this.maxSpeed / speed;
+      this.vy *= this.maxSpeed / speed;
     }
 
     // Boost handling
     if (this.boostCooldownTimer > 0) this.boostCooldownTimer -= deltaTime;
     if (this.isBoosting) {
-      this.velocity.x = Math.cos(this.rotation) * this.boostSpeed;
-      this.velocity.y = Math.sin(this.rotation) * this.boostSpeed;
+      this.vx = Math.cos(this.rotation) * this.boostSpeed;
+      this.vy = Math.sin(this.rotation) * this.boostSpeed;
 
       this.boostTimer -= deltaTime;
       if (this.boostTimer <= 0) this.isBoosting = false;
     } else {
       // Basic movement
-      this.velocity.x += (Math.cos(this.rotation) * this.thrust * deltaTime) / 1000;
-      this.velocity.y += (Math.sin(this.rotation) * this.thrust * deltaTime) / 1000;
+      this.vx += (Math.cos(this.rotation) * this.speed * deltaTime) / 1000;
+      this.vy += (Math.sin(this.rotation) * this.speed * deltaTime) / 1000;
     }
 
     // Deceleration
     if (!isPressed(Action.MOVE_FORWARD) && !isPressed(Action.MOVE_BACKWARD)) {
-      this.velocity.x *= this.deceleration;
-      this.velocity.y *= this.deceleration;
+      this.vx *= this.deceleration;
+      this.vy *= this.deceleration;
     }
 
     // Tractor beam effect on player
@@ -239,15 +231,15 @@ export default class Player extends GameObject {
 
         if (distance > 0) {
           const pullStrength = tractorBeam.strength;
-          this.velocity.x += (dx / distance) * pullStrength * deltaTime;
-          this.velocity.y += (dy / distance) * pullStrength * deltaTime;
+          this.vx += (dx / distance) * pullStrength * deltaTime;
+          this.vy += (dy / distance) * pullStrength * deltaTime;
         }
       }
     }
 
     // Move player
-    this.x += (this.velocity.x * deltaTime) / 1000;
-    this.y += (this.velocity.y * deltaTime) / 1000;
+    this.x += (this.vx * deltaTime) / 1000;
+    this.y += (this.vy * deltaTime) / 1000;
 
     // Screen wrap
     if (this.x < 0) this.x = this.game.width;
@@ -420,11 +412,19 @@ export default class Player extends GameObject {
     this.lives = Math.min(this.lives + amount, this.maxLives);
   }
 
-  getAngleToPlayer(object: GameObject) {
+  addBomb(amount: number) {
+    this.bombs = Math.min(this.bombs + amount, this.maxBombs);
+  }
+
+  addMissile(amount: number) {
+    this.missiles = Math.min(this.missiles + amount, this.maxMissiles);
+  }
+
+  getAngleToPlayer(object: CollisionObject) {
     return Math.atan2(this.y - object.y, this.x - object.x);
   }
 
-  getDistanceToPlayer(object: GameObject) {
+  getDistanceToPlayer(object: CollisionObject) {
     return Math.hypot(this.x - object.x, this.y - object.y);
   }
 
@@ -442,12 +442,4 @@ export default class Player extends GameObject {
     this.velocity = { x: 0, y: 0 };
     this.thrust = 0;
   }*/
-
-  addBomb(amount: number) {
-    this.bombs = Math.min(this.bombs + amount, this.maxBombs);
-  }
-
-  addMissile(amount: number) {
-    this.missiles = Math.min(this.missiles + amount, this.maxMissiles);
-  }
 }
