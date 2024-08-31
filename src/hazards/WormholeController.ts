@@ -1,5 +1,3 @@
-import { GameObject } from '../GameObject';
-
 export default class WormholeController {
   game: Game;
   wormholes: Wormhole[] = [];

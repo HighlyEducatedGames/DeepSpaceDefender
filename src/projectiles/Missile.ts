@@ -4,14 +4,11 @@ export default class Missile extends FriendlyProjectile {
   target: GameObject;
   x: number;
   y: number;
+  radius = 10;
   width = 20;
   height = 20;
-  radius = this.width * 0.5;
   damage = 50;
   speed = 300;
-  directionX = 0;
-  directionY = 0;
-  maxDistance = 3000;
   image = this.game.getImage('missile_image');
   sound = this.game.getAudio('missile_sound');
 
@@ -41,10 +38,13 @@ export default class Missile extends FriendlyProjectile {
 
   update(deltaTime: number) {
     if (this.target) {
-      // Move the missile towards the target
       const angleToTarget = Math.atan2(this.target.y - this.y, this.target.x - this.x);
-      this.x += (Math.cos(angleToTarget) * this.speed * deltaTime) / 1000 || 0;
-      this.y += (Math.sin(angleToTarget) * this.speed * deltaTime) / 1000 || 0;
+      this.vx = Math.cos(angleToTarget);
+      this.vy = Math.sin(angleToTarget);
+
+      // Move the missile towards the target
+      this.x += (this.vx * this.speed * deltaTime) / 1000;
+      this.y += (this.vy * this.speed * deltaTime) / 1000;
     } else {
       this.markedForDeletion = true;
     }

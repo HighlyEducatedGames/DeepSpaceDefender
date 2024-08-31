@@ -26,12 +26,10 @@ export default class ParticleBomb {
 
 class ParticleBombParticle extends FriendlyProjectile {
   angle: number;
-  x: number;
-  y: number;
+  x = this.game.player.x;
+  y = this.game.player.y;
   width = 0;
   height = 0;
-  directionX: number;
-  directionY: number;
   radius = 5;
   speed = 500;
   alpha = 1;
@@ -41,10 +39,8 @@ class ParticleBombParticle extends FriendlyProjectile {
   constructor(game: Game, angle: number) {
     super(game);
     this.angle = angle;
-    this.x = this.game.player.x;
-    this.y = this.game.player.y;
-    this.directionX = Math.cos(angle);
-    this.directionY = Math.sin(angle);
+    this.vx = Math.cos(angle);
+    this.vy = Math.sin(angle);
   }
 
   draw(ctx: CTX) {
@@ -55,8 +51,8 @@ class ParticleBombParticle extends FriendlyProjectile {
   }
 
   update(deltaTime: number) {
-    this.x += (this.speed * this.directionX * deltaTime) / 1000;
-    this.y += (this.speed * this.directionY * deltaTime) / 1000;
+    this.x += (this.vx * this.speed * deltaTime) / 1000;
+    this.y += (this.vy * this.speed * deltaTime) / 1000;
     this.alpha -= this.fadeRate;
     if (this.alpha <= 0) this.markedForDeletion = true;
   }

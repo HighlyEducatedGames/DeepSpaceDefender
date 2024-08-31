@@ -9,8 +9,10 @@ export abstract class Enemy extends GameObject {
   abstract health: number;
   abstract damage: number;
   abstract score: number;
-  patrolTarget = { x: 0, y: 0 };
-  retreatTarget = { x: 0, y: 0 };
+  abstract width: number;
+  abstract height: number;
+  patrolTarget: { x: number; y: number } | null = null;
+  retreatTarget: { x: number; y: number } | null = null;
   attackTimer = 0;
   abstract attackInterval: number;
   side = Math.random() < 0.5 ? 'left' : 'right';
@@ -41,10 +43,7 @@ export abstract class Enemy extends GameObject {
   }
 
   patrol(enemy: GameObject, deltaTime: number) {
-    if (!this.patrolTarget) {
-      this.patrolTarget = this.getNewPatrolPoint();
-    }
-
+    if (!this.patrolTarget) this.patrolTarget = this.getNewPatrolPoint();
     const distanceToTarget = Math.hypot(this.patrolTarget.x - this.x, this.patrolTarget.y - this.y);
 
     // Move towards the patrol target
@@ -71,7 +70,7 @@ export abstract class Enemy extends GameObject {
   }
 
   checkPlayerDistance() {
-    const distance = Math.hypot(this.x - this.game.player.x, this.y - this.game.player.y);
+    const distance = this.game.player.getDistanceToPlayer(this);
 
     // Example: if the enemy is a stealth type, they might have a smaller detection range
     const detectionRange = this instanceof StealthEnemy ? 150 : 200;
@@ -90,9 +89,7 @@ export abstract class Enemy extends GameObject {
   }
 
   retreat(enemy: GameObject, deltaTime: number) {
-    if (!this.retreatTarget) {
-      this.retreatTarget = this.getRetreatPoint();
-    }
+    if (!this.retreatTarget) this.retreatTarget = this.getRetreatPoint();
 
     const distanceToTarget = Math.hypot(this.retreatTarget.x - this.x, this.retreatTarget.y - this.y);
 
@@ -189,8 +186,8 @@ export abstract class Enemy extends GameObject {
 
   fireProjectile() {
     // Predict player's position based on their velocity
-    const playerFutureX = this.game.player.x + this.game.player.velocity.x * 0.5;
-    const playerFutureY = this.game.player.y + this.game.player.velocity.y * 0.5;
+    const playerFutureX = this.game.player.x + this.game.player.vx * 0.5;
+    const playerFutureY = this.game.player.y + this.game.player.vy * 0.5;
     const angleToPlayer = Math.atan2(playerFutureY - this.y, playerFutureX - this.x);
 
     this.game.projectiles.push(new Projectile(this.game, this.x, this.y, angleToPlayer));

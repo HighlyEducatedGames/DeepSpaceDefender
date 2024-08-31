@@ -8,15 +8,13 @@ interface PowerUpOptions {
 }
 
 export abstract class PowerUp extends GameObject {
-  x = 0;
-  y = 0;
+  x: number;
+  y: number;
   width: number;
   height: number;
   radius: number;
   speed: number;
   image: HTMLImageElement;
-  dx = 0;
-  dy = 0;
   margin = 50;
   sound = this.game.getAudio('powerup_sound');
   abstract onPlayerCollision(): void;
@@ -29,7 +27,11 @@ export abstract class PowerUp extends GameObject {
     this.speed = speed;
     this.image = this.game.getImage(image);
 
-    this.getOffScreenSpawnPosition();
+    const side = Math.random() < 0.5 ? 'left' : 'right';
+    this.x = side === 'left' ? -this.width * 0.5 : this.game.width + this.width * 0.5;
+    this.y = this.game.getRandomY(this.margin);
+    this.vx = side === 'left' ? 1 : -1;
+    this.vy = 0;
   }
 
   draw(ctx: CTX) {
@@ -45,16 +47,16 @@ export abstract class PowerUp extends GameObject {
   }
 
   update(deltaTime: number) {
-    this.x += (this.speed * this.dx * deltaTime) / 1000;
+    this.x += (this.speed * this.vx * deltaTime) / 1000;
 
     //Sin Wave
     this.y += Math.sin(this.x / 50) * 1.5;
 
-    if (this.y < 0 || this.y + this.height > this.game.height) {
-      this.y = Math.max(0, Math.min(this.y, this.game.height - this.height));
+    if (this.y - this.radius < 0 || this.y + this.radius > this.game.height) {
+      this.y = Math.max(this.radius, Math.min(this.y, this.game.height - this.radius));
     }
 
-    if (this.game.outOfBounds(this, this.width)) this.markedForDeletion = true;
+    if (this.game.outOfBounds(this, this.radius)) this.markedForDeletion = true;
   }
 
   checkCollisions() {
@@ -64,14 +66,6 @@ export abstract class PowerUp extends GameObject {
       this.game.cloneSound(this.sound);
       this.markedForDeletion = true;
     }
-  }
-
-  getOffScreenSpawnPosition() {
-    const side = Math.random() < 0.5 ? 'left' : 'right';
-    this.x = side === 'left' ? -this.width * 0.5 : this.game.width + this.width * 0.5;
-    this.y = this.game.getRandomY(this.margin);
-    this.dx = side === 'left' ? 1 : -1;
-    this.dy = 0;
   }
 }
 

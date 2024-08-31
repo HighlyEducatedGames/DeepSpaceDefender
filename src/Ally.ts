@@ -3,9 +3,9 @@ import { FriendlyProjectile, GameObject } from './GameObject';
 export default class Ally extends GameObject {
   x: number;
   y: number;
+  radius = 25;
   width = 50;
   height = 50;
-  radius = this.width * 0.5;
   enteringSide: Side;
   exitingSide: Side;
   offset = 4;
@@ -31,18 +31,16 @@ export default class Ally extends GameObject {
   followMargin = 15;
   targetSpeedMultiplier = 1;
   targetSnapDistance = 10;
-  image: HTMLImageElement;
-  sounds: { [key: string]: HTMLAudioElement };
+  image = this.game.getImage('ally_image');
+  sounds = {
+    warning: this.game.getAudio('ally_sound'),
+    overAndOut: this.game.getAudio('ally_over_sound'),
+    circularOrbit: this.game.getAudio('ally_circular_orbit_sound'),
+    followPlayer: this.game.getAudio('ally_follow_player_sound'),
+  };
 
   constructor(game: Game) {
     super(game);
-    this.image = this.game.getImage('ally_image');
-    this.sounds = {
-      warning: this.game.getAudio('ally_sound'),
-      overAndOut: this.game.getAudio('ally_over_sound'),
-      circularOrbit: this.game.getAudio('ally_circular_orbit_sound'),
-      followPlayer: this.game.getAudio('ally_follow_player_sound'),
-    };
     // Get spawning location and side
     const { x, y, side } = this.game.getOffScreenRandomSide(this);
     this.x = x;

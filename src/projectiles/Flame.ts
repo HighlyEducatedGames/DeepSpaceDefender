@@ -1,5 +1,4 @@
-import Explosion from '../effects/Explosion.js';
-import { FriendlyProjectile, Particle, Projectile } from '../GameObject';
+import { FriendlyProjectile } from '../GameObject';
 
 export default class Flame {
   game: Game;
@@ -35,26 +34,20 @@ export default class Flame {
 }
 
 class FlameParticle extends FriendlyProjectile {
-  x: number;
-  y: number;
+  x = this.game.player.x + Math.cos(this.game.player.rotation) * this.game.player.width * 0.5;
+  y = this.game.player.y + Math.sin(this.game.player.rotation) * this.game.player.height * 0.5;
   radius = Math.random() * 20 + 10;
   width = this.radius * 2;
   height = this.radius * 2;
   damage = 1;
+  vx = Math.cos(this.game.player.rotation) * 10 + (Math.random() - 0.5) * 2;
+  vy = Math.sin(this.game.player.rotation) * 10 + (Math.random() - 0.5) * 2;
   speed = 0;
   color = `rgba(${255}, ${Math.random() * 150}, 0, 1)`;
   alpha = 1;
-  tickingDamage = 1;
-  velocity: { x: number; y: number };
 
   constructor(game: Game) {
     super(game);
-    this.x = this.game.player.x + Math.cos(this.game.player.rotation) * this.game.player.width * 0.5;
-    this.y = this.game.player.y + Math.sin(this.game.player.rotation) * this.game.player.height * 0.5;
-    this.velocity = {
-      x: Math.cos(this.game.player.rotation) * 10 + (Math.random() - 0.5) * 2,
-      y: Math.sin(this.game.player.rotation) * 10 + (Math.random() - 0.5) * 2,
-    };
   }
 
   draw(ctx: CTX) {
@@ -70,8 +63,8 @@ class FlameParticle extends FriendlyProjectile {
   }
 
   update() {
-    this.x += this.velocity.x;
-    this.y += this.velocity.y;
+    this.x += this.vx;
+    this.y += this.vy;
     this.radius *= 0.96;
     this.alpha -= 0.02;
 

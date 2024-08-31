@@ -4,15 +4,15 @@ import BossExplosion from '../effects/BossExplosion';
 export default class Boss extends BossCreature {
   x: number;
   y: number;
+  radius = 50;
   width = 100;
   height = 100;
-  radius = this.width * 0.5;
   speed = 50;
   maxHealth = 1000;
   health = this.maxHealth;
   points = this.maxHealth;
-  image: HTMLImageElement;
-  music: HTMLAudioElement;
+  image = this.game.getImage('boss_image');
+  music = this.game.getAudio('boss_music');
   damage = 10;
   attackTimer = 0;
   attackInterval = 2000;
@@ -25,8 +25,6 @@ export default class Boss extends BossCreature {
 
   constructor(game: Game) {
     super(game);
-    this.image = this.game.getImage('boss_image');
-    this.music = this.game.getAudio('boss_music');
 
     const { x, y } = this.game.getOffScreenRandomSide(this, 20);
     this.x = x;
@@ -72,8 +70,10 @@ export default class Boss extends BossCreature {
     } else {
       // Move toward player
       const angleToPlayer = this.game.player.getAngleToPlayer(this);
-      this.x += (Math.cos(angleToPlayer) * (this.speed * deltaTime)) / 1000;
-      this.y += (Math.sin(angleToPlayer) * (this.speed * deltaTime)) / 1000;
+      this.vx = Math.cos(angleToPlayer);
+      this.vy = Math.sin(angleToPlayer);
+      this.x += (this.vx * this.speed * deltaTime) / 1000;
+      this.y += (this.vy * this.speed * deltaTime) / 1000;
     }
 
     // Health bar follows boss
@@ -117,7 +117,7 @@ export default class Boss extends BossCreature {
     this.game.projectiles.push(new BossProjectile(this, options));
   }
 
-  // Spread shot attack
+  // Spread shot attack - 5x @ 30 deg
   attackPattern2() {
     for (let i = -2; i <= 2; i++) {
       let angle = Math.atan2(this.game.player.y - this.y, this.game.player.x - this.x) + (i * Math.PI) / 12;
@@ -130,11 +130,11 @@ export default class Boss extends BossCreature {
     }
   }
 
-  // 360 attack
+  // 360 attack - 10x @ 36deg
   attackPattern3() {
     const numberOfProjectiles = 10;
     const angleIncrement = (2 * Math.PI) / numberOfProjectiles;
-    // Get the player angle so the first projectile is pointed at player
+    // Get the player angle so one projectile is pointed directly at the player
     const angleToPlayer = this.game.player.getAngleToPlayer(this);
     for (let i = 0; i < numberOfProjectiles; i++) {
       let angle = i * angleIncrement + angleToPlayer;
@@ -170,9 +170,7 @@ class BossProjectile extends EnemyProjectile {
   radius: number;
   speed: number;
   damage = 10;
-  directionX: number;
-  directionY: number;
-  image: HTMLImageElement;
+  image = this.game.getImage('boss_projectile_sprite_sheet');
   spriteWidth = 30;
   spriteHeight = 30;
   maxFrames = 8;
@@ -187,9 +185,8 @@ class BossProjectile extends EnemyProjectile {
     this.width = this.radius * 2;
     this.height = this.radius * 2;
     this.speed = speed;
-    this.directionX = Math.cos(angle);
-    this.directionY = Math.sin(angle);
-    this.image = this.game.getImage('boss_projectile_sprite_sheet');
+    this.vx = Math.cos(angle);
+    this.vy = Math.sin(angle);
   }
 
   draw(ctx: CTX) {
@@ -217,12 +214,10 @@ class BossProjectile extends EnemyProjectile {
 
   update(deltaTime: number) {
     // Movement
-    this.x += (this.speed * this.directionX * deltaTime) / 1000;
-    this.y += (this.speed * this.directionY * deltaTime) / 1000;
+    this.x += (this.vx * this.speed * deltaTime) / 1000;
+    this.y += (this.vy * this.speed * deltaTime) / 1000;
 
     // Remove if projectile outside the canvas boundaries
-    if (this.game.outOfBounds(this)) {
-      this.markedForDeletion = true;
-    }
+    if (this.game.outOfBounds(this)) this.markedForDeletion = true;
   }
 }

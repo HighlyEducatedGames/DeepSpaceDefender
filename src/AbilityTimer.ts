@@ -18,11 +18,8 @@ export default class AbilityTimer {
 
   update(deltaTime: number) {
     if (this.active) {
-      if (this.timer >= this.duration) {
-        this.active = false;
-      } else {
-        this.timer += deltaTime;
-      }
+      this.timer += deltaTime;
+      if (this.timer >= this.duration) this.active = false;
     }
   }
 }

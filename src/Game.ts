@@ -14,7 +14,6 @@ import BiomechLeviathan from './bosses/BiomechLeviathan';
 import WormholeController from './hazards/WormholeController';
 import InputHandler, { Action } from './InputHandler';
 import { Effect, GameObject, Particle, Projectile } from './GameObject';
-import { Enemy } from './enemies/BasicEnemies';
 
 export default class Game {
   canvas: HTMLCanvasElement;
@@ -131,51 +130,15 @@ export default class Game {
 
   // Main game loop
   render(ctx: CTX, deltaTime: number) {
+    this.draw(ctx);
     this.update(deltaTime);
     this.checkCollisions();
     this.cleanup();
-    this.draw(ctx);
-  }
-
-  update(deltaTime: number) {
-    if (!this.isGameOver) return;
-    this.levelUpdate(deltaTime);
-    this.player.update(deltaTime);
-    this.stars.forEach((star) => star.update(deltaTime));
-    this.coins.forEach((coin) => coin.update());
-    this.powerUps.update(deltaTime);
-    this.enemies.update(deltaTime);
-    if (this.boss) this.boss.update(deltaTime);
-    if (this.ally) this.ally.update(deltaTime);
-    this.projectiles.forEach((projectile) => projectile.update(deltaTime));
-    this.particles.forEach((particle) => particle.update(deltaTime));
-    this.effects.forEach((effect) => effect.update(deltaTime));
-    // this.wormholes.update(deltaTime);
-  }
-
-  checkCollisions() {
-    this.player.checkCollisions();
-    this.coins.forEach((coin) => coin.checkCollisions());
-    this.powerUps.checkCollisions();
-    this.enemies.checkCollisions();
-    if (this.boss) this.boss.checkCollisions();
-    if (this.ally) this.ally.checkCollisions();
-    this.projectiles.forEach((projectile) => projectile.checkCollisions());
-  }
-
-  cleanup() {
-    this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
-    this.powerUps.cleanup();
-    this.enemies.cleanup();
-    if (this.boss && this.boss.markedForDeletion) this.boss = null;
-    this.cleanupAlly();
-    this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
-    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
-    this.effects.forEach((effect) => effect.cleanup());
   }
 
   draw(ctx: CTX) {
     this.stars.forEach((star) => star.draw(ctx));
+    this.wormholes.draw(ctx);
     this.coins.forEach((coin) => coin.draw(ctx));
     this.powerUps.draw(ctx);
     this.projectiles.forEach((projectile) => projectile.draw(ctx));
@@ -186,7 +149,6 @@ export default class Game {
     if (this.ally) this.ally.draw(ctx);
     this.player.draw(ctx);
     this.GUI.draw(ctx);
-    // this.wormholes.draw(ctx);
 
     // Game over text
     if (this.isGameOver) {
@@ -211,6 +173,44 @@ export default class Game {
       ctx.lineTo(this.width, this.topMargin);
       ctx.stroke();
     }
+  }
+
+  update(deltaTime: number) {
+    if (this.isGameOver) return;
+    this.levelUpdate(deltaTime);
+    this.player.update(deltaTime);
+    this.stars.forEach((star) => star.update(deltaTime));
+    this.coins.forEach((coin) => coin.update(deltaTime));
+    this.powerUps.update(deltaTime);
+    this.enemies.update(deltaTime);
+    if (this.boss) this.boss.update(deltaTime);
+    if (this.ally) this.ally.update(deltaTime);
+    this.projectiles.forEach((projectile) => projectile.update(deltaTime));
+    this.particles.forEach((particle) => particle.update(deltaTime));
+    this.effects.forEach((effect) => effect.update(deltaTime));
+    this.wormholes.update(deltaTime);
+  }
+
+  checkCollisions() {
+    this.player.checkCollisions();
+    this.coins.forEach((coin) => coin.checkCollisions());
+    this.powerUps.checkCollisions();
+    this.enemies.checkCollisions();
+    if (this.boss) this.boss.checkCollisions();
+    if (this.ally) this.ally.checkCollisions();
+    this.projectiles.forEach((projectile) => projectile.checkCollisions());
+  }
+
+  cleanup() {
+    this.coins = this.coins.filter((coin) => !coin.markedForDeletion);
+    this.powerUps.cleanup();
+    this.enemies.cleanup();
+    if (this.boss && this.boss.markedForDeletion) this.boss = null;
+    this.cleanupAlly();
+    this.projectiles = this.projectiles.filter((projectile) => !projectile.markedForDeletion);
+    this.particles = this.particles.filter((particle) => !particle.markedForDeletion);
+    this.effects.forEach((effect) => effect.cleanup());
+    this.wormholes.cleanup();
   }
 
   handleGameControls() {
@@ -252,7 +252,7 @@ export default class Game {
       }
 
       // Advance to next level if all level objectives met
-      const clearedObjectives = this.coins.length === 0 && this.enemies.getLength() === 0;
+      const clearedObjectives = this.coins.length === 0 && this.enemies.count() === 0;
       if (clearedObjectives) {
         // Give points to player for completing the level with time to spare
         this.addScore(Math.floor(this.countdown) * 5);
@@ -331,6 +331,10 @@ export default class Game {
     );
   }
 
+  getRandomX(margin = 0) {
+    return Math.random() * (this.width - margin * 2) + margin;
+  }
+
   getRandomY(margin = 0) {
     return Math.random() * (this.height - this.topMargin - margin * 2) + this.topMargin + margin;
   }
@@ -355,20 +359,20 @@ export default class Game {
 
     switch (side) {
       case 'left':
-        x = -object.width * 0.5 - extraMargin;
+        x = -object.radius - extraMargin;
         y = Math.random() * object.game.height;
         break;
       case 'right':
-        x = object.game.width + object.height * 0.5 + extraMargin;
+        x = object.game.width + object.radius + extraMargin;
         y = Math.random() * object.game.height;
         break;
       case 'top':
         x = Math.random() * object.game.width;
-        y = -object.height * 0.5 - extraMargin;
+        y = -object.radius - extraMargin;
         break;
       case 'bottom':
         x = Math.random() * object.game.width;
-        y = object.game.height + object.height * 0.5 + extraMargin;
+        y = object.game.height + object.radius + extraMargin;
         break;
     }
     return { x, y, side };

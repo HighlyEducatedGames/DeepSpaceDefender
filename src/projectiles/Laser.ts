@@ -11,7 +11,7 @@ export default class Laser {
   width = 3;
   length = 300;
   particlesPerTick = 50;
-  sounds: { [key: string]: HTMLAudioElement };
+  sounds: { hit: HTMLAudioElement; fire: HTMLAudioElement; charge: HTMLAudioElement };
 
   constructor(game: Game) {
     this.game = game;

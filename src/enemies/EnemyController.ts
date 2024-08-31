@@ -1,5 +1,4 @@
 import { Enemy, RegularEnemy, StealthEnemy, TankEnemy } from './BasicEnemies';
-import { GameObject } from '../GameObject';
 import { ArrowIndicator } from '../hud/ArrowIndicator';
 
 type EnemyType = {
@@ -77,14 +76,9 @@ export default class EnemyController {
     this.arrowIndicators = this.arrowIndicators.filter((arrow) => !arrow.markedForDeletion);
   }
 
-  reset() {
+  init() {
     this.enemies = [];
     this.arrowIndicators = [];
-  }
-
-  init() {
-    // Clear all old enemies
-    this.reset();
 
     // Dynamically set number of enemies that can spawn this level
     this.types.regular.numToSpawn = Math.min(this.game.level, this.types.regular.max);
@@ -108,7 +102,7 @@ export default class EnemyController {
     this.arrowIndicators.push(new ArrowIndicator(this.game, target));
   }
 
-  getLength() {
+  count() {
     return this.enemies.length;
   }
 }

@@ -1,6 +1,4 @@
 import PowerUps, { PowerUp } from './PowerUp';
-import { GameObject } from '../GameObject';
-import powerUp from './PowerUp';
 
 export default class PowerUpController {
   game: Game;
@@ -37,12 +35,8 @@ export default class PowerUpController {
     this.powerUps = this.powerUps.filter((powerUp) => !powerUp.markedForDeletion);
   }
 
-  reset() {
-    this.powerUps = [];
-  }
-
   init() {
-    this.reset();
+    this.powerUps = [];
   }
 
   spawn() {

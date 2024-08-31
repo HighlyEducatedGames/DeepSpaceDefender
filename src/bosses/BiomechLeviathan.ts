@@ -5,17 +5,23 @@ import { BossCreature, Particle } from '../GameObject';
 export default class BiomechLeviathan extends BossCreature {
   x: number;
   y: number;
+  radius = 100;
   width = 200;
   height = 200;
-  radius = this.width * 0.5;
   speed = 40;
   maxHealth = 2000;
   health = this.maxHealth;
   points = this.maxHealth;
   damage = 10;
-  image: HTMLImageElement;
-  music: HTMLAudioElement;
-  sounds: { [key: string]: HTMLAudioElement };
+  image = this.game.getImage('biomech_leviathan_image');
+  music = this.game.getAudio('boss_music');
+  sounds = {
+    tractorBeam: this.game.getAudio('biomech_tractor_beam_sound'),
+    emp: this.game.getAudio('biomech_emp_sound'),
+    eat: this.game.getAudio('biomech_eat_sound'),
+    splat: this.game.getAudio('biomech_splat_sound'),
+    noFire: this.game.getAudio('no_fire_sound'),
+  };
   attackTimer = 0;
   attackInterval = 1500;
   canAttack = false;
@@ -37,16 +43,6 @@ export default class BiomechLeviathan extends BossCreature {
 
   constructor(game: Game) {
     super(game);
-    this.image = this.game.getImage('biomech_leviathan_image');
-    this.sounds = {
-      tractorBeam: this.game.getAudio('biomech_tractor_beam_sound'),
-      emp: this.game.getAudio('biomech_emp_sound'),
-      eat: this.game.getAudio('biomech_eat_sound'),
-      splat: this.game.getAudio('biomech_splat_sound'),
-      noFire: this.game.getAudio('no_fire_sound'),
-    };
-    this.music = this.game.getAudio('boss_music');
-
     const { x, y } = this.game.getOffScreenRandomSide(this, 20);
     this.x = x;
     this.y = y;
@@ -95,18 +91,20 @@ export default class BiomechLeviathan extends BossCreature {
   update(deltaTime: number) {
     super.update(deltaTime);
 
-    const angleToPlayer = this.game.player.getAngleToPlayer(this);
-    this.x += (Math.cos(angleToPlayer) * this.speed * deltaTime) / 1000;
-    this.y += (Math.sin(angleToPlayer) * this.speed * deltaTime) / 1000;
-
-    // Update health bar to follow boss
-    this.healthBarX = this.x - this.width * 0.5;
-    this.healthBarY = this.y + this.height * 0.5 + 10;
-
-    // Tractor Beam
-    if (this.tractorBeam) {
-      this.tractorBeam.update(deltaTime);
-      if (this.tractorBeam.markedForDeletion) this.tractorBeam = null;
+    // Movement
+    const distanceToPlayer = this.game.player.getDistanceToPlayer(this);
+    // Snap to player if close to avoid bouncing
+    const snapThreshold = 2; // Increase this if bouncing continues
+    if (distanceToPlayer < snapThreshold) {
+      this.x = this.game.player.x;
+      this.y = this.game.player.y;
+    } else {
+      // Move toward player
+      const angleToPlayer = this.game.player.getAngleToPlayer(this);
+      this.vx = Math.cos(angleToPlayer);
+      this.vy = Math.sin(angleToPlayer);
+      this.x += (this.vx * this.speed * deltaTime) / 1000;
+      this.y += (this.vy * this.speed * deltaTime) / 1000;
     }
 
     // Ink Clouds
@@ -125,8 +123,8 @@ export default class BiomechLeviathan extends BossCreature {
     // Attack logic
     switch (this.phase) {
       case 1:
-        // this.spawnTractorBeam(deltaTime);
-        this.spawnInkCloud();
+        this.spawnTractorBeam(deltaTime);
+        // this.spawnInkCloud();
         break;
       case 2:
         // this.spawnInkCloud();

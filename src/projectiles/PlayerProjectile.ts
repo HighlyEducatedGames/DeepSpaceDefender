@@ -10,8 +10,6 @@ export class PlayerProjectile extends FriendlyProjectile {
   speed = 500;
   radius = this.width * 0.5;
   angle: number;
-  directionX: number;
-  directionY: number;
   traveledDistance = 0;
   maxDistance = 800;
 
@@ -20,8 +18,8 @@ export class PlayerProjectile extends FriendlyProjectile {
     this.angle = angle;
     this.x = this.game.player.x + Math.cos(this.game.player.rotation + angle) * (this.game.player.width * 0.5);
     this.y = this.game.player.y + Math.sin(this.game.player.rotation + angle) * (this.game.player.height * 0.5);
-    this.directionX = Math.cos(this.game.player.rotation + angle);
-    this.directionY = Math.sin(this.game.player.rotation + angle);
+    this.vx = Math.cos(this.game.player.rotation + angle);
+    this.vy = Math.sin(this.game.player.rotation + angle);
   }
 
   draw(ctx: CTX) {
@@ -32,36 +30,32 @@ export class PlayerProjectile extends FriendlyProjectile {
   }
 
   update(deltaTime: number) {
-    this.x += (this.speed * this.directionX * deltaTime) / 1000;
-    this.y += (this.speed * this.directionY * deltaTime) / 1000;
+    this.x += (this.vx * this.speed * deltaTime) / 1000;
+    this.y += (this.vy * this.speed * deltaTime) / 1000;
     this.traveledDistance += (this.speed * deltaTime) / 1000;
-
-    if (this.traveledDistance > this.maxDistance) {
-      this.markedForDeletion = true;
-      return;
-    }
 
     // Screen wrap
     if (this.x < 0) this.x = this.game.width;
     if (this.x > this.game.width) this.x = 0;
     if (this.y < 0) this.y = this.game.height;
     if (this.y > this.game.height) this.y = 0;
+
+    if (this.traveledDistance > this.maxDistance) this.markedForDeletion = true;
   }
 }
 
 export class ChargedProjectile extends PlayerProjectile {
-  isFull: boolean;
   partialDamage = 50;
   fullDamage = 150;
   splitDistance = 300;
+  isFull = this.game.inputs.actions[Action.FIRE].heldDuration >= 2000;
+  damage = this.isFull ? this.fullDamage : this.partialDamage;
+  speed = this.isFull ? 300 : 400;
+  width = this.isFull ? 30 : 20;
+  height = this.isFull ? 30 : 20;
 
   constructor(game: Game, angle: number) {
     super(game, angle);
-    this.isFull = this.game.inputs.actions[Action.FIRE].heldDuration >= 2000;
-    this.damage = this.isFull ? this.fullDamage : this.partialDamage;
-    this.speed = this.isFull ? 300 : 400;
-    this.width = this.isFull ? 30 : 20;
-    this.height = this.isFull ? 30 : 20;
   }
 
   update(deltaTime: number) {
@@ -95,7 +89,7 @@ class SplitChargedProjectile extends PlayerProjectile {
     this.source = source;
     this.x = this.source.x;
     this.y = this.source.y;
-    this.directionX = Math.cos(angle);
-    this.directionY = Math.sin(angle);
+    this.vx = Math.cos(angle);
+    this.vy = Math.sin(angle);
   }
 }

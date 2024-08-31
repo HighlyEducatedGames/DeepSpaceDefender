@@ -3,21 +3,23 @@ import { GameObject } from './GameObject';
 export default class Coin extends GameObject {
   x: number;
   y: number;
+  radius = 10;
+  dx = 0;
+  dy = 0;
+  speed = 70;
   width = 20;
   height = 20;
-  radius = this.width * 0.5;
   margin = 50;
   points = 20;
   healthRestored = 3;
-  bobbingSpeed = 6;
-  bobbingAmplitude = 0.9;
-  bobbingAngle = Math.random() * Math.PI * 2;
+  angle = Math.random() * Math.PI * 2;
+  amplitude = 0.03;
   image = this.game.getImage('coin_image');
   sound = this.game.getAudio('coin_sound');
 
   constructor(game: Game) {
     super(game);
-    this.x = Math.random() * (this.game.width - this.margin * 2) + this.margin;
+    this.x = this.game.getRandomX(this.margin);
     this.y = this.game.getRandomY(this.margin);
   }
 
@@ -33,10 +35,11 @@ export default class Coin extends GameObject {
     }
   }
 
-  update() {
+  update(deltaTime: number) {
     // Oscillate vertically
-    this.bobbingAngle += this.bobbingSpeed * 0.01;
-    this.y += Math.sin(this.bobbingAngle) * this.bobbingAmplitude;
+    this.angle += this.amplitude;
+    this.dy = Math.sin(this.angle);
+    this.y += (this.dy * this.speed * deltaTime) / 1000;
   }
 
   checkCollisions() {

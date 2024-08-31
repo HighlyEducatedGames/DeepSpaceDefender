@@ -1,10 +1,8 @@
-import { EnemyProjectile, FriendlyProjectile } from '../GameObject';
+import { FriendlyProjectile } from '../GameObject';
 
 export default class Bomb extends FriendlyProjectile {
-  x: number;
-  y: number;
-  width = 0;
-  height = 0;
+  x = this.game.player.x;
+  y = this.game.player.y;
   radius = 300;
   damage = 150;
   speed = 0;
@@ -18,10 +16,8 @@ export default class Bomb extends FriendlyProjectile {
 
   constructor(game: Game) {
     super(game);
-    this.x = this.game.player.x;
-    this.y = this.game.player.y;
 
-    // Play bomb sound as soon as it is spawned
+    // Play bomb sound as soon as bomb is spawned
     this.sound.play().catch(() => {});
   }
 
@@ -43,6 +39,10 @@ export default class Bomb extends FriendlyProjectile {
   }
 
   update(deltaTime: number) {
+    // Follow the player
+    this.x = this.game.player.x;
+    this.y = this.game.player.y;
+
     if (this.timer >= this.duration) {
       this.timer = 0;
       this.markedForDeletion = true;
@@ -51,31 +51,9 @@ export default class Bomb extends FriendlyProjectile {
     }
 
     // Flash timer
+    this.flashTimer += deltaTime;
     if (this.flashTimer >= this.flashPeriod) {
       this.flashTimer = 0;
-    } else {
-      this.flashTimer += deltaTime;
-    }
-
-    // Follow the player
-    this.x = this.game.player.x;
-    this.y = this.game.player.y;
-  }
-
-  checkCollisions() {
-    // Check collision to all enemies
-    this.game.enemies.enemies.forEach((enemy) => {
-      if (this.game.checkCollision(this, enemy)) {
-        enemy.takeDamage(this.damage);
-      }
-    });
-
-    // Check collision to boss
-    if (this.game.boss && !this.hitBoss) {
-      if (this.game.checkCollision(this, this.game.boss)) {
-        this.game.boss.takeDamage(this.damage);
-        this.hitBoss = true;
-      }
     }
   }
 }

@@ -1,10 +1,13 @@
+import Game from './Game';
+
 export abstract class GameObject {
   game: Game;
   abstract x: number;
   abstract y: number;
-  abstract width: number;
-  abstract height: number;
   abstract radius: number;
+  vx = 0;
+  vy = 0;
+  abstract speed: number;
   markedForDeletion = false;
 
   constructor(game: Game) {
@@ -18,8 +21,6 @@ export abstract class GameObject {
 
 export abstract class Projectile extends GameObject {
   abstract damage: number;
-  abstract speed: number;
-
   constructor(game: Game) {
     super(game);
   }
@@ -46,6 +47,16 @@ export abstract class FriendlyProjectile extends Projectile {
         this.markedForDeletion = true;
       }
     }
+
+    // Check collision to enemy projectiles
+    this.game.projectiles
+      .filter((projectile) => projectile instanceof EnemyProjectile)
+      .forEach((projectile) => {
+        if (this.game.checkCollision(this, projectile)) {
+          this.markedForDeletion = true;
+          projectile.markedForDeletion = true;
+        }
+      });
   }
 }
 
@@ -60,13 +71,6 @@ export abstract class EnemyProjectile extends Projectile {
       this.game.player.takeDamage(this.damage);
       this.markedForDeletion = true;
     }
-
-    // Check collision to bomb
-    if (this.game.player.bomb) {
-      if (this.game.checkCollision(this, this.game.player.bomb)) {
-        this.markedForDeletion = true;
-      }
-    }
   }
 }
 
@@ -78,6 +82,7 @@ export abstract class BossCreature extends GameObject {
   abstract image: HTMLImageElement;
   abstract music: HTMLAudioElement;
   abstract damage: number;
+  abstract phase: number;
   allowCollision = true;
   collisionTimer = 0;
   collisionCooldown = 3000;
@@ -95,8 +100,6 @@ export abstract class BossCreature extends GameObject {
       this.game.nextLevel();
     }
   }
-
-  abstract onDeath(): void;
 
   update(deltaTime: number) {
     if (!this.allowCollision) {
@@ -121,6 +124,7 @@ export abstract class BossCreature extends GameObject {
   }
 
   abstract onPlayerCollision(): void;
+  abstract onDeath(): void;
 }
 
 export abstract class Effect {

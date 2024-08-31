@@ -6,7 +6,7 @@ export default class Asteroid extends EnemyProjectile {
     { width: 50, height: 50 },
     { width: 30, height: 30 },
   ];
-  x: number;
+  x = Math.random() * this.game.width;
   y = -this.sizes[0].height;
   size = this.sizes[Math.floor(Math.random() * this.sizes.length)];
   width = this.size.width;
@@ -15,12 +15,10 @@ export default class Asteroid extends EnemyProjectile {
   damage = 10;
   speed = 200;
   markedForDeletion = false;
-  image: HTMLImageElement;
+  image = this.game.getImage('asteroid_image');
 
   constructor(game: Game) {
     super(game);
-    this.x = Math.random() * this.game.width;
-    this.image = this.game.getImage('asteroid_image');
   }
 
   draw(ctx: CTX) {
