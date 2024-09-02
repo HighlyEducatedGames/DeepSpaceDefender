@@ -421,6 +421,11 @@ export default class InputHandler {
     this.mapInputs();
   }
 }
+// Controller Axis
+// 0 = Left Stick - X
+// 1 = Left Stick - Y
+// 2 = Right Stick - X
+// 3 = Right Stick - Y
 
 // X-Box Controller Buttons
 // 0 = A
@@ -441,8 +446,22 @@ export default class InputHandler {
 // 15 = Dpad RIGHT
 // 16 = X-Box button
 
-// X-Box Controller Axis
-// 0 = Left Stick - X
-// 1 = Left Stick - Y
-// 2 = Right Stick - X
-// 3 = Right Stick - Y
+// DualSense Controller Buttons
+// 0 = X
+// 1 = O
+// 2 = Square
+// 3 = Triangle
+// 4 = Left Bumper
+// 5 = Right Bumper
+// 6 = Left Trigger
+// 7 = Right Trigger
+// 8 = Create Button
+// 9 = Options Button
+// 10 = Left Stick
+// 11 = Right Stick
+// 12 = Dpad UP
+// 13 = Dpad DOWN
+// 14 = Dpad LEFT
+// 15 = Dpad RIGHT
+// 16 = PS Button
+// 17 = TouchPad Button
