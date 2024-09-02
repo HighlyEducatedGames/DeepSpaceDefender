@@ -1,4 +1,4 @@
-import { EnemyProjectile } from '../GameObject.js';
+import { EnemyProjectile } from '../GameObject';
 
 export default class Asteroid extends EnemyProjectile {
   sizes = [

@@ -9,8 +9,8 @@ import Star from './Star';
 import Ally from './Ally';
 import Boss from './bosses/Boss';
 import BiomechLeviathan from './bosses/BiomechLeviathan';
+import CyberDragon from './bosses/CyberDragon';
 // import TemporalSerpent from './bosses/TemporalSerpent.js';
-// import CyberDragon from './bosses/CyberDragon.js';
 import WormholeController from './hazards/WormholeController';
 import InputHandler, { Action } from './InputHandler';
 import { Effect, GameObject, Particle, Projectile } from './GameObject';
@@ -114,7 +114,7 @@ export default class Game {
 
     // Initialize boss if boss level
     if (this.level % 5 === 0 && this.doBoss) {
-      const bosses = [Boss, BiomechLeviathan /* CyberDragon, TemporalSerpent*/];
+      const bosses = [Boss, BiomechLeviathan, CyberDragon /* , TemporalSerpent*/];
       const bossIndex = Math.floor((level - 5) / 5) % bosses.length;
       this.boss = new bosses[bossIndex](this);
       this.music.setTrack(this.boss.music);

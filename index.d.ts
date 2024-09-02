@@ -10,9 +10,11 @@ type Enemies =
   | import('./src/enemies/BasicEnemies').TankEnemy
   | import('./src/enemies/BasicEnemies').StealthEnemy;
 
-type Bosses = import('./src/bosses/Boss').default | import('./src/bosses/BiomechLeviathan').default;
-/*| import('./src/bosses/CyberDragon').default
-  | import('./src/bosses/TemporalSerpent').default;*/
+type Bosses =
+  | import('./src/bosses/Boss').default
+  | import('./src/bosses/BiomechLeviathan').default
+  | import('./src/bosses/CyberDragon').default;
+/* | import('./src/bosses/TemporalSerpent').default;*/
 
 interface GamepadHapticActuator {
   effects?: string[];
