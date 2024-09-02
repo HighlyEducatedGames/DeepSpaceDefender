@@ -8,6 +8,7 @@ import ParticleBomb from './projectiles/ParticleBomb';
 import AbilityTimer from './AbilityTimer';
 import { Action } from './InputHandler';
 import { GameObject } from './GameObject';
+import { StealthEnemy } from './enemies/BasicEnemies';
 
 export default class Player extends GameObject {
   x = this.game.width * 0.5;
@@ -362,24 +363,25 @@ export default class Player extends GameObject {
   handleActionMissile() {
     if (this.missiles <= 0) return;
     this.missiles--;
-    if (!this.game.boss) {
-      const enemies = this.game.enemies.enemies
-        .slice()
-        .sort((a, b) => this.getDistanceToPlayer(a) - this.getDistanceToPlayer(b));
-
-      // Launch missiles at the 3 closest enemies
-      for (let i = 0; i < 3 && i < enemies.length; i++) {
-        const target = enemies[i];
-        if (target) {
-          const missile = new Missile(this.game, target);
-          // Only play the missile sound on the first spawned missile
-          if (i === 0) this.game.cloneSound(missile.sound);
-          this.game.projectiles.push(missile);
-        }
-      }
-    } else {
-      this.game.projectiles.push(new Missile(this.game, this.game.boss));
+    const targets = this.getMissileTargets(3);
+    for (let i = 0; i < targets.length; i++) {
+      const missile = new Missile(this.game, targets[i]);
+      // Only play the missile sound on the first spawned missile
+      if (i === 0) this.game.cloneSound(missile.sound);
+      this.game.projectiles.push(missile);
     }
+  }
+
+  getMissileTargets(count: number): GameObject[] {
+    if (this.game.boss) return [this.game.boss];
+    return this.game.enemies.enemies
+      .filter((enemy) => {
+        // Filter out non-visible stealth enemies
+        if (enemy instanceof StealthEnemy) return enemy.visible;
+        return true; // Non-stealth enemies are always visible
+      })
+      .sort((a, b) => this.getDistanceToPlayer(a) - this.getDistanceToPlayer(b))
+      .slice(0, count);
   }
 
   isBoostReady() {
