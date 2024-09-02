@@ -1,4 +1,4 @@
-import { FriendlyProjectile } from '../GameObject';
+import { FriendlyProjectile, EnemyProjectile } from '../GameObject';
 
 export default class Bomb extends FriendlyProjectile {
   x = this.game.player.x;
@@ -55,5 +55,30 @@ export default class Bomb extends FriendlyProjectile {
     if (this.flashTimer >= this.flashPeriod) {
       this.flashTimer = 0;
     }
+  }
+
+  checkCollisions() {
+    // Check collision to all enemies
+    this.game.enemies.enemies.forEach((enemy) => {
+      if (this.game.checkCollision(this, enemy)) {
+        enemy.takeDamage(this.damage);
+      }
+    });
+
+    // Check collision to boss
+    if (this.game.boss) {
+      if (this.game.checkCollision(this, this.game.boss)) {
+        this.game.boss.takeDamage(this.damage);
+      }
+    }
+
+    // Check collision to enemy projectiles
+    this.game.projectiles
+      .filter((projectile) => projectile instanceof EnemyProjectile)
+      .forEach((projectile) => {
+        if (this.game.checkCollision(this, projectile)) {
+          projectile.markedForDeletion = true;
+        }
+      });
   }
 }
