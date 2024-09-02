@@ -51,8 +51,7 @@ export class ChargedProjectile extends PlayerProjectile {
   isFull = this.game.inputs.actions[Action.FIRE].heldDuration >= 2000;
   damage = this.isFull ? this.fullDamage : this.partialDamage;
   speed = this.isFull ? 300 : 400;
-  width = this.isFull ? 30 : 20;
-  height = this.isFull ? 30 : 20;
+  radius = this.isFull ? 15 : 10;
 
   constructor(game: Game, angle: number) {
     super(game, angle);
