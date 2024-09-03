@@ -21,7 +21,7 @@ export default class CyberDragon extends BossCreature {
   };
   damage = 10;
   canAttack = false;
-  phase = 3;
+  phase = 1;
   healthBarWidth = this.width;
   healthBarHeight = 10;
   healthBarX: number;
