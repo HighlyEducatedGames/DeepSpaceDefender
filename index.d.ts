@@ -13,8 +13,8 @@ type Enemies =
 type Bosses =
   | import('./src/bosses/Boss').default
   | import('./src/bosses/BiomechLeviathan').default
-  | import('./src/bosses/CyberDragon').default;
-/* | import('./src/bosses/TemporalSerpent').default;*/
+  | import('./src/bosses/CyberDragon').default
+  | import('./src/bosses/TemporalSerpent').default;
 
 interface GamepadHapticActuator {
   effects?: string[];

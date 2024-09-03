@@ -3,32 +3,40 @@ import { BossCreature } from '../GameObject';
 export default class TemporalSerpent extends BossCreature {
   x: number;
   y: number;
-  width = 100;
-  height = 100;
-  radius = this.width * 0.5;
-  speed = 400;
+  radius = 30;
+  speed = 150;
   maxHealth = 2000;
   health = this.maxHealth;
   points = this.maxHealth;
-  image: HTMLImageElement;
-  images: { [key: string]: HTMLImageElement };
-  music: HTMLAudioElement;
-  sounds: { [key: string]: HTMLAudioElement };
+  images = {
+    base: this.game.getImage('temporal_serpent_image'),
+    head: this.game.getImage('temporal_serpent_head_image'),
+    segment: this.game.getImage('temporal_serpent_segment_image'),
+  };
+  image = this.images.head;
+  music = this.game.getAudio('boss_music');
+  sounds = {
+    hazard: this.game.getAudio('hazard_sound'),
+  };
   damage = 10;
-  attackTimer = 0;
-  attackInterval = 3000;
-  canAttack = false;
-  direction: Direction;
   phase = 1;
+  canAttack = false;
   healthBarWidth = 200;
   healthBarHeight = 20;
-  healthBarX: number;
-  healthBarY: number;
+  healthBarX = (this.game.width - this.healthBarWidth) * 0.5;
+  healthBarY = this.game.height - this.healthBarHeight - 30;
+  direction: Direction;
+  enteredScreen = false;
+
   segments: { x: number; y: number; radius: number }[] = [];
   detachedSegments: { x: number; y: number; radius: number }[] = [];
-  segmentSpacing = 30;
   segmentAddTimer = 0;
-  segmentAddInterval = 600;
+  segmentAddInterval = 1800;
+
+  attackInterval = 3000;
+  attackTimer = this.attackInterval;
+
+  segmentSpacing = 30;
   maxSegments = 3000;
   hazardZones: HazardZone[] = [];
   hazardZoneInterval = 500;
@@ -41,53 +49,14 @@ export default class TemporalSerpent extends BossCreature {
 
   constructor(game: Game) {
     super(game);
-    this.images = {
-      base: this.game.getImage('temporal_serpent_image'),
-      head: this.game.getImage('temporal_serpent_head_image'),
-      segment: this.game.getImage('temporal_serpent_segment_image'),
-    };
-    this.image = this.images.head;
-    this.sounds = {
-      hazard: this.game.getAudio('hazard_sound'),
-    };
-    this.music = this.game.getAudio('boss_music');
 
     const { x, y } = this.game.getOffScreenRandomSide(this, 20);
     this.x = x;
     this.y = y;
     this.direction = this.game.getRandomDirection();
-    this.healthBarX = (this.game.width - this.healthBarWidth) * 0.5;
-    this.healthBarY = this.game.height - this.healthBarHeight - 30;
-    this.segments = [{ x: this.x, y: this.y, radius: 30 }];
   }
 
   draw(ctx: CTX) {
-    const [head, ...bodySegments] = this.segments;
-
-    // Serpent head
-    if (head.x > 0 && head.x < this.game.width && head.y > 0 && head.y < this.game.height) {
-      ctx.drawImage(this.images.head, head.x - head.radius, head.y - head.radius, head.radius * 2, head.radius * 2);
-
-      // DEBUG - Hitbox
-      if (this.game.debug) {
-        ctx.strokeStyle = 'white';
-        ctx.beginPath();
-        ctx.arc(head.x, head.y, head.radius, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-    }
-
-    // Serpent segmants
-    [...bodySegments, ...this.detachedSegments].forEach((segment) => {
-      ctx.drawImage(
-        this.images.segment,
-        segment.x - segment.radius,
-        segment.y - segment.radius,
-        segment.radius * 2,
-        segment.radius * 2,
-      );
-    });
-
     // Health Bar
     const healthRatio = this.health / this.maxHealth;
 
@@ -106,11 +75,43 @@ export default class TemporalSerpent extends BossCreature {
     ctx.textAlign = 'center';
     ctx.fillText('Temporal Serpent', this.game.width * 0.5, this.healthBarY + this.healthBarHeight + 20);
     ctx.restore();
+
+    // Serpent segments
+    [...[...this.segments].reverse(), ...this.detachedSegments].forEach((segment) => {
+      ctx.drawImage(
+        this.images.segment,
+        segment.x - segment.radius,
+        segment.y - segment.radius,
+        segment.radius * 2,
+        segment.radius * 2,
+      );
+    });
+
+    // Serpent Head
+    ctx.drawImage(this.images.head, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+
+    // DEBUG - Hitbox
+    if (this.game.debug) {
+      ctx.strokeStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 
   update(deltaTime: number) {
-    const [head] = this.segments;
     const moveDistance = (this.speed * deltaTime) / 1000;
+
+    // Move toward player until head has entered the game area
+    if (!this.game.outOfBounds(this, -this.radius * 2)) this.enteredScreen = true;
+    if (!this.enteredScreen) {
+      const angleToPlayer = this.game.player.getAngleToPlayer(this);
+      this.vx = Math.cos(angleToPlayer);
+      this.vy = Math.sin(angleToPlayer);
+      this.x += (this.vx * this.speed * deltaTime) / 1000;
+      this.y += (this.vy * this.speed * deltaTime) / 1000;
+      return;
+    }
 
     // Change direction at random intervals
     this.directionChangeTimer += deltaTime;
@@ -120,70 +121,89 @@ export default class TemporalSerpent extends BossCreature {
     }
 
     // Change direction towards the player at specific intervals
-    this.followPlayerTimer += deltaTime;
+    /*this.followPlayerTimer += deltaTime;
     if (this.followPlayerTimer >= this.followPlayerInterval) {
       this.followPlayerTimer = 0;
-      this.direction = this.game.player.getDirectionToPlayer(head);
-    }
+      this.direction = this.game.player.getDirectionToPlayer(this);
+    }*/
 
     // Move the head based on the current direction
     switch (this.direction) {
       case 'up':
-        head.y -= moveDistance;
-        if (head.y <= head.radius) {
-          head.y = head.radius;
+        this.y -= moveDistance;
+        if (this.y <= this.radius) {
+          this.y = this.radius;
           this.direction = 'right';
         }
         break;
       case 'down':
-        head.y += moveDistance;
-        if (head.y >= this.game.height - head.radius) {
-          head.y = this.game.height - head.radius;
+        this.y += moveDistance;
+        if (this.y >= this.game.height - this.radius) {
+          this.y = this.game.height - this.radius;
           this.direction = 'left';
         }
         break;
       case 'left':
-        head.x -= moveDistance;
-        if (head.x <= head.radius) {
-          head.x = head.radius;
+        this.x -= moveDistance;
+        if (this.x <= this.radius) {
+          this.x = this.radius;
           this.direction = 'up';
         }
         break;
       case 'right':
-        head.x += moveDistance;
-        if (head.x >= this.game.width - head.radius) {
-          head.x = this.game.width - head.radius;
+        this.x += moveDistance;
+        if (this.x >= this.game.width - this.radius) {
+          this.x = this.game.width - this.radius;
           this.direction = 'down';
         }
         break;
     }
 
     // Leave a hazardous zone behind the last segment at a specified interval
-    if (this.segments.length > 0 && this.segments.length % this.hazardZoneInterval === 0) {
+    /*if (this.segments.length > 0 && this.segments.length % this.hazardZoneInterval === 0) {
       const lastSegment = this.segments[this.segments.length - 1];
       this.hazardZones.push(new HazardZone(this.game, lastSegment.x, lastSegment.y));
-    }
+    }*/
 
     // Add new segment to the tail at the increased interval
     this.segmentAddTimer += deltaTime;
     if (this.segmentAddTimer >= this.segmentAddInterval) {
       this.segmentAddTimer = 0;
       if (this.segments.length < this.maxSegments) {
-        const newSegment = { x: head.x, y: head.y, radius: head.radius };
+        const lastSegment = this.segments[this.segments.length - 1] || this;
+        const newSegment = { x: lastSegment.x, y: lastSegment.y, radius: lastSegment.radius };
         this.segments.push(newSegment);
       }
     }
 
-    // Update segments to follow the previous segment with increased spacing
+    // Update segments to follow the previous segment with smooth spacing
     for (let i = this.segments.length - 1; i > 0; i--) {
       const segment = this.segments[i];
       const previousSegment = this.segments[i - 1];
-      const distance = Math.sqrt(
-        Math.pow(previousSegment.x - segment.x, 2) + Math.pow(previousSegment.y - segment.y, 2),
-      );
+      const dx = previousSegment.x - segment.x;
+      const dy = previousSegment.y - segment.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
       if (distance > this.segmentSpacing) {
-        segment.x = previousSegment.x;
-        segment.y = previousSegment.y;
+        const moveX = (dx / distance) * (distance - this.segmentSpacing);
+        const moveY = (dy / distance) * (distance - this.segmentSpacing);
+        segment.x += moveX;
+        segment.y += moveY;
+      }
+    }
+
+    // Move the first segment (the one directly following the head) towards the head
+    if (this.segments.length > 0) {
+      const firstSegment = this.segments[0];
+      const dx = this.x - firstSegment.x;
+      const dy = this.y - firstSegment.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > this.segmentSpacing) {
+        const moveX = (dx / distance) * (distance - this.segmentSpacing);
+        const moveY = (dy / distance) * (distance - this.segmentSpacing);
+        firstSegment.x += moveX;
+        firstSegment.y += moveY;
       }
     }
 
@@ -203,16 +223,16 @@ export default class TemporalSerpent extends BossCreature {
     // });
 
     // Phase transitions
-    if (this.health <= this.maxHealth * 0.75) {
+    /*if (this.health <= this.maxHealth * 0.75) {
       this.phase = 2;
     } else if (this.health <= this.maxHealth * 0.5) {
       this.phase = 3;
     } else if (this.health <= this.maxHealth * 0.25) {
       this.phase = 4;
-    }
+    }*/
 
     // Attack logic
-    this.attackTimer += deltaTime;
+    /*this.attackTimer += deltaTime;
     if (this.canAttack && this.attackTimer >= this.attackInterval) {
       this.attackTimer += 0;
       switch (this.phase) {
@@ -229,7 +249,7 @@ export default class TemporalSerpent extends BossCreature {
           this.attackPhase2();
           break;
       }
-    }
+    }*/
 
     // handleSerpentBombImpact(temporalSerpent, deltaTime, timestamp); // TODO
   }

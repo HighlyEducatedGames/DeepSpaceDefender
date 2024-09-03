@@ -1,4 +1,5 @@
 import { Action } from './InputHandler';
+import TemporalSerpent from './bosses/TemporalSerpent';
 
 export default class GUI {
   game: Game;
@@ -291,6 +292,8 @@ export default class GUI {
     entities += this.game.coins.length;
     if (this.game.ally) entities++;
     if (this.game.boss) entities++;
+    if (this.game.boss instanceof TemporalSerpent)
+      entities += this.game.boss.segments.length + this.game.boss.detachedSegments.length;
     if (this.game.player.bomb) entities++;
     entities += this.game.powerUps.powerUps.length;
     entities += this.game.enemies.enemies.length;
