@@ -109,11 +109,11 @@ export default class CyberDragon extends BossCreature {
     this.healthBarY = this.y + this.height * 0.5 + 10;
 
     // Phase Transitions
-    if (this.phase === 1 && this.health < this.maxHealth * 0.75) {
+    if (this.phase === 1 && this.health <= this.maxHealth * 0.75) {
       this.phase = 2;
-    } else if (this.phase === 2 && this.health < this.maxHealth * 0.5) {
+    } else if (this.phase === 2 && this.health <= this.maxHealth * 0.5) {
       this.phase = 3;
-    } else if (this.phase === 3 && this.health < this.maxHealth * 0.25) {
+    } else if (this.phase === 3 && this.health <= this.maxHealth * 0.25) {
       this.phase = 4;
     }
 

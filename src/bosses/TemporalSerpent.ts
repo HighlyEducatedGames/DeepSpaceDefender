@@ -121,11 +121,11 @@ export default class TemporalSerpent extends BossCreature {
     }
 
     // Change direction towards the player at specific intervals
-    /*this.followPlayerTimer += deltaTime;
+    this.followPlayerTimer += deltaTime;
     if (this.followPlayerTimer >= this.followPlayerInterval) {
       this.followPlayerTimer = 0;
       this.direction = this.game.player.getDirectionToPlayer(this);
-    }*/
+    }
 
     // Move the head based on the current direction
     switch (this.direction) {
@@ -176,10 +176,13 @@ export default class TemporalSerpent extends BossCreature {
       }
     }
 
+    // Create a new array with the head followed by all segments
+    const allSegments = [this, ...this.segments];
+
     // Update segments to follow the previous segment with smooth spacing
-    for (let i = this.segments.length - 1; i > 0; i--) {
-      const segment = this.segments[i];
-      const previousSegment = this.segments[i - 1];
+    for (let i = 1; i < allSegments.length; i++) {
+      const segment = allSegments[i];
+      const previousSegment = allSegments[i - 1];
       const dx = previousSegment.x - segment.x;
       const dy = previousSegment.y - segment.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
@@ -192,44 +195,29 @@ export default class TemporalSerpent extends BossCreature {
       }
     }
 
-    // Move the first segment (the one directly following the head) towards the head
-    if (this.segments.length > 0) {
-      const firstSegment = this.segments[0];
-      const dx = this.x - firstSegment.x;
-      const dy = this.y - firstSegment.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance > this.segmentSpacing) {
-        const moveX = (dx / distance) * (distance - this.segmentSpacing);
-        const moveY = (dy / distance) * (distance - this.segmentSpacing);
-        firstSegment.x += moveX;
-        firstSegment.y += moveY;
-      }
-    }
-
     // Update detached segments
-    // this.detachedSegments.forEach((segment, index) => {
-    //   if (segment.travelDirection) {
-    //     const travelDistance = segment.speed * (deltaTime / 1000);
-    //     segment.x += segment.travelDirection.x * travelDistance;
-    //     segment.y += segment.travelDirection.y * travelDistance;
-    //     segment.travelDistance -= travelDistance;
-    //     if (segment.travelDistance <= 0) {
-    //       segment.explode = true;
-    //       segment.explosionTime = this.game.timestamp;
-    //       delete segment.travelDirection; // Remove travelDirection to stop further movement
-    //     }
-    //   }
-    // });
+    this.detachedSegments.forEach((segment, index) => {
+      //   if (segment.travelDirection) {
+      //     const travelDistance = segment.speed * (deltaTime / 1000);
+      //     segment.x += segment.travelDirection.x * travelDistance;
+      //     segment.y += segment.travelDirection.y * travelDistance;
+      //     segment.travelDistance -= travelDistance;
+      //     if (segment.travelDistance <= 0) {
+      //       segment.explode = true;
+      //       segment.explosionTime = this.game.timestamp;
+      //       delete segment.travelDirection; // Remove travelDirection to stop further movement
+      //     }
+      //   }
+    });
 
     // Phase transitions
-    /*if (this.health <= this.maxHealth * 0.75) {
+    if (this.phase === 1 && this.health <= this.maxHealth * 0.75) {
       this.phase = 2;
-    } else if (this.health <= this.maxHealth * 0.5) {
+    } else if (this.phase === 2 && this.health <= this.maxHealth * 0.5) {
       this.phase = 3;
-    } else if (this.health <= this.maxHealth * 0.25) {
+    } else if (this.phase === 3 && this.health <= this.maxHealth * 0.25) {
       this.phase = 4;
-    }*/
+    }
 
     // Attack logic
     /*this.attackTimer += deltaTime;
@@ -269,9 +257,9 @@ export default class TemporalSerpent extends BossCreature {
   // }
 
   attackPhase1() {
-    if (this.segments.length === 0) return;
-    const lastSegement = this.segments[this.segments.length - 1];
-    this.hazardZones.push(new HazardZone(this.game, lastSegement.x, lastSegement.y));
+    // if (this.segments.length === 0) return;
+    // const lastSegement = this.segments[this.segments.length - 1];
+    //this.hazardZones.push(new HazardZone(this.game, lastSegement.x, lastSegement.y));
   }
 
   attackPhase2() {

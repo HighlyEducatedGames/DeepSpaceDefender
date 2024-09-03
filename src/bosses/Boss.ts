@@ -73,10 +73,10 @@ export default class Boss extends BossCreature {
     this.healthBarY = this.y - this.height * 0.5 + this.height + 5;
 
     // Phase Transitions
-    if (this.phase === 1 && this.health < this.maxHealth * 0.6) {
+    if (this.phase === 1 && this.health <= this.maxHealth * 0.6) {
       this.phase = 2;
       this.speed = 70;
-    } else if (this.phase === 2 && this.health < this.maxHealth * 0.2) {
+    } else if (this.phase === 2 && this.health <= this.maxHealth * 0.2) {
       this.phase = 3;
       this.attackInterval = 1000;
     }
