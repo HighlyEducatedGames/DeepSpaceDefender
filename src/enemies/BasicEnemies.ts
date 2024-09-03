@@ -19,14 +19,18 @@ export abstract class Enemy extends GameObject {
   offScreenMargin = 100;
   vx = this.side === 'left' ? 1 : -1;
   vy = 0;
-  canShoot = true;
+  canShoot = false;
   margin = 50;
   arrowAdded = false;
   abstract image: HTMLImageElement;
   behaviorTree = this.createBehaviorTree();
 
-  constructor(game: Game) {
+  protected constructor(game: Game) {
     super(game);
+
+    setTimeout(() => {
+      this.canShoot = true;
+    }, 2000);
   }
 
   createBehaviorTree() {

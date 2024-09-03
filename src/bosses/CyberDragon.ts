@@ -20,8 +20,6 @@ export default class CyberDragon extends BossCreature {
     spiralShot: this.game.getAudio('spiral_shot_sound'),
   };
   damage = 10;
-  attackTimer = 0;
-  attackInterval = 2000;
   canAttack = false;
   phase = 3;
   healthBarWidth = this.width;
@@ -29,21 +27,23 @@ export default class CyberDragon extends BossCreature {
   healthBarX: number;
   healthBarY: number;
 
+  laserAttackInterval = 2000;
+  laserAttackTimer = this.laserAttackInterval;
   laserCharging = false;
   laserChargeTimer = 0;
   laserChargeDuration = 3500;
   laserChargeRadius = 5;
   laserReady = false;
 
-  asteroidTimer = 0;
   asteroidInterval = 600;
+  asteroidTimer = this.asteroidInterval;
 
+  spiralShotInterval = 9000;
+  spiralShotTimer = this.spiralShotInterval;
   spiralShotActive = false;
   spiralShotAngle = 0;
   spiralShotAnglePitch = 0.1;
-  spiralShotTimer = 0;
   spiralShotDuration = 5000;
-  spiralShotCooldown = 4000;
   spiralShotFireTimer = 0;
   spiralShotFireInterval = 100;
 
@@ -132,36 +132,37 @@ export default class CyberDragon extends BossCreature {
     }
 
     // Attack logic
-    this.attackTimer += deltaTime;
-    if (this.canAttack && this.attackTimer >= this.attackInterval) {
-      this.attackTimer = 0;
+    if (this.canAttack) {
       switch (this.phase) {
         case 1:
-          this.chargeLaser();
+          this.chargeLaser(deltaTime);
           break;
         case 2:
-          this.chargeLaser();
-          this.spawnAsteroid();
+          this.chargeLaser(deltaTime);
+          this.spawnAsteroid(deltaTime);
           break;
         case 3:
-          this.fireSpiralProjectiles();
+          this.fireSpiralProjectiles(deltaTime);
           break;
         case 4:
-          this.chargeLaser();
-          this.spawnAsteroid();
-          this.fireSpiralProjectiles();
+          this.chargeLaser(deltaTime);
+          this.spawnAsteroid(deltaTime);
+          this.fireSpiralProjectiles(deltaTime);
           break;
       }
     }
   }
 
-  chargeLaser() {
-    if (!this.laserCharging) {
-      this.laserCharging = true;
-      this.laserChargeTimer = 0;
-      this.laserChargeRadius = 5;
-      this.sounds.laserCharging.currentTime = 0;
-      this.sounds.laserCharging.play().catch(() => {});
+  chargeLaser(deltaTime: number) {
+    this.laserAttackTimer += deltaTime;
+    if (this.laserAttackTimer >= this.laserAttackInterval) {
+      if (!this.laserCharging) {
+        this.laserCharging = true;
+        this.laserChargeTimer = 0;
+        this.laserChargeRadius = 5;
+        this.sounds.laserCharging.currentTime = 0;
+        this.sounds.laserCharging.play().catch(() => {});
+      }
     }
   }
 
@@ -172,48 +173,40 @@ export default class CyberDragon extends BossCreature {
     this.laserReady = false;
   }
 
-  spawnAsteroid() {
-    this.game.projectiles.push(new Asteroid(this.game));
-  }
-
-  fireSpiralProjectiles() {
-    const timestamp = Date.now();
-
-    if (this.spiralShotActive) {
-      if (timestamp - this.spiralShotTimer > 7000) {
-        this.spiralShotActive = false;
-        this.sounds.spiralShot.pause();
-        this.sounds.spiralShot.currentTime = 0;
-        this.spiralShotTimer = timestamp;
-      } else {
-        // Only fire a projectile if the interval has passed
-        if (timestamp - this.spiralShotFireTimer > this.spiralShotFireInterval) {
-          const angle = this.spiralShotAngle;
-          this.game.projectiles.push(new SpiralProjectile(this, angle));
-          this.spiralShotAngle += this.spiralShotAnglePitch;
-
-          // Update the last fire time
-          this.spiralShotFireTimer = timestamp;
-        }
-      }
-    } else {
-      if (timestamp - this.spiralShotTimer > 3000) {
-        this.spiralShotActive = true;
-        this.playSpiralShotSound();
-        this.spiralShotTimer = timestamp;
-      }
+  spawnAsteroid(deltaTime: number) {
+    this.asteroidTimer += deltaTime;
+    if (this.asteroidTimer >= this.asteroidInterval) {
+      this.asteroidTimer = 0;
+      this.game.projectiles.push(new Asteroid(this.game));
     }
   }
 
-  playSpiralShotSound() {
-    this.sounds.spiralShot.currentTime = 0;
-    this.sounds.spiralShot.play();
-    setTimeout(() => {
-      if (this.spiralShotActive) {
+  fireSpiralProjectiles(deltaTime: number) {
+    this.spiralShotTimer += deltaTime;
+    if (this.spiralShotTimer >= this.spiralShotInterval) {
+      this.spiralShotTimer = 0;
+      this.spiralShotActive = true;
+      this.sounds.spiralShot.currentTime = 0;
+      this.sounds.spiralShot.loop = true;
+      this.sounds.spiralShot.play().catch(() => {});
+    }
+
+    if (this.spiralShotActive) {
+      if (this.spiralShotTimer >= this.spiralShotDuration) {
+        this.spiralShotTimer = 0;
+        this.spiralShotActive = false;
+        this.sounds.spiralShot.pause();
         this.sounds.spiralShot.currentTime = 0;
-        this.sounds.spiralShot.play();
+      } else {
+        this.spiralShotFireTimer += deltaTime;
+        if (this.spiralShotFireTimer >= this.spiralShotFireInterval) {
+          const angle = this.spiralShotAngle;
+          this.game.projectiles.push(new SpiralProjectile(this, angle));
+          this.spiralShotAngle += this.spiralShotAnglePitch;
+          this.spiralShotFireTimer = 0;
+        }
       }
-    }, 3500); // Play the sound again after a delay if still active
+    }
   }
 
   cleanup() {}
@@ -223,7 +216,9 @@ export default class CyberDragon extends BossCreature {
   onDeath() {
     this.game.effects.push(new Explosion(this.game, this.x, this.y));
     this.game.projectiles.forEach((projectile) => {
-      if (projectile instanceof Laser || projectile instanceof SpiralProjectile) projectile.markedForDeletion = true;
+      if (projectile instanceof Laser || projectile instanceof Asteroid || projectile instanceof SpiralProjectile) {
+        projectile.markedForDeletion = true;
+      }
     });
   }
 }

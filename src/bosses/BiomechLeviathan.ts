@@ -12,7 +12,6 @@ export default class BiomechLeviathan extends BossCreature {
   maxHealth = 2000;
   health = this.maxHealth;
   points = this.maxHealth;
-  damage = 10;
   image = this.game.getImage('biomech_leviathan_image');
   music = this.game.getAudio('boss_music');
   sounds = {
@@ -22,19 +21,26 @@ export default class BiomechLeviathan extends BossCreature {
     splat: this.game.getAudio('biomech_splat_sound'),
     noFire: this.game.getAudio('no_fire_sound'),
   };
+  damage = 10;
   phase = 1;
-  maxInkClouds = 3;
-  inkClouds: InkCloud[] = [];
-  empBlast: EmpBlast | null = null;
-  empBlastTimer = 0;
-  empBlastCooldown = 5000;
-  tractorBeam: TractorBeam | null = null;
-  tractorBeamTimer = 0;
-  tractorBeamCooldown = 5000;
+  canAttack = false;
   healthBarWidth = this.width;
   healthBarHeight = 10;
   healthBarX: number;
   healthBarY: number;
+
+  tractorBeam: TractorBeam | null = null;
+  tractorBeamInterval = 5000;
+  tractorBeamTimer = this.tractorBeamInterval;
+
+  maxInkClouds = 3;
+  inkClouds: InkCloud[] = [];
+  inkCloudInterval = 1000;
+  inkCloudTimer = this.inkCloudInterval;
+
+  empBlast: EmpBlast | null = null;
+  empBlastInterval = 5000;
+  empBlastTimer = this.empBlastInterval;
 
   constructor(game: Game) {
     super(game);
@@ -43,6 +49,10 @@ export default class BiomechLeviathan extends BossCreature {
     this.y = y;
     this.healthBarX = this.x - this.width * 0.5;
     this.healthBarY = this.y + this.height * 0.5 + 10;
+
+    setTimeout(() => {
+      this.canAttack = true;
+    }, 5000);
   }
 
   draw(ctx: CTX) {
@@ -110,37 +120,43 @@ export default class BiomechLeviathan extends BossCreature {
     }
 
     // Attack logic
-    switch (this.phase) {
-      case 1:
-        this.spawnTractorBeam(deltaTime);
-        break;
-      case 2:
-        this.spawnInkCloud();
-        break;
-      case 3:
-        this.spawnEmpBlast(deltaTime);
-        break;
+    if (this.canAttack) {
+      switch (this.phase) {
+        case 1:
+          this.spawnTractorBeam(deltaTime);
+          break;
+        case 2:
+          this.spawnInkCloud(deltaTime);
+          break;
+        case 3:
+          this.spawnEmpBlast(deltaTime);
+          break;
+      }
     }
   }
 
   spawnTractorBeam(deltaTime: number) {
     if (this.tractorBeam) return;
     this.tractorBeamTimer += deltaTime;
-    if (this.tractorBeamTimer >= this.tractorBeamCooldown) {
+    if (this.tractorBeamTimer >= this.tractorBeamInterval) {
       this.tractorBeamTimer = 0;
       this.tractorBeam = new TractorBeam(this);
     }
   }
 
-  spawnInkCloud() {
+  spawnInkCloud(deltaTime: number) {
     if (this.inkClouds.length >= this.maxInkClouds) return;
-    this.inkClouds.push(new InkCloud(this));
+    this.inkCloudTimer += deltaTime;
+    if (this.inkCloudTimer >= this.inkCloudInterval) {
+      this.inkCloudTimer = 0;
+      this.inkClouds.push(new InkCloud(this));
+    }
   }
 
   spawnEmpBlast(deltaTime: number) {
     if (this.empBlast) return;
     this.empBlastTimer += deltaTime;
-    if (this.empBlastTimer >= this.empBlastCooldown) {
+    if (this.empBlastTimer >= this.empBlastInterval) {
       this.empBlastTimer = 0;
       this.empBlast = new EmpBlast(this);
     }
@@ -164,6 +180,9 @@ export default class BiomechLeviathan extends BossCreature {
 
   onDeath() {
     this.game.effects.push(new BossExplosion(this.game, this.x, this.y));
+    this.tractorBeam = null;
+    this.inkClouds = [];
+    this.empBlast = null;
   }
 }
 

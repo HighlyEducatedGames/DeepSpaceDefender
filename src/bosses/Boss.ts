@@ -15,8 +15,8 @@ export default class Boss extends BossCreature {
   image = this.game.getImage('boss_image');
   music = this.game.getAudio('boss_music');
   damage = 10;
-  attackTimer = 0;
   attackInterval = 2000;
+  attackTimer = this.attackInterval;
   canAttack = false;
   phase = 1;
   healthBarWidth = this.width;
@@ -145,6 +145,9 @@ export default class Boss extends BossCreature {
 
   onDeath() {
     this.game.effects.push(new BossExplosion(this.game, this.x, this.y));
+    this.game.projectiles.forEach((projectile) => {
+      if (projectile instanceof BossProjectile) projectile.markedForDeletion = true;
+    });
   }
 }
 
