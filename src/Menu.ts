@@ -19,7 +19,7 @@ export default class Menu {
       this.game.music.setMusicVolume(parseFloat(this.musicVolumeSlider.value));
     });
 
-    let soundEffectTimeout: NodeJS.Timeout;
+    let soundEffectTimeout: ReturnType<typeof setTimeout>;
     this.fxVolumeSlider.addEventListener('input', () => {
       this.game.music.setFxVolume(parseFloat(this.fxVolumeSlider.value));
       if (soundEffectTimeout) clearTimeout(soundEffectTimeout);
