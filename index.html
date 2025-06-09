@@ -3,86 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <title>Deep Space Defender</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="public/favicon.ico" type="image/x-icon" />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="public/style.css" />
   </head>
   <body>
     <canvas id="gameCanvas"></canvas>
     <canvas id="loadingCanvas"></canvas>
 
     <div class="hidden-assets">
-      <img src="assets/images/404.webp" id="404_image" />
-      <img src="assets/images/title_screen.png" id="title_screen_image" />
-      <img src="assets/images/coin.png" id="coin_image" />
-      <img src="assets/images/ally.png" id="ally_image" />
-      <img src="assets/images/player.png" id="player_image" />
-      <img src="assets/images/player_thrust.png" id="player_thrust_image" />
-      <img src="assets/images/player_reverse.png" id="player_reverse_image" />
-      <img src="assets/images/bombPowerUp.png" id="bomb_powerup_image" />
-      <img src="assets/images/homingMissilePowerUp.png" id="missile_powerup_image" />
-      <img src="assets/images/homing_missile.png" id="missile_image" />
-      <img src="assets/images/asteroid.png" id="asteroid_image" />
-      <img src="assets/images/powerup.png" id="powerup_image" />
-      <img src="assets/images/shield_powerUp.png" id="shield_powerup_image" />
-      <img src="assets/images/reversePowerUp.png" id="reverse_powerup_image" />
-      <img src="assets/images/boostPowerUp.png" id="boost_powerup_image" />
-      <img src="assets/images/flamethrowerPowerUp.png" id="flame_powerup_image" />
-      <img src="assets/images/laserPowerUp.png" id="laser_powerup_image" />
-      <img src="assets/images/particleBomb.png" id="particle_bomb_powerup_image" />
-      <img src="assets/images/enemy.png" id="enemy_image" />
-      <img src="assets/images/enemy_tank.png" id="tank_enemy_image" />
-      <img src="assets/images/stealth_enemy.png" id="stealth_enemy_image" />
-      <img src="assets/images/temporal_serpent.png" id="temporal_serpent_image" />
-      <img src="assets/images/serpentHead.png" id="temporal_serpent_head_image" />
-      <img src="assets/images/serpentSegment.png" id="temporal_serpent_segment_image" />
-      <img src="assets/images/cyber_dragon.png" id="cyber_dragon_image" />
-      <img src="assets/images/boss.png" id="boss_image" />
-      <img src="assets/images/boss_projectile.png" id="boss_projectile_image" />
-      <img src="assets/images/biomech_leviathan.png" id="biomech_leviathan_image" />
+      <img src="public/assets/images/404.webp" id="404_image" />
+      <img src="public/assets/images/title_screen.png" id="title_screen_image" />
+      <img src="public/assets/images/coin.png" id="coin_image" />
+      <img src="public/assets/images/ally.png" id="ally_image" />
+      <img src="public/assets/images/player.png" id="player_image" />
+      <img src="public/assets/images/player_thrust.png" id="player_thrust_image" />
+      <img src="public/assets/images/player_reverse.png" id="player_reverse_image" />
+      <img src="public/assets/images/bombPowerUp.png" id="bomb_powerup_image" />
+      <img src="public/assets/images/homingMissilePowerUp.png" id="missile_powerup_image" />
+      <img src="public/assets/images/homing_missile.png" id="missile_image" />
+      <img src="public/assets/images/asteroid.png" id="asteroid_image" />
+      <img src="public/assets/images/powerup.png" id="powerup_image" />
+      <img src="public/assets/images/shield_powerUp.png" id="shield_powerup_image" />
+      <img src="public/assets/images/reversePowerUp.png" id="reverse_powerup_image" />
+      <img src="public/assets/images/boostPowerUp.png" id="boost_powerup_image" />
+      <img src="public/assets/images/flamethrowerPowerUp.png" id="flame_powerup_image" />
+      <img src="public/assets/images/laserPowerUp.png" id="laser_powerup_image" />
+      <img src="public/assets/images/particleBomb.png" id="particle_bomb_powerup_image" />
+      <img src="public/assets/images/enemy.png" id="enemy_image" />
+      <img src="public/assets/images/enemy_tank.png" id="tank_enemy_image" />
+      <img src="public/assets/images/stealth_enemy.png" id="stealth_enemy_image" />
+      <img src="public/assets/images/temporal_serpent.png" id="temporal_serpent_image" />
+      <img src="public/assets/images/serpentHead.png" id="temporal_serpent_head_image" />
+      <img src="public/assets/images/serpentSegment.png" id="temporal_serpent_segment_image" />
+      <img src="public/assets/images/cyber_dragon.png" id="cyber_dragon_image" />
+      <img src="public/assets/images/boss.png" id="boss_image" />
+      <img src="public/assets/images/boss_projectile.png" id="boss_projectile_image" />
+      <img src="public/assets/images/biomech_leviathan.png" id="biomech_leviathan_image" />
 
-      <img src="assets/images/boss_projectile_sprite_sheet.png" id="boss_projectile_sprite_sheet" />
+      <img src="public/assets/images/boss_projectile_sprite_sheet.png" id="boss_projectile_sprite_sheet" />
 
       <div id="audio-sources">
-        <audio src="assets/audio/collision.mp3" id="collision_sound"></audio>
-        <audio src="assets/audio/coin.mp3" id="coin_sound"></audio>
-        <audio src="assets/audio/allySound.mp3" id="ally_sound"></audio>
-        <audio src="assets/audio/allyOver.mp3" id="ally_over_sound"></audio>
-        <audio src="assets/audio/circularOrbitSound.mp3" id="ally_circular_orbit_sound"></audio>
-        <audio src="assets/audio/followPlayerSound.mp3" id="ally_follow_player_sound"></audio>
-        <audio src="assets/audio/acceleration.mp3" id="acceleration_sound"></audio>
-        <audio src="assets/audio/reverse.mp3" id="reverse_sound"></audio>
-        <audio src="assets/audio/fire.mp3" id="fire_sound"></audio>
-        <audio src="assets/audio/charging.mp3" id="charging_sound"></audio>
-        <audio src="assets/audio/flame.mp3" id="flame_sound"></audio>
-        <audio src="assets/audio/torch.mp3" id="torch_sound"></audio>
-        <audio src="assets/audio/boost.mp3" id="boost_sound"></audio>
-        <audio src="assets/audio/lifelost.mp3" id="lifelost_sound"></audio>
-        <audio src="assets/audio/homing_missile_sound.mp3" id="missile_sound"></audio>
-        <audio src="assets/audio/bombSound.mp3" id="bomb_sound"></audio>
-        <audio src="assets/audio/powerUp.mp3" id="powerup_sound"></audio>
-        <audio src="assets/audio/explosion.mp3" id="explosion_sound"></audio>
-        <audio src="assets/audio/hazardZone.mp3" id="hazard_sound"></audio>
-        <audio src="assets/audio/laser_charging.mp3" id="laser_charging_sound"></audio>
-        <audio src="assets/audio/spiralshot.mp3" id="spiral_shot_sound"></audio>
-        <audio src="assets/audio/tractorBeamSound.mp3" id="biomech_tractor_beam_sound"></audio>
-        <audio src="assets/audio/empSound.mp3" id="biomech_emp_sound"></audio>
-        <audio src="assets/audio/biomechEat.mp3" id="biomech_eat_sound"></audio>
-        <audio src="assets/audio/splatSound.mp3" id="biomech_splat_sound"></audio>
-        <audio src="assets/audio/nofire.mp3" id="no_fire_sound"></audio>
-        <audio src="assets/audio/laserHit.mp3" id="laser_hit_sound"></audio>
-        <audio src="assets/audio/laserFire.mp3" id="laser_fire_sound"></audio>
-        <audio src="assets/audio/particleBomb.wav" id="particle_bomb_sound"></audio>
+        <audio src="public/assets/audio/collision.mp3" id="collision_sound"></audio>
+        <audio src="public/assets/audio/coin.mp3" id="coin_sound"></audio>
+        <audio src="public/assets/audio/allySound.mp3" id="ally_sound"></audio>
+        <audio src="public/assets/audio/allyOver.mp3" id="ally_over_sound"></audio>
+        <audio src="public/assets/audio/circularOrbitSound.mp3" id="ally_circular_orbit_sound"></audio>
+        <audio src="public/assets/audio/followPlayerSound.mp3" id="ally_follow_player_sound"></audio>
+        <audio src="public/assets/audio/acceleration.mp3" id="acceleration_sound"></audio>
+        <audio src="public/assets/audio/reverse.mp3" id="reverse_sound"></audio>
+        <audio src="public/assets/audio/fire.mp3" id="fire_sound"></audio>
+        <audio src="public/assets/audio/charging.mp3" id="charging_sound"></audio>
+        <audio src="public/assets/audio/flame.mp3" id="flame_sound"></audio>
+        <audio src="public/assets/audio/torch.mp3" id="torch_sound"></audio>
+        <audio src="public/assets/audio/boost.mp3" id="boost_sound"></audio>
+        <audio src="public/assets/audio/lifelost.mp3" id="lifelost_sound"></audio>
+        <audio src="public/assets/audio/homing_missile_sound.mp3" id="missile_sound"></audio>
+        <audio src="public/assets/audio/bombSound.mp3" id="bomb_sound"></audio>
+        <audio src="public/assets/audio/powerUp.mp3" id="powerup_sound"></audio>
+        <audio src="public/assets/audio/explosion.mp3" id="explosion_sound"></audio>
+        <audio src="public/assets/audio/hazardZone.mp3" id="hazard_sound"></audio>
+        <audio src="public/assets/audio/laser_charging.mp3" id="laser_charging_sound"></audio>
+        <audio src="public/assets/audio/spiralshot.mp3" id="spiral_shot_sound"></audio>
+        <audio src="public/assets/audio/tractorBeamSound.mp3" id="biomech_tractor_beam_sound"></audio>
+        <audio src="public/assets/audio/empSound.mp3" id="biomech_emp_sound"></audio>
+        <audio src="public/assets/audio/biomechEat.mp3" id="biomech_eat_sound"></audio>
+        <audio src="public/assets/audio/splatSound.mp3" id="biomech_splat_sound"></audio>
+        <audio src="public/assets/audio/nofire.mp3" id="no_fire_sound"></audio>
+        <audio src="public/assets/audio/laserHit.mp3" id="laser_hit_sound"></audio>
+        <audio src="public/assets/audio/laserFire.mp3" id="laser_fire_sound"></audio>
+        <audio src="public/assets/audio/particleBomb.wav" id="particle_bomb_sound"></audio>
 
-        <audio src="assets/audio/background-music.mp3" id="background_music"></audio>
-        <audio src="assets/audio/boss_music.mp3" id="boss_music"></audio>
-        <audio src="assets/audio/gameOverMusic.mp3" id="game_over_music"></audio>
+        <audio src="public/assets/audio/background-music.mp3" id="background_music"></audio>
+        <audio src="public/assets/audio/boss_music.mp3" id="boss_music"></audio>
+        <audio src="public/assets/audio/gameOverMusic.mp3" id="game_over_music"></audio>
       </div>
     </div>
 
     <div id="menu-container">
       <div id="controller">
-        <img src="assets/images/keyboard.png" id="controller-image" />
+        <img src="public/assets/images/keyboard.png" id="controller-image" />
       </div>
       <div id="menu">
         <h2>MENU</h2>
@@ -126,51 +126,51 @@
             <th>Description</th>
           </tr>
           <tr>
-            <td><img src="assets/images/player.png" alt="Player" /></td>
+            <td><img src="public/assets/images/player.png" alt="Player" /></td>
             <td>This is you. Save the Galaxy from the EVIL EMPIRE.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/coin.png" alt="Coin" /></td>
+            <td><img src="public/assets/images/coin.png" alt="Coin" /></td>
             <td>Collect coins to increase your score and health.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/powerUp.png" alt="Power Up" /></td>
+            <td><img src="public/assets/images/powerUp.png" alt="Power Up" /></td>
             <td>Blaster Power-Up. 3x Power.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/bombPowerUp.png" alt="Bomb Power Up" /></td>
+            <td><img src="public/assets/images/bombPowerUp.png" alt="Bomb Power Up" /></td>
             <td>Bomb Power-Up. Kills enemies in blast radius.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/homingMissilePowerUp.png" alt="Homing Missile Power Up" /></td>
+            <td><img src="public/assets/images/homingMissilePowerUp.png" alt="Homing Missile Power Up" /></td>
             <td>Homing Missile Power-Up. Kills up to 3 enemies.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/shield_powerUp.png" alt="Shield Power Up" /></td>
+            <td><img src="public/assets/images/shield_powerUp.png" alt="Shield Power Up" /></td>
             <td>Shield Power-Up. Protects you from damage.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/reversePowerUp.png" alt="Reverse Power Up" /></td>
+            <td><img src="public/assets/images/reversePowerUp.png" alt="Reverse Power Up" /></td>
             <td>Reverse Projectile Power-Up. Fires backwards 3x Power.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/boostPowerUp.png" alt="Boost Power Up" /></td>
+            <td><img src="public/assets/images/boostPowerUp.png" alt="Boost Power Up" /></td>
             <td>Boost Power-up. Unlimited boosts for a limited time.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/ally.png" alt="Ally" /></td>
+            <td><img src="public/assets/images/ally.png" alt="Ally" /></td>
             <td>Ally spaceship. Fights alongside you.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/enemy.png" alt="Enemy" /></td>
+            <td><img src="public/assets/images/enemy.png" alt="Enemy" /></td>
             <td>Enemy spaceship. Avoid or destroy them.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/enemy_tank.png" alt="Enemy Tank" /></td>
+            <td><img src="public/assets/images/enemy_tank.png" alt="Enemy Tank" /></td>
             <td>Enemy tank. Tougher than regular enemies.</td>
           </tr>
           <tr>
-            <td><img src="assets/images/stealth_enemy.png" alt="Stealth Enemy" /></td>
+            <td><img src="public/assets/images/stealth_enemy.png" alt="Stealth Enemy" /></td>
             <td>Stealth enemy. Hard to detect.</td>
           </tr>
         </table>
@@ -291,7 +291,7 @@
       }
     </script>
 
-    <script src="loading.js"></script>
-    <script defer type="module" src="index.js"></script>
+    <script src="public/loading.js"></script>
+    <script defer src="game.js"></script>
   </body>
 </html>
